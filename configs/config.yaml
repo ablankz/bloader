@@ -1,0 +1,195 @@
+env: "local"
+loader:
+  basePath: "loader"
+targets:
+  # The id is required, and it must be unique.
+  - id: "apiServer"
+    type: "http"
+    values:
+      - env: "local"
+        url: "http://localhost:8080"
+      - env: "production"
+        url: "https://web.state.api.cresplanex.org"
+  - id: "websocketServer"
+    type: "websocket"
+    values:
+      - env: "local"
+        url: "ws://localhost:8110/ws"
+      - env: "production"
+        url: "wss://ws.state.api.cresplanex.org/ws"
+  - id: "metricsServer"
+    type: "metrics"
+    metricsType: "prometheus"
+    values:
+      - env: "local"
+        url: "http://localhost:10090/api/v1/query"
+      - env: "production"
+        url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
+outputs:
+    # The id is required, and it must be unique.
+  - id: "outputLocalCSV"
+    values:
+      - env: "local"
+        # The type is required.
+        # Supported types are `local`.
+        type: "local"
+        # The format is required.
+        # Supported formats are `csv`.
+        format: "csv"
+        basePath: "outputs/local-csv"
+      - env: "production"
+        type: "local"
+        format: "csv"
+        basePath: "outputs/prod-csv"
+store:
+  file:
+    - env: "local"
+      path: "local_store.db"
+    - env: "production"
+      path: "prod_store.db"
+  buckets:
+    - id: "bucketForEncrypt"
+    - id: "bucketForCredential"
+    - id: "bucketForConfig"
+    - id: "bucketForApp"
+encrypts:
+    # The id is required, and it must be unique.
+  - id: "encryptStaticCBC"
+    # Supported types are `staticCBC`, `staticCFB`, `staticCTR`,
+    # `dynamicCBC`, `dynamicCFB`, `dynamicCTR`.
+    type: "staticCBC"
+    key: "must override"
+  - id: "encryptDynamicCBC"
+    type: "dynamicCBC"
+    store:
+      bucketId: "bucketForEncrypt"
+      key: "encryptKeyForDynamicStore"
+      encrypt:
+        enabled: false
+auth:
+    # The id is required, and it must be unique.
+  - id: "authForWeb"
+    default: true
+    type: "oauth2"
+    oauth2:
+      grantType: "authorization_code"
+      clientId: "register_client"
+      clientSecret: "register_client_secret"
+      authUrl: "https://auth.state.api.cresplanex.org/oauth2/authorize"
+      tokenUrl: "https://auth.state.api.cresplanex.org/oauth2/token"
+      accessType: "offline"
+      scope:
+        - "openid"
+        - "email"
+      credential:
+        store:
+          bucketId: "bucketForCredential"
+          key: "webAuthCredential"
+          encrypt:
+            enabled: true
+            encryptId: "encryptDynamicCBC"
+  - id: "authForMobile"
+    default: false
+    type: "oauth2"
+    oauth2:
+      grantType: "client_credentials"
+      clientId: "mobile_client"
+      clientSecret: "mobile_client_secret"
+      tokenUrl: "https://auth.state.api.cresplanex.org/oauth2/token"
+      scope:
+        - "openid"
+        - "email"
+      credential:
+        store:
+          bucketId: "bucketForCredential"
+          key: "mobileAuthCredential"
+          encrypt:
+            enabled: false
+  - id: "authForApi"
+    default: false
+    type: "apiKey"
+    apiKey:
+      headerName: "X-API-KEY"
+      key: "You must override this value"
+server:
+  port: 9800
+  # The server will be started on the `server.port` by default.
+  # If you want to start the oauth redirect server on a different port, you can set the redirect_port.
+  # For redirect URL, we use a fixed value of /auth/callback.
+  # So, if you set the `server.redirect_port`` to 10800, 
+  # the redirect URL will be http://localhost:10800/auth/callback.
+  # redirect_port: 10800
+logging:
+  output:
+    - type: "stdout"
+      format: "text"
+      level: "warn"
+      # If enabledEnv is not set, it will be enabled all environments.
+      enabledEnv:
+        - "local"
+    # - type: "file"
+    #   filename: "logs/app.log"
+    #   format: "text"
+    #   level: "debug"
+    # - type: "tcp"
+    #   address: "127.0.0.1:5000"
+    #   format: "json"
+    #   level: "warn"
+# override is optional, if you want to override the configuration.
+# The one below takes precedence over the one above.
+clock:
+  fake: 
+    # If enabledEnv is not set, it will be enabled all environments.
+    enabled: true
+    time: "2021-01-01T00:00:00Z"
+  # The default value is `2006-01-02T15:04:05Z`.
+  format: "2006-01-02T15:04:05Z"
+language:
+  default: "en"
+# The bottom one takes precedence.
+override:
+  - type: "file"
+    # The fileType is required to load the file, supported types are `yaml`, `json`.
+    fileType: "yaml"
+    path: "configs/partial_override.yaml"
+    partial: true
+    vars:
+      - key: auth[0].oauth2.clientId
+        value: "auth.clientId"
+      - key: auth[0].oauth2.clientSecret
+        value: "auth.clientSecret"
+    # If enabledEnv is not set, it will be enabled all environments.
+    # enabledEnv:
+  - type: "file"
+    fileType: "yaml"
+    path: "configs/local_override.yaml"
+    # If enabledEnv is not set, it will be enabled all environments.
+    enabledEnv:
+      - "local"
+  - type: "file"
+    fileType: "yaml"
+    path: "configs/production_override.yaml"
+    enabledEnv:
+      - "production"
+  - type: "store"
+    store:
+      bucketId: "bucketForConfig"
+      key: "apiKey"
+      encrypt:
+        enabled: true
+        encryptId: "encryptDynamicCBC"
+    key: "auth[2].apiKey.key"
+    # If enabledEnv is not set, it will be enabled all environments.
+    # enabledEnv:
+    #   - "local"
+    #   - "production"
+  - type: "static"
+    key: "auth[0].oauth2.authUrl"
+    value: "http://localhost:8080/oauth2/authorize"
+    enabledEnv:
+      - "local"
+  - type: "static"
+    key: "auth[0].oauth2.tokenUrl"
+    value: "http://localhost:8080/oauth2/token"
+    enabledEnv:
+      - "local"

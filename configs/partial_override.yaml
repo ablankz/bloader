@@ -1,0 +1,3 @@
+auth:
+  clientId: 1234567890
+  clientSecret: "client_secret"

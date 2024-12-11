@@ -1,0 +1,9 @@
+server:
+  port: 8080
+clock:
+  fake: 
+    # If enabledEnv is not set, it will be enabled all environments.
+    enabled: false
+    time: "2021-01-01T00:00:00Z"
+  # The default value is `2006-01-02T15:04:05Z`.
+  format: "2006-01-02T15:04:05Z"
