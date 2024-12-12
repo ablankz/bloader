@@ -48,7 +48,7 @@ func (c StoreConfig) Validate() (ValidStoreConfig, error) {
 
 // StoreSpecifyConfig represents the configuration for the store
 type StoreSpecifyConfig struct {
-	BucketID *string                 `mapstructure:"bucketID"`
+	BucketID *string                 `mapstructure:"bucket_id"`
 	Key      *string                 `mapstructure:"key"`
 	Encrypt  CredentialEncryptConfig `mapstructure:"encrypt"`
 }
@@ -63,7 +63,7 @@ type ValidStoreSpecifyConfig struct {
 // CredentialEncryptConfig is the configuration for the credential encrypt.
 type CredentialEncryptConfig struct {
 	Enabled   bool    `mapstructure:"enabled"`
-	EncryptID *string `mapstructure:"encryptId"`
+	EncryptID *string `mapstructure:"encrypt_id"`
 }
 
 // ValidCredentialEncryptConfig represents the valid auth credential encrypt configuration

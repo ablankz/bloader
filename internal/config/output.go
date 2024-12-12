@@ -23,15 +23,15 @@ type OutputRespectiveValueConfig struct {
 	Env      *string `mapstructure:"env"`
 	Type     *string `mapstructure:"type"`
 	Format   *string `mapstructure:"format"`
-	BasePath *string `mapstructure:"basePath"`
+	BasePath *string `mapstructure:"base_path"`
 }
 
 // ValidOutputRespectiveValueConfig represents the configuration for the output respective service value
 type ValidOutputRespectiveValueConfig struct {
-	Env      string       `mapstructure:"env"`
-	Type     OutputType   `mapstructure:"type"`
-	Format   OutputFormat `mapstructure:"format"`
-	BasePath string       `mapstructure:"basePath"`
+	Env      string
+	Type     OutputType
+	Format   OutputFormat
+	BasePath string
 }
 
 // Validate validates the output respective value configuration
@@ -77,8 +77,8 @@ type OutputRespectiveConfig struct {
 
 // ValidOutputRespectiveConfig represents the configuration for the output respective service
 type ValidOutputRespectiveConfig struct {
-	ID     string                             `mapstructure:"id"`
-	Values []ValidOutputRespectiveValueConfig `mapstructure:"values"`
+	ID     string
+	Values []ValidOutputRespectiveValueConfig
 }
 
 // OutputConfig represents the configuration for the output service

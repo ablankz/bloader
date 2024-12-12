@@ -42,37 +42,37 @@ func (c OverrideRespectiveVarConfig) Validate() (ValidOverrideRespectiveVarConfi
 	return valid, nil
 }
 
-// OverrideRespectiveFileTypes represents the file types for the override respective service
-type OverrideRespectiveFileTypes string
+// OverrideFileTypes represents the file types for the override respective service
+type OverrideFileTypes string
 
 const (
-	// OverrideRespectiveFileTypesYAML represents the YAML file type for the override respective service
-	OverrideRespectiveFileTypesYAML OverrideRespectiveFileTypes = "yaml"
+	// OverrideFileTypesYAML represents the YAML file type for the override respective service
+	OverrideFileTypesYAML OverrideFileTypes = "yaml"
 )
 
 // OverrideRespectiveConfig represents the configuration for the override respective service
 type OverrideRespectiveConfig struct {
 	Type       *string                       `mapstructure:"type"`
-	FileType   *string                       `mapstructure:"fileType"`
+	FileType   *string                       `mapstructure:"file_type"`
 	Path       *string                       `mapstructure:"path"`
 	Partial    bool                          `mapstructure:"partial"`
 	Vars       []OverrideRespectiveVarConfig `mapstructure:"vars"`
 	Store      *StoreSpecifyConfig           `mapstructure:"store"`
 	Key        *string                       `mapstructure:"key"`
 	Value      *string                       `mapstructure:"value"`
-	EnabledEnv *[]string                     `mapstructure:"enabledEnv"`
+	EnabledEnv *[]string                     `mapstructure:"enabled_env"`
 }
 
 // ValidOverrideRespectiveConfig represents the configuration for the override respective service
 type ValidOverrideRespectiveConfig struct {
-	Type       OverrideType                       `mapstructure:"type"`
-	FileType   OverrideRespectiveFileTypes        `mapstructure:"fileType"`
-	Path       string                             `mapstructure:"path"`
-	Partial    bool                               `mapstructure:"partial"`
-	Vars       []ValidOverrideRespectiveVarConfig `mapstructure:"vars"`
-	Store      ValidStoreSpecifyConfig            `mapstructure:"store"`
-	Key        string                             `mapstructure:"key"`
-	Value      string                             `mapstructure:"value"`
+	Type       OverrideType
+	FileType   OverrideFileTypes
+	Path       string
+	Partial    bool
+	Vars       []ValidOverrideRespectiveVarConfig
+	Store      ValidStoreSpecifyConfig
+	Key        string
+	Value      string
 	EnabledEnv struct {
 		All    bool
 		Values []string
@@ -110,9 +110,9 @@ func (c OverrideConfig) Validate() (ValidOverrideConfig, error) {
 			if override.FileType == nil {
 				return nil, fmt.Errorf("override[%d]: %w", i, ErrOverrideFileTypeRequired)
 			}
-			switch OverrideRespectiveFileTypes(*override.FileType) {
-			case OverrideRespectiveFileTypesYAML:
-				validOverride.FileType = OverrideRespectiveFileTypesYAML
+			switch OverrideFileTypes(*override.FileType) {
+			case OverrideFileTypesYAML:
+				validOverride.FileType = OverrideFileTypesYAML
 			default:
 				return nil, fmt.Errorf("override[%d]: %w", i, ErrOverrideFileTypeInvalid)
 			}

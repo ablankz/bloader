@@ -8,9 +8,9 @@ type AuthRespectiveConfig struct {
 	Default    bool                  `mapstructure:"default"`
 	Type       *string               `mapstructure:"type"`
 	OAuth2     *AuthOAuth2Config     `mapstructure:"oauth2"`
-	APIKey     *AuthAPIKeyConfig     `mapstructure:"apiKey"`
+	APIKey     *AuthAPIKeyConfig     `mapstructure:"api_key"`
 	Basic      *AuthBasicConfig      `mapstructure:"basic"`
-	PrivateKey *AuthPrivateKeyConfig `mapstructure:"privateKey"`
+	PrivateKey *AuthPrivateKeyConfig `mapstructure:"private_key"`
 	JWT        *AuthJWTConfig        `mapstructure:"jwt"`
 }
 
@@ -33,11 +33,11 @@ const (
 	// AuthTypeOAuth2 is the type of the oauth2.
 	AuthTypeOAuth2 AuthType = "oauth2"
 	// AuthTypeAPIKey is the type of the api key.
-	AuthTypeAPIKey AuthType = "apiKey"
+	AuthTypeAPIKey AuthType = "api_key"
 	// AuthTypeBasic is the type of the basic auth.
 	AuthTypeBasic AuthType = "basic"
 	// AuthTypePrivateKey is the type of the private key.
-	AuthTypePrivateKey AuthType = "privateKey"
+	AuthTypePrivateKey AuthType = "private_key"
 	// AuthTypeJWT is the type of the jwt.
 	AuthTypeJWT AuthType = "jwt"
 )
@@ -90,13 +90,13 @@ const (
 
 // AuthOAuth2Config is the configuration for the oauth2.
 type AuthOAuth2Config struct {
-	GrantType    *string               `mapstructure:"grantType"`
-	ClientID     *string               `mapstructure:"clientId"`
+	GrantType    *string               `mapstructure:"grant_type"`
+	ClientID     *string               `mapstructure:"client_id"`
 	Scope        []string              `mapstructure:"scope"`
-	ClientSecret string                `mapstructure:"clientSecret"`
-	AccessType   *string               `mapstructure:"accessType"`
-	AuthURL      *string               `mapstructure:"authUrl"`
-	TokenURL     *string               `mapstructure:"tokenUrl"`
+	ClientSecret string                `mapstructure:"client_secret"`
+	AccessType   *string               `mapstructure:"access_type"`
+	AuthURL      *string               `mapstructure:"auth_url"`
+	TokenURL     *string               `mapstructure:"token_url"`
 	Username     *string               `mapstructure:"username"`
 	Password     *string               `mapstructure:"password"`
 	Credential   *AuthCredentialConfig `mapstructure:"credential"`
@@ -186,7 +186,7 @@ func (c AuthOAuth2Config) Validate() (ValidAuthOAuth2Config, error) {
 
 // AuthAPIKeyConfig is the configuration for the api key.
 type AuthAPIKeyConfig struct {
-	HeaderName *string `mapstructure:"headerName"`
+	HeaderName *string `mapstructure:"header_name"`
 	Key        *string `mapstructure:"key"`
 }
 
@@ -238,7 +238,7 @@ func (c AuthBasicConfig) Validate() (ValidAuthBasicConfig, error) {
 
 // AuthPrivateKeyConfig is the configuration for the private key.
 type AuthPrivateKeyConfig struct {
-	PrivateKey *string `mapstructure:"privateKey"`
+	PrivateKey *string `mapstructure:"private_key"`
 }
 
 // ValidAuthPrivateKeyConfig represents the valid auth private key configuration

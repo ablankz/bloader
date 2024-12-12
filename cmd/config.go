@@ -1,13 +1,15 @@
 /*
 Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 )
 
 // configCmd represents the config command
@@ -21,7 +23,19 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("config called")
+		settings := viper.AllSettings()
+		exConfigSettings := map[string]any{}
+		for key, value := range settings {
+			if key != "config" {
+				exConfigSettings[key] = value
+			}
+		}
+		yamlData, err := yaml.Marshal(exConfigSettings)
+		if err != nil {
+			log.Fatalf("Error converting configuration to YAML: %v", err)
+		}
+		fmt.Println("Current configuration:")
+		fmt.Println(string(yamlData))
 	},
 }
 

@@ -45,7 +45,7 @@ type LoggingOutputConfig struct {
 	Level      *string   `mapstructure:"level"`
 	Filename   *string   `mapstructure:"filename"`
 	Address    *string   `mapstructure:"address"`
-	EnabledEnv *[]string `mapstructure:"enabledEnv"`
+	EnabledEnv *[]string `mapstructure:"enabled_env"`
 }
 
 // ValidLoggingOutputConfig represents the valid configuration for logging output

@@ -50,18 +50,18 @@ type Config struct {
 
 // ValidConfig represents the application configuration
 type ValidConfig struct {
-	Env      string              `mapstructure:"env"`
-	Loader   ValidLoaderConfig   `mapstructure:"loader"`
-	Targets  ValidTargetConfig   `mapstructure:"targets"`
-	Outputs  ValidOutputConfig   `mapstructure:"outputs"`
-	Store    ValidStoreConfig    `mapstructure:"store"`
-	Encrypts ValidEncryptConfig  `mapstructure:"encrypts"`
-	Auth     ValidAuthConfig     `mapstructure:"auth"`
-	Server   ValidServerConfig   `mapstructure:"server"`
-	Logging  ValidLoggingConfig  `mapstructure:"logging"`
-	Clock    ValidClockConfig    `mapstructure:"clock"`
-	Language ValidLanguageConfig `mapstructure:"language"`
-	Override ValidOverrideConfig `mapstructure:"override"`
+	Env      string
+	Loader   ValidLoaderConfig
+	Targets  ValidTargetConfig
+	Outputs  ValidOutputConfig
+	Store    ValidStoreConfig
+	Encrypts ValidEncryptConfig
+	Auth     ValidAuthConfig
+	Server   ValidServerConfig
+	Logging  ValidLoggingConfig
+	Clock    ValidClockConfig
+	Language ValidLanguageConfig
+	Override ValidOverrideConfig
 }
 
 // Validate validates the configuration

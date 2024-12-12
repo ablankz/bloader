@@ -3,7 +3,7 @@ package config
 // ServerConfig represents the server configuration
 type ServerConfig struct {
 	Port         *int `mapstructure:"port"`
-	RedirectPort *int `mapstructure:"redirectPort"`
+	RedirectPort *int `mapstructure:"redirect_port"`
 }
 
 // ValidServerConfig represents the valid server configuration

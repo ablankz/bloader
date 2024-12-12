@@ -13,6 +13,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 )
 
 // var ctr = container.NewContainer()
@@ -44,7 +45,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().StringP("config", "c", "", "config file (default is $HOME/.nova-measure/config.yaml)")
+	rootCmd.PersistentFlags().StringP("config", "c", "", "config file (default is $HOME/configs/config.yaml, /etc/bloader/config.yaml, or ./config.yaml.)")
 	if err := viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config")); err != nil {
 		fmt.Printf("Error binding flag: %v\n", err)
 		os.Exit(1)
@@ -64,8 +65,10 @@ func initConfig() {
 			os.Exit(1)
 		}
 		viper.AddConfigPath(homeDir + "/configs")
+		viper.AddConfigPath(".")
+		viper.AddConfigPath("/etc/bloader")
 		viper.SetConfigName("config")
-		viper.SetConfigType("yaml")
+		// viper.SetConfigType("yaml")
 	}
 
 	// Load environment variables
@@ -81,11 +84,11 @@ func initConfig() {
 		os.Exit(1)
 	}
 
-	var baseConfig map[string]interface{}
-	if err := viper.Unmarshal(&baseConfig); err != nil {
-		fmt.Printf("Error unmarshalling base config: %v\n", err)
-		os.Exit(1)
-	}
+	// var baseConfig map[string]any
+	// if err := viper.Unmarshal(&baseConfig); err != nil {
+	// 	fmt.Printf("Error unmarshalling base config: %v\n", err)
+	// 	os.Exit(1)
+	// }
 
 	var cfgForOverride config.ConfigForOverride
 	if err := viper.Unmarshal(&cfgForOverride, func(m *mapstructure.DecoderConfig) {
@@ -105,8 +108,58 @@ func initConfig() {
 		if !override.EnabledEnv.All && !utils.Contains(override.EnabledEnv.Values, validForOverride.Env) {
 			continue
 		}
-		fmt.Println(baseConfig)
+		switch override.Type {
+		case config.OverrideTypeStatic:
+			config.SetNestedValue(viper.GetViper(), override.Key, override.Value)
+		case config.OverrideTypeFile:
+			if override.Partial {
+				// Load the file
+				// Merge the file with the base config
+			} else {
+				f, err := os.Open(override.Path)
+				if err != nil {
+					fmt.Printf("failed to load file: %v\n", err)
+					os.Exit(1)
+				}
+				defer f.Close()
+				overrideFile := make(map[string]any)
+				switch override.FileType {
+				case config.OverrideFileTypesYAML:
+					decoder := yaml.NewDecoder(f)
+					if err := decoder.Decode(&overrideFile); err != nil {
+						fmt.Printf("failed to decode file: %v\n", err)
+						os.Exit(1)
+					}
+				}
+				viper.MergeConfigMap(overrideFile)
+			}
+		case config.OverrideTypeStore:
+		}
+		// config.SetNestedValue(viper.GetViper(), "auth[0].oauth2.authUrl", "invalid")
+		// viper.Set("auth.[0].oauth2.authUrl", "https://accounts.google.com/o/oauth2/auth")
 	}
+	// var key string
+	// var value any
+	// key = "auth[0].oauth2.auth_url"
+	// value = "https://accounts.google.com/o/oauth2/auth"
+	// config.SetNestedValue(viper.GetViper(), key, value)
+
+	// key = "auth[0].oauth2.scope[1]"
+	// value = "aaaa"
+	// config.SetNestedValue(viper.GetViper(), key, value)
+
+	// key = "env"
+	// value = "bbb"
+	// config.SetNestedValue(viper.GetViper(), key, value)
+
+	// key = "logging.output[0].format"
+	// value = "json"
+	// config.SetNestedValue(viper.GetViper(), key, value)
+
+	// key = "logging.outpu[12].format"
+	// value = "js"
+	// config.SetNestedValue(viper.GetViper(), key, value)
+	// var currentValue any
 
 	// if err := container.Init(cfg); err != nil {
 	// 	fmt.Printf("Error initializing container: %v\n", err)

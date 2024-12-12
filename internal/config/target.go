@@ -22,8 +22,8 @@ type TargetRespectiveValueConfig struct {
 
 // ValidTargetRespectiveValueConfig represents the configuration for the target respective service value
 type ValidTargetRespectiveValueConfig struct {
-	Env string `mapstructure:"env"`
-	URL string `mapstructure:"url"`
+	Env string
+	URL string
 }
 
 // Validate validates the target respective value configuration
@@ -51,9 +51,9 @@ type TargetRespectiveConfig struct {
 
 // ValidTargetRespectiveConfig represents the configuration for the target respective service
 type ValidTargetRespectiveConfig struct {
-	ID     string                             `mapstructure:"id"`
-	Type   TargetType                         `mapstructure:"type"`
-	Values []ValidTargetRespectiveValueConfig `mapstructure:"values"`
+	ID     string
+	Type   TargetType
+	Values []ValidTargetRespectiveValueConfig
 }
 
 // TargetConfig represents the configuration for the target service

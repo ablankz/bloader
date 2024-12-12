@@ -2,12 +2,12 @@ package config
 
 // LoaderConfig represents the configuration for the loader service
 type LoaderConfig struct {
-	BasePath *string `mapstructure:"basePath"`
+	BasePath *string `mapstructure:"base_path"`
 }
 
 // ValidLoaderConfig represents the configuration for the loader service
 type ValidLoaderConfig struct {
-	BasePath string `mapstructure:"basePath"`
+	BasePath string
 }
 
 // Validate validates the loader configuration

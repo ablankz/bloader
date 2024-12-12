@@ -7,7 +7,7 @@ type EncryptRespectiveConfig struct {
 	ID       *string `mapstructure:"id"`
 	Type     *string `mapstructure:"type"`
 	Key      *[]byte `mapstructure:"key"`
-	StoreKey *string `mapstructure:"storeKey"`
+	StoreKey *string `mapstructure:"store_key"`
 }
 
 // ValidEncryptRespectiveConfig represents the valid encrypt configuration
