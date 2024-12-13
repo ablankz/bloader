@@ -48,17 +48,17 @@ store:
     - env: "production"
       path: "prod_store.db"
   buckets:
-    - id: "bucketForEncrypt"
-    - id: "bucketForCredential"
-    - id: "bucketForConfig"
-    - id: "bucketForApp"
+    - "bucketForEncrypt"
+    - "bucketForCredential"
+    - "bucketForConfig"
+    - "bucketForApp"
 encrypts:
     # The id is required, and it must be unique.
-  - id: "encryptStaticCBC"
-    # Supported types are `staticCBC`, `staticCFB`, `staticCTR`,
-    # `dynamicCBC`, `dynamicCFB`, `dynamicCTR`.
-    type: "staticCBC"
-    key: "must override"
+  # - id: "encryptStaticCBC"
+  #   # Supported types are `staticCBC`, `staticCFB`, `staticCTR`,
+  #   # `dynamicCBC`, `dynamicCFB`, `dynamicCTR`.
+  #   type: "staticCBC"
+  #   key: "must override"
   - id: "encryptDynamicCBC"
     type: "dynamicCBC"
     store:
@@ -171,18 +171,6 @@ override:
     path: "configs/production_override.yaml"
     enabled_env:
       - "production"
-  - type: "store"
-    store:
-      bucket_id: "bucketForConfig"
-      key: "apiKey"
-      encrypt:
-        enabled: true
-        encrypt_id: "encryptDynamicCBC"
-    key: "auth[2].api_key.key"
-    # If enabled_env is not set, it will be enabled all environments.
-    # enabled_env:
-    #   - "local"
-    #   - "production"
   - type: "static"
     key: "auth[0].oauth2.auth_url"
     value: "http://localhost:8080/oauth2/authorize"

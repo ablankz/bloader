@@ -4,27 +4,28 @@ package container
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/ablankz/bloader/internal/auth"
 	"github.com/ablankz/bloader/internal/clock"
 	"github.com/ablankz/bloader/internal/clock/fakeclock"
 	"github.com/ablankz/bloader/internal/config"
+	"github.com/ablankz/bloader/internal/encrypt"
 	"github.com/ablankz/bloader/internal/i18n"
 	"github.com/ablankz/bloader/internal/logger"
-	"gopkg.in/yaml.v3"
+	"github.com/ablankz/bloader/internal/store"
 )
 
 // Container holds the dependencies for the application
 type Container struct {
-	Ctx        context.Context
-	Clocker    clock.Clock
-	Translator i18n.Translation
-	Config     config.Config
-	Logger     logger.Logger
-	AuthToken  *auth.AuthToken
+	Ctx                    context.Context
+	Clocker                clock.Clock
+	Translator             i18n.Translation
+	Config                 config.ValidConfig
+	Logger                 logger.Logger
+	Store                  store.Store
+	Encypter               encrypt.EncrypterContainer
+	AuthenticatorContainer auth.AuthAuthenticatorContainer
 }
 
 // NewContainer creates a new Container
@@ -33,7 +34,7 @@ func NewContainer() *Container {
 }
 
 // Init initializes the Container
-func (c *Container) Init(cfg config.Config) error {
+func (c *Container) Init(cfg config.ValidConfig) error {
 	c.Ctx = context.Background()
 	var err error
 
@@ -45,18 +46,13 @@ func (c *Container) Init(cfg config.Config) error {
 	// ----------------------------------------
 	// Set Default Language
 	// ----------------------------------------
-	switch c.Config.Lang {
-	case "en":
+	switch c.Config.Language.Default {
+	case config.LanguageTypeEnglish:
 		i18n.Default = i18n.English
-	case "ja":
+	case config.LanguageTypeJapanese:
 		i18n.Default = i18n.Japanese
-	case "":
-		fmt.Println("No language specified. Defaulting to English.")
-		c.Config.Lang = "en"
-		i18n.Default = i18n.English
 	default:
-		fmt.Println("Invalid language specified. Defaulting to English.")
-		c.Config.Lang = "en"
+		c.Config.Language.Default = config.LanguageTypeEnglish
 		i18n.Default = i18n.English
 	}
 
@@ -64,7 +60,6 @@ func (c *Container) Init(cfg config.Config) error {
 	// Set Clock
 	// ----------------------------------------
 	if _, err = time.Parse(c.Config.Clock.Format, c.Config.Clock.Format); err != nil {
-		fmt.Println("Invalid clock format. Defaulting to 2006-01-02 15:04:05.\n Error:", err)
 		c.Config.Clock.Format = "2006-01-02 15:04:05"
 	}
 
@@ -86,83 +81,52 @@ func (c *Container) Init(cfg config.Config) error {
 	// ----------------------------------------
 	// Set Logger
 	// ----------------------------------------
-	c.Logger = logger.NewSlogLogger()
-	if err := c.Logger.SetupLogger(&cfg.Logging); err != nil {
+	c.Logger, err = logger.NewLoggerFromConfig(cfg.Env, cfg.Logging)
+	if err != nil {
+		return fmt.Errorf("failed to create logger: %w", err)
+	}
+	if err := c.Logger.SetupLogger(cfg.Env, cfg.Logging); err != nil {
 		return fmt.Errorf("failed to setup logger: %w", err)
+	}
+
+	// ----------------------------------------
+	// Set Store
+	// ----------------------------------------
+	c.Store, err = store.NewStoreFromConfig(cfg.Store)
+	if err != nil {
+		return fmt.Errorf("failed to create store: %w", err)
+	}
+	if err := c.Store.SetupStore(cfg.Env, cfg.Store); err != nil {
+		return fmt.Errorf("failed to setup store: %w", err)
+	}
+
+	// ----------------------------------------
+	// Set Encrypter
+	// ----------------------------------------
+	c.Encypter, err = encrypt.NewEncrypterContainerFromConfig(cfg.Encrypts)
+	if err != nil {
+		return fmt.Errorf("failed to create encrypter: %w", err)
 	}
 
 	// ----------------------------------------
 	// Set AuthToken
 	// ----------------------------------------
-	defaultAuth := auth.AuthToken{
-		AccessToken:  "",
-		RefreshToken: "",
-		TokenType:    "",
-		Expiry:       time.Time{},
-	}
-	if _, err := os.Stat(cfg.Credential.Path); os.IsNotExist(err) {
-		fmt.Println("credential file does not exist. creating a new one.")
-		if err := createFileWithDefaultConfig(cfg.Credential.Path, &defaultAuth); err != nil {
-			return fmt.Errorf("failed to create credential file: %w", err)
-		}
-	}
-	tokenInfo, err := readAuthTokenConfig(cfg.Credential.Path)
+	c.AuthenticatorContainer, err = auth.NewAuthAuthenticatorContainerFromConfig(
+		c.Store,
+		c.Config,
+	)
 	if err != nil {
-		return fmt.Errorf("failed to read config: %w", err)
+		return fmt.Errorf("failed to create authenticator container: %w", err)
 	}
-	c.AuthToken = &tokenInfo
 
 	return nil
-}
-
-type savable interface {
-	Save(encoder *yaml.Encoder) error
-}
-
-func createFileWithDefaultConfig(filename string, defaultConf savable) error {
-	if err := os.MkdirAll(filepath.Dir(filename), 0755); err != nil {
-		return fmt.Errorf("failed to create directories: %w", err)
-	}
-	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, 0o600)
-	if err != nil {
-		fmt.Println(err)
-		return fmt.Errorf("failed to open file: %w", err)
-	}
-	defer file.Close()
-
-	encoder := yaml.NewEncoder(file)
-	defer encoder.Close()
-
-	if err := defaultConf.Save(encoder); err != nil {
-		return fmt.Errorf("failed to save config: %w", err)
-	}
-	return nil
-}
-
-func readAuthTokenConfig(filename string) (auth.AuthToken, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return auth.AuthToken{}, fmt.Errorf("failed to open file: %w", err)
-	}
-	defer file.Close()
-
-	if fileStat, err := file.Stat(); err != nil {
-		return auth.AuthToken{}, fmt.Errorf("failed to get file stat: %w", err)
-	} else if fileStat.Size() == 0 {
-		return auth.AuthToken{}, nil
-	}
-
-	var authToken auth.AuthToken
-	decoder := yaml.NewDecoder(file)
-	if err := authToken.Load(decoder); err != nil {
-		return auth.AuthToken{}, fmt.Errorf("failed to load config: %w", err)
-	}
-
-	return authToken, nil
 }
 
 // Close closes the Container
 func (c *Container) Close() error {
 	c.Logger.Close()
+	if err := c.Store.Close(); err != nil {
+		return fmt.Errorf("failed to close store: %w", err)
+	}
 	return nil
 }

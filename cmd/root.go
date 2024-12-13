@@ -4,11 +4,13 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/ablankz/bloader/internal/config"
+	"github.com/ablankz/bloader/internal/container"
 	"github.com/ablankz/bloader/internal/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
@@ -16,7 +18,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// var ctr = container.NewContainer()
+var ctr = container.NewContainer()
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -53,7 +55,7 @@ func init() {
 }
 
 func initConfig() {
-	// ctr.Ctx = context.Background()
+	ctr.Ctx = context.Background()
 
 	configFile := viper.GetString("config")
 	if configFile != "" {
@@ -84,12 +86,6 @@ func initConfig() {
 		os.Exit(1)
 	}
 
-	// var baseConfig map[string]any
-	// if err := viper.Unmarshal(&baseConfig); err != nil {
-	// 	fmt.Printf("Error unmarshalling base config: %v\n", err)
-	// 	os.Exit(1)
-	// }
-
 	var cfgForOverride config.ConfigForOverride
 	if err := viper.Unmarshal(&cfgForOverride, func(m *mapstructure.DecoderConfig) {
 		m.DecodeHook = mapstructure.ComposeDecodeHookFunc(
@@ -113,8 +109,25 @@ func initConfig() {
 			config.SetNestedValue(viper.GetViper(), override.Key, override.Value)
 		case config.OverrideTypeFile:
 			if override.Partial {
-				// Load the file
-				// Merge the file with the base config
+				f, err := os.Open(override.Path)
+				if err != nil {
+					fmt.Printf("failed to load file: %v\n", err)
+					os.Exit(1)
+				}
+				defer f.Close()
+				overrideMap := make(map[string]any)
+				switch override.FileType {
+				case config.OverrideFileTypesYAML:
+					decoder := yaml.NewDecoder(f)
+					if err := decoder.Decode(&overrideMap); err != nil {
+						fmt.Printf("failed to decode file: %v\n", err)
+						os.Exit(1)
+					}
+				}
+				for _, v := range override.Vars {
+					value := config.GetNestedValueFromMap(overrideMap, v.Value)
+					config.SetNestedValue(viper.GetViper(), v.Key, value)
+				}
 			} else {
 				f, err := os.Open(override.Path)
 				if err != nil {
@@ -122,60 +135,48 @@ func initConfig() {
 					os.Exit(1)
 				}
 				defer f.Close()
-				overrideFile := make(map[string]any)
+				overrideMap := make(map[string]any)
 				switch override.FileType {
 				case config.OverrideFileTypesYAML:
 					decoder := yaml.NewDecoder(f)
-					if err := decoder.Decode(&overrideFile); err != nil {
+					if err := decoder.Decode(&overrideMap); err != nil {
 						fmt.Printf("failed to decode file: %v\n", err)
 						os.Exit(1)
 					}
 				}
-				viper.MergeConfigMap(overrideFile)
+				viper.MergeConfigMap(overrideMap)
 			}
-		case config.OverrideTypeStore:
 		}
-		// config.SetNestedValue(viper.GetViper(), "auth[0].oauth2.authUrl", "invalid")
-		// viper.Set("auth.[0].oauth2.authUrl", "https://accounts.google.com/o/oauth2/auth")
 	}
-	// var key string
-	// var value any
-	// key = "auth[0].oauth2.auth_url"
-	// value = "https://accounts.google.com/o/oauth2/auth"
-	// config.SetNestedValue(viper.GetViper(), key, value)
 
-	// key = "auth[0].oauth2.scope[1]"
-	// value = "aaaa"
-	// config.SetNestedValue(viper.GetViper(), key, value)
+	var cfg config.Config
+	if err := viper.Unmarshal(&cfg); err != nil {
+		fmt.Printf("Error unmarshalling config: %v\n", err)
+		os.Exit(1)
+	}
+	validCfg, err := cfg.Validate()
+	if err != nil {
+		fmt.Printf("Error validating config: %v\n", err)
+		os.Exit(1)
+	}
 
-	// key = "env"
-	// value = "bbb"
-	// config.SetNestedValue(viper.GetViper(), key, value)
+	if err := ctr.Init(validCfg); err != nil {
+		fmt.Printf("Error initializing container: %v\n", err)
+		os.Exit(1)
+	}
 
-	// key = "logging.output[0].format"
-	// value = "json"
-	// config.SetNestedValue(viper.GetViper(), key, value)
-
-	// key = "logging.outpu[12].format"
-	// value = "js"
-	// config.SetNestedValue(viper.GetViper(), key, value)
-	// var currentValue any
-
-	// if err := container.Init(cfg); err != nil {
-	// 	fmt.Printf("Error initializing container: %v\n", err)
-	// 	os.Exit(1)
-	// }
-
-	// if expire := container.AuthToken.IsExpired(); expire {
-	// 	yellow := color.New(color.FgYellow).SprintFunc()
-	// 	fmt.Println(yellow("Token has expired. Refreshing token..."))
-	// 	if err := container.AuthToken.Refresh(container.Ctx, createOAuthConfig(), container.Config.Credential.Path); err != nil {
-	// 		red := color.New(color.FgRed).SprintFunc()
-	// 		fmt.Println(red(fmt.Sprintf("Failed to refresh token: %v", err)))
-	// 		fmt.Println("You may need to re-authenticate, if want to access the credential API.")
-	// 	} else {
-	// 		green := color.New(color.FgGreen).SprintFunc()
-	// 		fmt.Println(green("Successfully refreshed token"))
+	// for k, v := range ctr.AuthenticatorContainer.Container {
+	// 	if expired := (*v).IsExpired(ctr.Ctx, ctr.Store); expired {
+	// 		yellow := color.New(color.FgYellow).SprintFunc()
+	// 		fmt.Printf(yellow("Token for %s has expired. Refreshing token...\n"), k)
+	// 		if err := (*v).Refresh(ctr.Ctx, ctr.Store); err != nil {
+	// 			red := color.New(color.FgRed).SprintFunc()
+	// 			fmt.Printf(red("Failed to refresh token: %v\n"), err)
+	// 			fmt.Printf("You may need to re-authenticate, if want to access the credential API.\n")
+	// 		} else {
+	// 			green := color.New(color.FgGreen).SprintFunc()
+	// 			fmt.Printf(green("Successfully refreshed token for %s\n"), k)
+	// 		}
 	// 	}
 	// }
 }

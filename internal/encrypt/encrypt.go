@@ -1,6 +1,9 @@
 package encrypt
 
-import "github.com/ablankz/bloader/internal/config"
+import (
+	"github.com/ablankz/bloader/internal/config"
+	"github.com/ablankz/bloader/internal/store"
+)
 
 // EncryptType is the type of the encrypt.
 type EncryptType string
@@ -16,8 +19,8 @@ const (
 
 // Encrypter is the interface for the encrypter.
 type Encrypter interface {
-	Encrypt(plaintext []byte) (string, error)
-	Decrypt(ciphertextBase64 string) ([]byte, error)
+	Encrypt(str store.Store, plaintext []byte) (string, error)
+	Decrypt(str store.Store, ciphertextBase64 string) ([]byte, error)
 }
 
 // EncrypterContainer is the container for the encrypter.
@@ -29,12 +32,18 @@ func NewEncrypterContainerFromConfig(conf config.ValidEncryptConfig) (EncrypterC
 	for _, e := range conf {
 		var encrypter Encrypter
 		switch e.Type {
-		case EncryptTypeCBC:
-			encrypter = NewStaticEncrypter([]byte(e.Key), []byte(e.IV), e.Type)
-		case EncryptTypeCFB:
-			encrypter = NewStaticEncrypter([]byte(e.Key), []byte(e.IV), e.Type)
-		case EncryptTypeCTR:
-			encrypter = NewStaticEncrypter([]byte(e.Key), []byte(e.IV), e.Type)
+		case config.EncryptTypeStaticCBC:
+			encrypter = NewStaticEncrypter([]byte(e.Key), EncryptTypeCBC)
+		case config.EncryptTypeStaticCFB:
+			encrypter = NewStaticEncrypter([]byte(e.Key), EncryptTypeCFB)
+		case config.EncryptTypeStaticCTR:
+			encrypter = NewStaticEncrypter([]byte(e.Key), EncryptTypeCTR)
+		case config.EncryptTypeDynamicCBC:
+			encrypter = NewDynamicEncrypter(e.Store.BucketID, e.Store.Key, EncryptTypeCBC)
+		case config.EncryptTypeDynamicCFB:
+			encrypter = NewDynamicEncrypter(e.Store.BucketID, e.Store.Key, EncryptTypeCFB)
+		case config.EncryptTypeDynamicCTR:
+			encrypter = NewDynamicEncrypter(e.Store.BucketID, e.Store.Key, EncryptTypeCTR)
 		}
 		ec[e.ID] = encrypter
 	}

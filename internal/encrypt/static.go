@@ -1,5 +1,7 @@
 package encrypt
 
+import "github.com/ablankz/bloader/internal/store"
+
 // StaticEncrypter is the static encrypter.
 type StaticEncrypter struct {
 	key    []byte
@@ -15,7 +17,7 @@ func NewStaticEncrypter(key []byte, method EncryptType) *StaticEncrypter {
 }
 
 // Encrypt encrypts the plaintext using the static encrypter.
-func (e *StaticEncrypter) Encrypt(plaintext []byte) (string, error) {
+func (e *StaticEncrypter) Encrypt(str store.Store, plaintext []byte) (string, error) {
 	ciphertext, err := Encrypt(plaintext, e.key, e.method)
 	if err != nil {
 		return "", err
@@ -24,7 +26,7 @@ func (e *StaticEncrypter) Encrypt(plaintext []byte) (string, error) {
 }
 
 // Decrypt decrypts the ciphertext using the static encrypter.
-func (e *StaticEncrypter) Decrypt(ciphertextBase64 string) ([]byte, error) {
+func (e *StaticEncrypter) Decrypt(str store.Store, ciphertextBase64 string) ([]byte, error) {
 	plaintext, err := Decrypt(ciphertextBase64, e.key, e.method)
 	if err != nil {
 		return nil, err

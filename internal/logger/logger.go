@@ -9,13 +9,18 @@ import (
 
 // Logger is an interface for logging
 type Logger interface {
-	SetupLogger(env string, conf *config.ValidLoggingConfig) error
+	SetupLogger(env string, conf config.ValidLoggingConfig) error
 	With(args ...keyVal) Logger
 	Debug(ctx context.Context, msg string, args ...keyVal)
 	Info(ctx context.Context, msg string, args ...keyVal)
 	Warn(ctx context.Context, msg string, args ...keyVal)
 	Error(ctx context.Context, msg string, args ...keyVal)
 	Close() error
+}
+
+// NewLoggerFromConfig creates a new Logger from the config
+func NewLoggerFromConfig(env string, conf config.ValidLoggingConfig) (Logger, error) {
+	return &SlogLogger{}, nil
 }
 
 type keyVal struct {

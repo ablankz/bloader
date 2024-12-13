@@ -65,8 +65,8 @@ var (
 	ErrEncryptMethodInvalid = fmt.Errorf("encrypt method is invalid")
 	// ErrEncryptRSAKeySizeInvalid is the error for the invalid encrypt RSA key size.
 	ErrEncryptRSAKeySizeInvalid = fmt.Errorf("encrypt RSA key size is invalid, must be 16, 24, or 32 bytes")
-	// ErrEncryptStoreKeyRequired is the error for the required encrypt store key.
-	ErrEncryptStoreKeyRequired = fmt.Errorf("encrypt store key is required")
+	// ErrEncryptStoreRequired is the error for the required encrypt store.
+	ErrEncryptStoreRequired = fmt.Errorf("encrypt store is required")
 	// ErrClockFormatInvalid is the error for the invalid clock format.
 	ErrClockFormatInvalid = fmt.Errorf("clock format is invalid")
 	// ErrClockFakeTimeRequired is the error for the required clock fake time.
@@ -79,6 +79,8 @@ var (
 	ErrStoreFileEnvRequired = fmt.Errorf("store file env is required")
 	// ErrStoreBucketIDRequired is the error for the required store bucket ID.
 	ErrStoreBucketIDRequired = fmt.Errorf("store bucket ID is required")
+	// ErrStoreBucketIDDuplicate is the error for the duplicate store bucket ID.
+	ErrStoreBucketIDDuplicate = fmt.Errorf("store bucket ID is duplicate")
 	// ErrStoreKeyRequired is the error for the required store key.
 	ErrStoreKeyRequired = fmt.Errorf("store key is required")
 	// ErrStoreEncryptIDRequired is the error for the required store encrypt ID.

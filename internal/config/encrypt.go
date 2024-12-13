@@ -4,18 +4,18 @@ import "fmt"
 
 // EncryptRespectiveConfig is the configuration for the encrypt.
 type EncryptRespectiveConfig struct {
-	ID       *string `mapstructure:"id"`
-	Type     *string `mapstructure:"type"`
-	Key      *[]byte `mapstructure:"key"`
-	StoreKey *string `mapstructure:"store_key"`
+	ID    *string             `mapstructure:"id"`
+	Type  *string             `mapstructure:"type"`
+	Key   *string             `mapstructure:"key"`
+	Store *StoreSpecifyConfig `mapstructure:"store"`
 }
 
 // ValidEncryptRespectiveConfig represents the valid encrypt configuration
 type ValidEncryptRespectiveConfig struct {
-	ID       string
-	Type     EncryptType
-	Key      []byte
-	StoreKey string
+	ID    string
+	Type  EncryptType
+	Key   []byte
+	Store ValidStoreSpecifyConfig
 }
 
 // EncryptType is the type of the encrypt.
@@ -65,16 +65,20 @@ func (c EncryptConfig) Validate() (ValidEncryptConfig, error) {
 			if ec.Key == nil {
 				return ValidEncryptConfig{}, fmt.Errorf("encrypt[%d].key: %w", i, ErrEncryptKeyRequired)
 			}
-			validRespective.Key = *ec.Key
+			validRespective.Key = []byte(*ec.Key)
 			if len(*ec.Key) != 16 && len(*ec.Key) != 24 && len(*ec.Key) != 32 {
 				return ValidEncryptConfig{}, fmt.Errorf("encrypt[%d].key: %w", i, ErrEncryptRSAKeySizeInvalid)
 			}
 		case EncryptTypeDynamicCBC, EncryptTypeDynamicCFB, EncryptTypeDynamicCTR:
 			validRespective.Type = EncryptType(*ec.Type)
-			if ec.StoreKey == nil {
-				return ValidEncryptConfig{}, fmt.Errorf("encrypt[%d].storeKey: %w", i, ErrEncryptStoreKeyRequired)
+			if ec.Store == nil {
+				return ValidEncryptConfig{}, fmt.Errorf("encrypt[%d].store: %w", i, ErrEncryptStoreRequired)
 			}
-			validRespective.StoreKey = *ec.StoreKey
+			validStore, err := ec.Store.Validate()
+			if err != nil {
+				return ValidEncryptConfig{}, fmt.Errorf("encrypt[%d].store: %w", i, err)
+			}
+			validRespective.Store = validStore
 		default:
 			return ValidEncryptConfig{}, fmt.Errorf("encrypt[%d].type: %w", i, ErrEncryptTypeInvalid)
 		}

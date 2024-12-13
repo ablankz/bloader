@@ -7,6 +7,57 @@ import (
 	"github.com/spf13/viper"
 )
 
+func GetNestedValueFromMap(data map[string]any, key string) any {
+	keys := strings.Split(key, ".")
+	return parseMap(data, keys)
+}
+
+func parseMap(currentMap map[string]any, keys []string) any {
+	if len(keys) == 0 {
+		return currentMap
+	}
+	k := keys[0]
+	remainKeys := keys[1:]
+	if strings.Contains(k, "[") {
+		idx := strings.Index(k, "[")
+		preKey := k[:idx]
+		idx2 := strings.Index(k, "]")
+		postKey := k[idx+1 : idx2]
+		if postKey == "" {
+			return currentMap
+		}
+		index, err := strconv.Atoi(postKey)
+		if err != nil {
+			return currentMap
+		}
+		if slice, ok := currentMap[preKey]; ok {
+			if _, ok := slice.([]any); ok {
+				if len(slice.([]any)) > index {
+					if v, ok := slice.([]any)[index].(map[string]any); ok {
+						return parseMap(v, remainKeys)
+					} else {
+						return currentMap[preKey].([]any)[index]
+					}
+				}
+			}
+		}
+	} else {
+		if v, ok := currentMap[k]; ok {
+			if mapV, ok := v.(map[string]any); ok {
+				return parseMap(mapV, remainKeys)
+			} else if _, ok := v.([]any); ok {
+				return currentMap
+			} else {
+				return currentMap[k]
+			}
+		} else {
+			return currentMap
+		}
+	}
+
+	return currentMap
+}
+
 func SetNestedValue(v *viper.Viper, key string, value any) {
 	keys := strings.Split(key, ".")
 	data := v.AllSettings()
@@ -16,6 +67,9 @@ func SetNestedValue(v *viper.Viper, key string, value any) {
 }
 
 func parse(currentMap map[string]any, keys []string, value any) map[string]any {
+	if len(keys) == 0 {
+		return currentMap
+	}
 	k := keys[0]
 	remainKeys := keys[1:]
 	if strings.Contains(k, "[") {

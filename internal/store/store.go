@@ -1,0 +1,26 @@
+package store
+
+import (
+	"io"
+
+	"github.com/ablankz/bloader/internal/config"
+)
+
+type Store interface {
+	SetupStore(env string, conf config.ValidStoreConfig) error
+	CreateBuckets(conf config.ValidStoreConfig) error
+	PutObject(bucket, key string, data []byte) error
+	GetObject(bucket, key string) ([]byte, error)
+	PutObjectReader(bucket, key string, reader io.Reader) error
+	GetObjectReader(bucket, key string) (io.Reader, error)
+	DeleteObject(bucket, key string) error
+	ListObjects(bucket string) ([]string, error)
+	ListBuckets() ([]string, error)
+	Backup(writer io.Writer) (int, error)
+	Clear() error
+	Close() error
+}
+
+func NewStoreFromConfig(conf config.ValidStoreConfig) (Store, error) {
+	return &BoltStore{}, nil
+}

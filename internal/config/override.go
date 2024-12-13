@@ -10,8 +10,6 @@ const (
 	OverrideTypeStatic OverrideType = "static"
 	// OverrideTypeFile represents the File override service
 	OverrideTypeFile OverrideType = "file"
-	// OverrideTypeStore represents the Store override service
-	OverrideTypeStore OverrideType = "store"
 )
 
 // OverrideRespectiveVarConfig represents the configuration for the override respective service var
@@ -22,8 +20,8 @@ type OverrideRespectiveVarConfig struct {
 
 // ValidOverrideRespectiveVarConfig represents the configuration for the override respective service var
 type ValidOverrideRespectiveVarConfig struct {
-	Key   string `mapstructure:"key"`
-	Value string `mapstructure:"value"`
+	Key   string
+	Value string
 }
 
 // Validate validates the override respective var configuration
@@ -70,7 +68,6 @@ type ValidOverrideRespectiveConfig struct {
 	Path       string
 	Partial    bool
 	Vars       []ValidOverrideRespectiveVarConfig
-	Store      ValidStoreSpecifyConfig
 	Key        string
 	Value      string
 	EnabledEnv struct {
@@ -88,7 +85,6 @@ type ValidOverrideConfig []ValidOverrideRespectiveConfig
 // Validate validates the override configuration
 func (c OverrideConfig) Validate() (ValidOverrideConfig, error) {
 	var valid ValidOverrideConfig
-	var err error
 	for i, override := range c {
 		var validOverride ValidOverrideRespectiveConfig
 		if override.Type == nil {
@@ -130,19 +126,6 @@ func (c OverrideConfig) Validate() (ValidOverrideConfig, error) {
 					validOverride.Vars = append(validOverride.Vars, validVarConfig)
 				}
 			}
-		case OverrideTypeStore:
-			validOverride.Type = OverrideTypeStore
-			if override.Store == nil {
-				return nil, ErrOverrideStoreRequired
-			}
-			validOverride.Store, err = override.Store.Validate()
-			if err != nil {
-				return nil, fmt.Errorf("override[%d].store: %w", i, err)
-			}
-			if override.Key == nil {
-				return nil, ErrOverrideKeyRequired
-			}
-			validOverride.Key = *override.Key
 		default:
 			return nil, ErrOverrideTypeInvalid
 		}

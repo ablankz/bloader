@@ -33,11 +33,11 @@ const (
 	// AuthTypeOAuth2 is the type of the oauth2.
 	AuthTypeOAuth2 AuthType = "oauth2"
 	// AuthTypeAPIKey is the type of the api key.
-	AuthTypeAPIKey AuthType = "api_key"
+	AuthTypeAPIKey AuthType = "apiKey"
 	// AuthTypeBasic is the type of the basic auth.
 	AuthTypeBasic AuthType = "basic"
 	// AuthTypePrivateKey is the type of the private key.
-	AuthTypePrivateKey AuthType = "private_key"
+	AuthTypePrivateKey AuthType = "privateKey"
 	// AuthTypeJWT is the type of the jwt.
 	AuthTypeJWT AuthType = "jwt"
 )

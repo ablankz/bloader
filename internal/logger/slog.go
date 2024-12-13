@@ -27,7 +27,7 @@ func NewSlogLogger() *SlogLogger {
 }
 
 // SetupLogger sets up the logger with the given configuration
-func (l *SlogLogger) SetupLogger(env string, cfg *config.ValidLoggingConfig) error {
+func (l *SlogLogger) SetupLogger(env string, cfg config.ValidLoggingConfig) error {
 	var handlers []slog.Handler
 
 	for _, output := range cfg.Output {
