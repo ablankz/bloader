@@ -44,9 +44,9 @@ outputs:
 store:
   file:
     - env: "local"
-      path: "local_store.db"
+      path: "local_store/local_store.db"
     - env: "production"
-      path: "prod_store.db"
+      path: "local_store/prod_store.db"
   buckets:
     - "bucketForEncrypt"
     - "bucketForCredential"
