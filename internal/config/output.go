@@ -48,23 +48,22 @@ func (c OutputRespectiveValueConfig) Validate() (ValidOutputRespectiveValueConfi
 	switch OutputType(*c.Type) {
 	case OutputTypeLocal:
 		valid.Type = OutputTypeLocal
+		if c.Format == nil {
+			return ValidOutputRespectiveValueConfig{}, ErrOutputValueFormatRequired
+		}
+		switch OutputFormat(*c.Format) {
+		case OutputFormatCSV:
+			valid.Format = OutputFormatCSV
+		default:
+			return ValidOutputRespectiveValueConfig{}, ErrOutputValueFormatInvalid
+		}
+		if c.BasePath == nil {
+			return ValidOutputRespectiveValueConfig{}, ErrOutputValueBasePathRequired
+		}
+		valid.BasePath = *c.BasePath
 	default:
 		return ValidOutputRespectiveValueConfig{}, ErrOutputValueTypeInvalid
 	}
-
-	if c.Format == nil {
-		return ValidOutputRespectiveValueConfig{}, ErrOutputValueFormatRequired
-	}
-	switch OutputFormat(*c.Format) {
-	case OutputFormatCSV:
-		valid.Format = OutputFormatCSV
-	default:
-		return ValidOutputRespectiveValueConfig{}, ErrOutputValueFormatInvalid
-	}
-	if c.BasePath == nil {
-		return ValidOutputRespectiveValueConfig{}, ErrOutputValueBasePathRequired
-	}
-	valid.BasePath = *c.BasePath
 
 	return valid, nil
 }

@@ -1,0 +1,14 @@
+{{- $mailDomainList := list "example.com" "test.com" "demo.org" -}}
+kind: StoreValue
+data:
+  - bucket_id: "bucketForApp"
+    key: "users"
+    value:
+    {{- range $index, $element := until .DataCount }}
+    {{- $randOn3 := randInt 0 3 }}
+      - id: {{ add $index 1 }}
+        uuid: {{ uuidv4 }}
+        name: {{ randAlpha 4 | title }} {{ randAlpha 4 | title }}
+        email: {{ randAlpha 8 | lower }}@{{ index $mailDomainList $randOn3 }}
+        phone: {{ randInt 1000000000 9999999999 }}
+    {{- end }}

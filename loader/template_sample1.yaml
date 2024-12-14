@@ -1,0 +1,89 @@
+kind: MassExecute
+type: http
+output:
+  enabled: true
+  id: outputLocalCSV
+test: {{ .Name | upper }}
+aaa:
+  - {{trimAll "$" "$5.00"}}
+  - {{title "hello world"}}
+  - {{initials .Name}}
+  - {{randNumeric 3}}
+  - {{wrapWith 5 "\t" "Hello World"}}
+  - {{contains "cat" "catch"}}
+  - {{"I Am Henry VIII" | replace " " "-"}}
+  - {{splitList "$" "foo$bar$baz"}}
+  - {{shuffle "hello"}}
+  - {{add 1 2 .Number}}
+  - {{uuidv4}}
+  - {{now | date_modify "-1.5h"}}
+  - {{now | htmlDate}}
+  - {{ .Release.Name }}-configmap
+  - {{ .Values.favorite.drink | default "tea"}}
+  - {{ .Values.favorite.drink | default "tea" | quote }}
+{{- if eq .Release.Name "releaseName" }}
+{{ indent 2 "- mug" }}
+{{- end }}
+{{- with .Release }}
+release:
+  name: {{ .Name }}
+  time: {{ .Time }}
+  date: {{ .Date }}
+  rootName: {{ $.Name}}
+{{- end }}
+items:
+  {{- range .Items }}
+  - {{ . | title | quote }}
+  {{- end }}    
+map_items:
+  {{- range .MapItems }}
+  - name: {{ .Name | title }}
+    value: {{ .Value }}
+  {{- end }}   
+data:
+  requests:
+    - target_id: "apiServer"
+      endpoint: "/api/v1/organizations"
+      method: GET
+      interval: 500ms
+      awaitPrevResponse: false
+      queryParam:
+        limit: [10]
+        offset: [0]
+        cursor: [""]
+        pagination: ["offset"]
+        sortField: ["name"]
+        sortOrder: ["asc"]
+        withCount: [true]
+        hasIsDefaultFilter: [false]
+        filterIsDefault: [false]
+        hasOrganizationFilter: [false]
+        filterOrganizationIDs: []
+        hasUserFilter: [false]
+        filterUserIDs: []
+        userFilterType: ["all"]
+        with: []
+      pathVariables: {}
+      successBreak:
+        - count
+        - time
+      break:
+        time: 2m
+        count: 5
+        sysError: true
+        parseError: true
+        writeError: true
+        statusCode:
+          op: eq
+          value: 500
+      data:
+        - key: "resultType"
+          jmesPath: "data.resultType"
+        - key: "memory_active"
+          jmesPath: "data.result[*].value"
+          onNil: "ignore" # cancel or ignore(default)
+        - key: "invalid_key"
+          jmesPath: "data.result[*].invalid_key"
+          onNil: "ignore" # cancel or ignore(default)
+      dataOutputFilter:
+        jmesPath: "code == '0002:0003'"

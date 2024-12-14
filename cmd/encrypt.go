@@ -15,8 +15,9 @@ var encryptID string
 
 // encryptCmd represents the encrypt command
 var encryptCmd = &cobra.Command{
-	Use:   "encrypt",
-	Short: "Encrypt text",
+	Use:     "encrypt",
+	Aliases: []string{"enc"},
+	Short:   "Encrypt text",
 	Long: `This command encrypts text.
 It encrypts the text using the encryption key.`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -25,7 +26,7 @@ It encrypts the text using the encryption key.`,
 			return
 		}
 		target := args[0]
-		encryper, ok := ctr.Encypter[encryptID]
+		encryper, ok := ctr.EncypterContainer[encryptID]
 		if !ok {
 			color.Red("Encrypt setting not found")
 			return

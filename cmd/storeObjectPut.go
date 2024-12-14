@@ -1,5 +1,5 @@
 /*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
+Copyright © 2024 hayashi kenta <k.hayashi@cresplanex.com>
 */
 package cmd
 
@@ -26,8 +26,9 @@ bloader store object put --bucket 1234 objectKey objectValue`,
 		}
 		objKey := args[0]
 		objVal := args[1]
+
 		if storeObjectEncrypt != "" {
-			encryper, ok := ctr.Encypter[storeObjectEncrypt]
+			encryper, ok := ctr.EncypterContainer[storeObjectEncrypt]
 			if !ok {
 				color.Red("Encrypt setting not found")
 				return

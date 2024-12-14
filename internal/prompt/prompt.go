@@ -193,8 +193,6 @@ func PromptPassword(
 // PromptText prompts the user to enter a text.
 func PromptText(
 	label string,
-	maxAttempts int,
-	promptAgainCallback PromptAgainCallback,
 	isConfirm bool,
 ) (string, error) {
 	prompt := promptui.Prompt{

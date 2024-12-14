@@ -14,8 +14,9 @@ import (
 
 // configCmd represents the config command
 var configCmd = &cobra.Command{
-	Use:   "config",
-	Short: "Print the current configuration",
+	Use:     "config",
+	Aliases: []string{"conf"},
+	Short:   "Print the current configuration",
 	Long: `This command prints the current configuration.
 It reads the configuration from the configuration file and prints it in YAML format.`,
 	Run: func(cmd *cobra.Command, args []string) {

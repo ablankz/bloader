@@ -9,8 +9,9 @@ import (
 
 // storeCmd represents the store command
 var storeCmd = &cobra.Command{
-	Use:   "store",
-	Short: "Perform store management in client cli",
+	Use:     "store",
+	Aliases: []string{"st"},
+	Short:   "Perform store management in client cli",
 	Long: `It operates the store in the client cli and can create/delete buckets, 
 backup, put, etc.`,
 }

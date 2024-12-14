@@ -12,8 +12,9 @@ import (
 
 // storeObjectListCmd represents the storeObjectList command
 var storeObjectListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List all object keys in the specified bucket",
+	Use:     "list",
+	Aliases: []string{"ls"},
+	Short:   "List all object keys in the specified bucket",
 	Long: `This command lists all objects in the specified bucket.
 It sends a request to the storage server to retrieve the list of objects and prints them to the console.
 For example:

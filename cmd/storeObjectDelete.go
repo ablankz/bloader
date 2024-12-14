@@ -12,8 +12,9 @@ import (
 
 // storeObjectDeleteCmd represents the storeObjectDelete command
 var storeObjectDeleteCmd = &cobra.Command{
-	Use:   "delete",
-	Short: "Delete an object from the specified bucket",
+	Use:     "delete",
+	Aliases: []string{"del"},
+	Short:   "Delete an object from the specified bucket",
 	Long: `This command deletes an object from the specified bucket.
 It sends a request to the storage server to delete the object.
 For example:

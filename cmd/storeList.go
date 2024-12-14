@@ -12,9 +12,10 @@ import (
 
 // storeListCmd represents the storeList command
 var storeListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List a list of buckets in the store.",
-	Long:  `You can view a list of buckets currently held in the store.`,
+	Use:     "list",
+	Aliases: []string{"ls"},
+	Short:   "List a list of buckets in the store.",
+	Long:    `You can view a list of buckets currently held in the store.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		buckets, err := ctr.Store.ListBuckets()
 		if err != nil {

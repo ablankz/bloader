@@ -35,7 +35,7 @@ bloader store object get --bucket 1234 objectKey`,
 			return
 		}
 		if storeObjectEncrypt != "" {
-			encryper, ok := ctr.Encypter[storeObjectEncrypt]
+			encryper, ok := ctr.EncypterContainer[storeObjectEncrypt]
 			if !ok {
 				color.Red("Encrypt setting not found")
 				return

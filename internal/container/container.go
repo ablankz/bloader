@@ -14,6 +14,7 @@ import (
 	"github.com/ablankz/bloader/internal/i18n"
 	"github.com/ablankz/bloader/internal/logger"
 	"github.com/ablankz/bloader/internal/store"
+	"github.com/ablankz/bloader/internal/target"
 )
 
 // Container holds the dependencies for the application
@@ -24,8 +25,9 @@ type Container struct {
 	Config                 config.ValidConfig
 	Logger                 logger.Logger
 	Store                  store.Store
-	Encypter               encrypt.EncrypterContainer
+	EncypterContainer      encrypt.EncrypterContainer
 	AuthenticatorContainer auth.AuthenticatorContainer
+	TargetContainer        target.TargetContainer
 }
 
 // NewContainer creates a new Container
@@ -103,7 +105,7 @@ func (c *Container) Init(cfg config.ValidConfig) error {
 	// ----------------------------------------
 	// Set Encrypter
 	// ----------------------------------------
-	c.Encypter, err = encrypt.NewEncrypterContainerFromConfig(c.Store, cfg.Encrypts)
+	c.EncypterContainer, err = encrypt.NewEncrypterContainerFromConfig(c.Store, cfg.Encrypts)
 	if err != nil {
 		return fmt.Errorf("failed to create encrypter: %w", err)
 	}
@@ -118,6 +120,11 @@ func (c *Container) Init(cfg config.ValidConfig) error {
 	if err != nil {
 		return fmt.Errorf("failed to create authenticator container: %w", err)
 	}
+
+	// ----------------------------------------
+	// Set Target
+	// ----------------------------------------
+	c.TargetContainer = target.NewTargetContainer(cfg.Env, cfg.Targets)
 
 	return nil
 }
