@@ -126,7 +126,7 @@ func (t *AuthToken) refresh(
 	if err != nil {
 		return fmt.Errorf("failed to refresh token: %w", err)
 	}
-	return credentialSet(newToken, str, credentialConf)
+	return credentialSet(t, newToken, str, credentialConf)
 }
 
 // Authenticate authenticates the user
@@ -150,7 +150,7 @@ func (a *OAuthAuthenticator) Authenticate(ctx context.Context, str store.Store) 
 		}
 		http.HandleFunc(oauthRedirectPath, handlerCallbackFactory(ctx, a.oauthConf, func(token *oauth2.Token) {
 			fmt.Println("Received token from OAuth server.")
-			if err := credentialSet(token, str, a.credentialConf); err != nil {
+			if err := credentialSet(a.authToken, token, str, a.credentialConf); err != nil {
 				fmt.Printf("Failed to save token: %v", err)
 				return
 			}
@@ -186,19 +186,19 @@ func (a *OAuthAuthenticator) Authenticate(ctx context.Context, str store.Store) 
 		if err != nil {
 			return fmt.Errorf("failed to get token: %w", err)
 		}
-		return credentialSet(token, str, a.credentialConf)
+		return credentialSet(a.authToken, token, str, a.credentialConf)
 	case AuthOAuth2GrantTypePassword:
 		token, err := a.oauthConf.PasswordCredentialsToken(ctx, a.username, a.password)
 		if err != nil {
 			return fmt.Errorf("failed to get token: %w", err)
 		}
-		return credentialSet(token, str, a.credentialConf)
+		return credentialSet(a.authToken, token, str, a.credentialConf)
 	}
 	return nil
 }
 
-func credentialSet(token *oauth2.Token, str store.Store, credentialConf config.ValidAuthCredentialConfig) error {
-	authToken := &AuthToken{
+func credentialSet(t *AuthToken, token *oauth2.Token, str store.Store, credentialConf config.ValidAuthCredentialConfig) error {
+	authToken := AuthToken{
 		AccessToken:  token.AccessToken,
 		TokenType:    token.TokenType,
 		Expiry:       token.Expiry,
@@ -215,6 +215,7 @@ func credentialSet(token *oauth2.Token, str store.Store, credentialConf config.V
 	); err != nil {
 		return fmt.Errorf("failed to save token to store: %w", err)
 	}
+	*t = authToken
 	return nil
 }
 
@@ -250,13 +251,13 @@ func (a *OAuthAuthenticator) Refresh(ctx context.Context, str store.Store) error
 		if err != nil {
 			return fmt.Errorf("failed to get token: %w", err)
 		}
-		return credentialSet(token, str, a.credentialConf)
+		return credentialSet(a.authToken, token, str, a.credentialConf)
 	case AuthOAuth2GrantTypePassword:
 		token, err := a.oauthConf.PasswordCredentialsToken(ctx, a.username, a.password)
 		if err != nil {
 			return fmt.Errorf("failed to get token: %w", err)
 		}
-		return credentialSet(token, str, a.credentialConf)
+		return credentialSet(a.authToken, token, str, a.credentialConf)
 	}
 	return nil
 }

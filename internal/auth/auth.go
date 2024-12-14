@@ -21,15 +21,15 @@ type Authenticator interface {
 	Refresh(ctx context.Context, str store.Store) error
 }
 
-// AuthAuthenticatorContainer holds the dependencies for the Authenticator
-type AuthAuthenticatorContainer struct {
+// AuthenticatorContainer holds the dependencies for the Authenticator
+type AuthenticatorContainer struct {
 	DefaultAuthenticator string
 	Container            map[string]*Authenticator
 }
 
-// NewAuthAuthenticatorContainer creates a new AuthAuthenticatorContainer
-func NewAuthAuthenticatorContainerFromConfig(str store.Store, conf config.ValidConfig) (AuthAuthenticatorContainer, error) {
-	var ctr AuthAuthenticatorContainer = AuthAuthenticatorContainer{
+// NewAuthenticatorContainerFromConfig creates a new AuthenticatorContainer from the configuration
+func NewAuthenticatorContainerFromConfig(str store.Store, conf config.ValidConfig) (AuthenticatorContainer, error) {
+	var ctr AuthenticatorContainer = AuthenticatorContainer{
 		Container: make(map[string]*Authenticator),
 	}
 
@@ -46,22 +46,22 @@ func NewAuthAuthenticatorContainerFromConfig(str store.Store, conf config.ValidC
 			}
 			authenticator, err = NewOAuthAuthenticator(str, redirectPort, authConf.OAuth2)
 			if err != nil {
-				return AuthAuthenticatorContainer{}, err
+				return AuthenticatorContainer{}, err
 			}
 		case config.AuthTypeBasic:
 			authenticator, err = NewBasicAuthenticator(authConf.Basic)
 			if err != nil {
-				return AuthAuthenticatorContainer{}, err
+				return AuthenticatorContainer{}, err
 			}
 		case config.AuthTypeAPIKey:
 			authenticator, err = NewAPIKeyAuthenticator(authConf.APIKey)
 			if err != nil {
-				return AuthAuthenticatorContainer{}, err
+				return AuthenticatorContainer{}, err
 			}
 		case config.AuthTypeJWT:
 			authenticator, err = NewJWTAuthenticator(authConf.JWT)
 			if err != nil {
-				return AuthAuthenticatorContainer{}, err
+				return AuthenticatorContainer{}, err
 			}
 		}
 

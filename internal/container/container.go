@@ -25,7 +25,7 @@ type Container struct {
 	Logger                 logger.Logger
 	Store                  store.Store
 	Encypter               encrypt.EncrypterContainer
-	AuthenticatorContainer auth.AuthAuthenticatorContainer
+	AuthenticatorContainer auth.AuthenticatorContainer
 }
 
 // NewContainer creates a new Container
@@ -103,7 +103,7 @@ func (c *Container) Init(cfg config.ValidConfig) error {
 	// ----------------------------------------
 	// Set Encrypter
 	// ----------------------------------------
-	c.Encypter, err = encrypt.NewEncrypterContainerFromConfig(cfg.Encrypts)
+	c.Encypter, err = encrypt.NewEncrypterContainerFromConfig(c.Store, cfg.Encrypts)
 	if err != nil {
 		return fmt.Errorf("failed to create encrypter: %w", err)
 	}
@@ -111,7 +111,7 @@ func (c *Container) Init(cfg config.ValidConfig) error {
 	// ----------------------------------------
 	// Set AuthToken
 	// ----------------------------------------
-	c.AuthenticatorContainer, err = auth.NewAuthAuthenticatorContainerFromConfig(
+	c.AuthenticatorContainer, err = auth.NewAuthenticatorContainerFromConfig(
 		c.Store,
 		c.Config,
 	)
@@ -124,9 +124,13 @@ func (c *Container) Init(cfg config.ValidConfig) error {
 
 // Close closes the Container
 func (c *Container) Close() error {
-	c.Logger.Close()
-	if err := c.Store.Close(); err != nil {
-		return fmt.Errorf("failed to close store: %w", err)
+	if c.Logger != nil {
+		c.Logger.Close()
+	}
+	if c.Store != nil {
+		if err := c.Store.Close(); err != nil {
+			return fmt.Errorf("failed to close store: %w", err)
+		}
 	}
 	return nil
 }

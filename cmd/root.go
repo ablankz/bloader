@@ -1,5 +1,5 @@
 /*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
+Copyright © 2024 hayashi kenta <k.hayashi@cresplanex.com>
 */
 package cmd
 
@@ -23,16 +23,9 @@ var ctr = container.NewContainer()
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "bloader",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	Short: "The tool for load testing",
+	Long: `This tool is used to perform load testing.
+It sends requests to the specified server and measures the response time.`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -42,12 +35,13 @@ func Execute() {
 	if err != nil {
 		os.Exit(1)
 	}
+	defer ctr.Close()
 }
 
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().StringP("config", "c", "", "config file (default is $HOME/configs/config.yaml, /etc/bloader/config.yaml, or ./config.yaml.)")
+	rootCmd.PersistentFlags().StringP("config", "c", "", "config file (default is ./bloaderconfig.yaml, $HOME/configs/config.yaml, or /etc/bloader/config.yaml)")
 	if err := viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config")); err != nil {
 		fmt.Printf("Error binding flag: %v\n", err)
 		os.Exit(1)
@@ -66,8 +60,8 @@ func initConfig() {
 			fmt.Printf("Failed to get home directory: %v\n", err)
 			os.Exit(1)
 		}
+		viper.AddConfigPath("./bloader")
 		viper.AddConfigPath(homeDir + "/configs")
-		viper.AddConfigPath(".")
 		viper.AddConfigPath("/etc/bloader")
 		viper.SetConfigName("config")
 		// viper.SetConfigType("yaml")

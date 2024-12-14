@@ -1,5 +1,5 @@
 /*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
+Copyright © 2024 hayashi kenta <k.hayashi@cresplanex.com>
 */
 package cmd
 
@@ -10,8 +10,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var refreshAuthID string
-
 // refreshCmd represents the refresh command
 var refreshCmd = &cobra.Command{
 	Use:   "refresh",
@@ -19,7 +17,7 @@ var refreshCmd = &cobra.Command{
 	Long: `This command refreshes the access token for the application.
 It reads the refresh token from the configuration file and sends a request to the authorization server to get a new access token.`,
 	Run: func(_ *cobra.Command, args []string) {
-		target := refreshAuthID
+		target := authID
 		if target == "" {
 			target = ctr.AuthenticatorContainer.DefaultAuthenticator
 		}
@@ -47,6 +45,4 @@ It reads the refresh token from the configuration file and sends a request to th
 
 func init() {
 	authCmd.AddCommand(refreshCmd)
-
-	refreshCmd.Flags().StringVarP(&refreshAuthID, "id", "i", "", `ID of the auth setting. If not provided, a default auth setting will be used.`)
 }

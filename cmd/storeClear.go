@@ -1,39 +1,28 @@
 /*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
+Copyright © 2024 hayashi kenta <k.hayashi@cresplanex.com>
 */
 package cmd
 
 import (
-	"fmt"
-
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
 // storeClearCmd represents the storeClear command
 var storeClearCmd = &cobra.Command{
 	Use:   "clear",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Clear the store",
+	Long: `This command clears the store.
+It removes all the data from the store.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("storeClear called")
+		if err := ctr.Store.Clear(); err != nil {
+			color.Red("Failed to clear the store: %v", err)
+			return
+		}
+		color.Green("Store cleared successfully")
 	},
 }
 
 func init() {
 	storeCmd.AddCommand(storeClearCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// storeClearCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// storeClearCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

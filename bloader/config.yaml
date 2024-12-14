@@ -50,7 +50,6 @@ store:
   buckets:
     - "bucketForEncrypt"
     - "bucketForCredential"
-    - "bucketForConfig"
     - "bucketForApp"
 encrypts:
     # The id is required, and it must be unique.
@@ -151,7 +150,7 @@ override:
   - type: "file"
     # The file_type is required to load the file, supported types are `yaml`, `json`.
     file_type: "yaml"
-    path: "configs/partial_override.yaml"
+    path: "bloader/partial_override.yaml"
     partial: true
     vars:
       - key: auth[0].oauth2.client_id
@@ -162,13 +161,13 @@ override:
     # enabled_env:
   - type: "file"
     file_type: "yaml"
-    path: "configs/local_override.yaml"
+    path: "bloader/local_override.yaml"
     # If enabled_env is not set, it will be enabled all environments.
     enabled_env:
       - "local"
   - type: "file"
     file_type: "yaml"
-    path: "configs/production_override.yaml"
+    path: "bloader/production_override.yaml"
     enabled_env:
       - "production"
   - type: "static"

@@ -1,6 +1,5 @@
 /*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-
+Copyright © 2024 hayashi kenta <k.hayashi@cresplanex.com>
 */
 package cmd
 

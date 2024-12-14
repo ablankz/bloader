@@ -1,5 +1,5 @@
 /*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
+Copyright © 2024 hayashi kenta <k.hayashi@cresplanex.com>
 */
 package cmd
 
@@ -8,8 +8,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var loginAuthID string
-
 // loginCmd represents the login command
 var loginCmd = &cobra.Command{
 	Use:   "login",
@@ -17,7 +15,7 @@ var loginCmd = &cobra.Command{
 	Long: `This command logs in to the application.
 It sends a request to the authorization server to get an access token.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		target := loginAuthID
+		target := authID
 		if target == "" {
 			target = ctr.AuthenticatorContainer.DefaultAuthenticator
 		}
@@ -41,6 +39,4 @@ It sends a request to the authorization server to get an access token.`,
 
 func init() {
 	authCmd.AddCommand(loginCmd)
-
-	loginCmd.Flags().StringVarP(&loginAuthID, "id", "i", "", `ID of the auth setting. If not provided, a default auth setting will be used.`)
 }

@@ -25,6 +25,9 @@ func (b *BoltStore) SetupStore(env string, conf config.ValidStoreConfig) error {
 				return fmt.Errorf("failed to open bolt db: %v", err)
 			}
 			b.db = db
+			if err := b.CreateBuckets(conf); err != nil {
+				return fmt.Errorf("failed to create buckets: %v", err)
+			}
 			return nil
 		}
 	}
