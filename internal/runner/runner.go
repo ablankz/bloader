@@ -38,6 +38,8 @@ func Run(ctr *container.Container, filename string) error {
 		&threadOnlyStore,
 		outputRoot,
 		outputCtr,
+		0,
+		0,
 	); err != nil {
 		return fmt.Errorf("failed to execute the load test: %w", err)
 	}

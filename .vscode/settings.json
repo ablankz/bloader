@@ -1,0 +1,9 @@
+{
+    "yaml.validate": false,
+    "yaml.customTags": [
+    "!<tag:yaml.org,2002:map>",
+    "!<tag:yaml.org,2002:str>",
+    "!<tag:yaml.org,2002:int>",
+    "{{.*}}"
+    ]
+}

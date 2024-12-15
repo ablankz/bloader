@@ -6,9 +6,15 @@ data:
     value:
     {{- range $index, $element := until .DataCount }}
     {{- $randOn3 := randInt 0 3 }}
+    {{- $randOn4to6 := randInt 4 7 }}
+    {{- $rand2On4to6 := randInt 4 7 }}
+    {{- $randOn6to8 := randInt 6 9 }}
       - id: {{ add $index 1 }}
         uuid: {{ uuidv4 }}
-        name: {{ randAlpha 4 | title }} {{ randAlpha 4 | title }}
-        email: {{ randAlpha 8 | lower }}@{{ index $mailDomainList $randOn3 }}
+        name: {{ randAlpha $randOn4to6 | title }} {{ randAlpha $rand2On4to6 | title }}
+        email: {{ randAlpha $randOn6to8 | lower }}@{{ index $mailDomainList $randOn3 }}
         phone: {{ randInt 1000000000 9999999999 }}
     {{- end }}
+    encrypt:
+      enabled: true
+      encrypt_id: encryptDynamicCBC

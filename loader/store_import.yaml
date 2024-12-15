@@ -1,0 +1,8 @@
+kind: StoreImport
+data:
+  - key: "users"
+    bucket_id: "bucketForApp"
+    store_key: "users"
+    # encrypt:
+    #   enabled: true
+    #   encrypt_id: encryptDynamicCBC

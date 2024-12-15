@@ -1,73 +1,73 @@
-package storevalue
+package storeimport
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"sync"
 
 	"github.com/ablankz/bloader/internal/container"
 )
 
-// StoreValue represents the StoreValue runner
-type StoreValue struct {
-	Data []StoreValueData `yaml:"data"`
+// StoreImport represents the StoreImport runner
+type StoreImport struct {
+	Data []StoreImportData `yaml:"data"`
 }
 
-// ValidStoreValue represents the valid StoreValue runner
-type ValidStoreValue struct {
-	Data []ValidStoreValueData
+// ValidStoreImport represents the valid StoreImport runner
+type ValidStoreImport struct {
+	Data []ValidStoreImportData
 }
 
-// Validate validates the StoreValue
-func (r StoreValue) Validate() (ValidStoreValue, error) {
-	var validData []ValidStoreValueData
+// Validate validates the StoreImport
+func (r StoreImport) Validate() (ValidStoreImport, error) {
+	var validData []ValidStoreImportData
 	for i, d := range r.Data {
 		valid, err := d.Validate()
 		if err != nil {
-			return ValidStoreValue{}, fmt.Errorf("failed to validate data at index %d: %v", i, err)
+			return ValidStoreImport{}, fmt.Errorf("failed to validate data at index %d: %v", i, err)
 		}
 		validData = append(validData, valid)
 	}
-	return ValidStoreValue{
+	return ValidStoreImport{
 		Data: validData,
 	}, nil
 }
 
-// StoreValueData represents the data for the StoreValue runner
-type StoreValueData struct {
+// StoreImportData represents the data for the StoreImport runner
+type StoreImportData struct {
 	BucketID *string                 `yaml:"bucket_id"`
 	Key      *string                 `yaml:"key"`
-	Value    *any                    `yaml:"value"`
+	StoreKey *string                 `yaml:"store_key"`
 	Encrypt  CredentialEncryptConfig `yaml:"encrypt"`
 }
 
-// ValidStoreValueData represents the valid data for the StoreValue runner
-type ValidStoreValueData struct {
+// ValidStoreImportData represents the valid data for the StoreImport runner
+type ValidStoreImportData struct {
 	BucketID string
 	Key      string
-	Value    any
+	StoreKey string
 	Encrypt  ValidCredentialEncryptConfig
 }
 
-// Validate validates the StoreValueData
-func (d StoreValueData) Validate() (ValidStoreValueData, error) {
+// Validate validates the StoreImportData
+func (d StoreImportData) Validate() (ValidStoreImportData, error) {
 	if d.BucketID == nil {
-		return ValidStoreValueData{}, fmt.Errorf("bucket_id is required")
+		return ValidStoreImportData{}, fmt.Errorf("bucket_id is required")
 	}
 	if d.Key == nil {
-		return ValidStoreValueData{}, fmt.Errorf("key is required")
+		return ValidStoreImportData{}, fmt.Errorf("key is required")
 	}
-	if d.Value == nil {
-		return ValidStoreValueData{}, fmt.Errorf("value is required")
+	if d.StoreKey == nil {
+		return ValidStoreImportData{}, fmt.Errorf("store_key is required")
 	}
 	validEncrypt, err := d.Encrypt.Validate()
 	if err != nil {
-		return ValidStoreValueData{}, fmt.Errorf("failed to validate encrypt: %v", err)
+		return ValidStoreImportData{}, fmt.Errorf("failed to validate encrypt: %v", err)
 	}
-	return ValidStoreValueData{
+	return ValidStoreImportData{
 		BucketID: *d.BucketID,
 		Key:      *d.Key,
-		Value:    *d.Value,
+		StoreKey: *d.StoreKey,
 		Encrypt:  validEncrypt,
 	}, nil
 }
@@ -98,25 +98,25 @@ func (c CredentialEncryptConfig) Validate() (ValidCredentialEncryptConfig, error
 	}, nil
 }
 
-// Run runs the StoreValue runner
-func (r ValidStoreValue) Run(ctx context.Context, ctr *container.Container) error {
+// Run runs the StoreImport runner
+func (r ValidStoreImport) Run(ctx context.Context, ctr *container.Container, store *sync.Map) error {
 	for _, d := range r.Data {
-		valBytes, err := json.Marshal(d.Value)
+		valBytes, err := ctr.Store.GetObject(d.BucketID, d.StoreKey)
 		if err != nil {
-			return fmt.Errorf("failed to marshal value: %v", err)
+			return fmt.Errorf("failed to get object: %v", err)
 		}
 		if d.Encrypt.Enabled {
 			encryptor, ok := ctr.EncypterContainer[d.Encrypt.EncryptID]
 			if !ok {
 				return fmt.Errorf("encryptor not found: %s", d.Encrypt.EncryptID)
 			}
-			encryptedVal, err := encryptor.Encrypt(valBytes)
+			decryptedVal, err := encryptor.Decrypt(string(valBytes))
 			if err != nil {
-				return fmt.Errorf("failed to encrypt value: %v", err)
+				return fmt.Errorf("failed to decrypt value: %v", err)
 			}
-			valBytes = []byte(encryptedVal)
+			valBytes = []byte(decryptedVal)
 		}
-		ctr.Store.PutObject(d.BucketID, d.Key, valBytes)
+		store.Store(d.Key, valBytes)
 	}
 	return nil
 }
