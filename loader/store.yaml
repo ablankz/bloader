@@ -4,7 +4,7 @@ data:
   - bucket_id: "bucketForApp"
     key: "users"
     value:
-    {{- range $index, $element := until .DataCount }}
+    {{- range $index, $element := until .Values.DataCount }}
     {{- $randOn3 := randInt 0 3 }}
     {{- $randOn4to6 := randInt 4 7 }}
     {{- $rand2On4to6 := randInt 4 7 }}
@@ -18,3 +18,6 @@ data:
     encrypt:
       enabled: true
       encrypt_id: encryptDynamicCBC
+  - bucket_id: "bucketForApp"
+    key: "teamId"
+    value: "team-{{ randAlphaNum 6 }}"

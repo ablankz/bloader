@@ -15,6 +15,8 @@ const (
 	RunnerKindMemoryValue RunnerKind = "MemoryValue"
 	// RunnerKindStoreImport represents the store import runner
 	RunnerKindStoreImport RunnerKind = "StoreImport"
+	// RunnerKindOneExecute represents execute one request runner
+	RunnerKindOneExecute RunnerKind = "OneExecute"
 	// RunnerKindMassExecute represents execute multiple requests runner
 	RunnerKindMassExecute RunnerKind = "MassExecute"
 )
@@ -40,7 +42,11 @@ func (r Runner) Validate() (ValidRunner, error) {
 	}
 	var kind RunnerKind
 	switch RunnerKind(*r.Kind) {
-	case RunnerKindStoreValue, RunnerKindMemoryValue, RunnerKindStoreImport, RunnerKindMassExecute:
+	case RunnerKindStoreValue,
+		RunnerKindMemoryValue,
+		RunnerKindStoreImport,
+		RunnerKindOneExecute,
+		RunnerKindMassExecute:
 		kind = RunnerKind(*r.Kind)
 	default:
 		return ValidRunner{}, fmt.Errorf("invalid kind value: %s", *r.Kind)

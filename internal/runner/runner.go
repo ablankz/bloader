@@ -10,7 +10,7 @@ import (
 	"github.com/ablankz/bloader/internal/prompt"
 )
 
-func Run(ctr *container.Container, filename string) error {
+func Run(ctr *container.Container, filename string, data map[string]any) error {
 	var err error
 	if filename == "" {
 		filename, err = prompt.PromptText(
@@ -29,6 +29,10 @@ func Run(ctr *container.Container, filename string) error {
 
 	path := fmt.Sprintf("%s/%s", ctr.Config.Loader.BasePath, filename)
 	outputRoot := time.Now().Format("20060102_150405")
+
+	for k, v := range data {
+		globalStore.Store(k, v)
+	}
 
 	if err := baseExecute(
 		ctx,

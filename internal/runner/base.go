@@ -124,7 +124,7 @@ func baseExecute(
 			}
 			var val any
 			if err := json.Unmarshal(valBytes, &val); err != nil {
-				return fmt.Errorf("failed to unmarshal value: %v", err)
+				return fmt.Errorf("failed to unmarshal value: %v, if the value encrypted, please make sure the value is decrypted", err)
 			}
 			if d.ThreadOnly {
 				threadOnlyStr.Store(d.Key, valBytes)
@@ -173,6 +173,8 @@ func baseExecute(
 	if err := wait(ctx, ctr, validRunner, RunnerSleepValueAfterInit); err != nil {
 		return fmt.Errorf("failed to wait: %v", err)
 	}
+
+	fmt.Println("rawData", rawData.String())
 
 	switch validRunner.Kind {
 	case RunnerKindStoreValue:

@@ -1,28 +1,20 @@
-kind: MassExecute
+kind: OneExecute
 store_import:
   enabled: true
   data:
-    # - key: "value1"
-    #   bucket_id: "bucketForApp"
-    #   store_key: "users"
-    #   # global or thread only(default: global)
-    #   thread_only: true
     - key: "usersList"
       bucket_id: "bucketForApp"
-      store_key: "users"
-      encrypt:
-        enabled: true
-        encrypt_id: encryptDynamicCBC
-    - key: "teamId"
-      bucket_id: "bucketForApp"
-      store_key: "teamId"
       thread_only: true
+      store_key: "users"
+      # encrypt:
+      #   enabled: true
+      #   encrypt_id: encryptDynamicCBC
 type: http
 output:
   enabled: true
   ids: 
     - outputLocalCSV
-auth: 
+auth:
   enabled: true
   auth_id: authForWeb
 data:
@@ -40,26 +32,8 @@ data:
         userId: "{{ .uuid }}"
         name: "{{ .name }}"
         email: "{{ .email }}"
-        teamId: "{{ $.ThreadValues.teamId }}"
     {{- end }}
     {{- end }}
-      successBreak:
-        - count
-        - time
-        - statusCode/badRequest
-      break:
-        time: 2m
-        count: 5
-        sysError: true
-        parseError: true
-        writeError: true
-        statusCode:
-          - id: internalServerError
-            op: eq
-            value: 500
-          - id: badRequest
-            op: eq
-            value: 400
       data:
         - key: "resultType"
           jmesPath: "data.resultType"
@@ -71,3 +45,14 @@ data:
           onNil: "ignore"
       dataOutputFilter:
         jmesPath: "code == '0002:0003'"
+      memory_data:
+        - key: "userCreateJobId"
+          jmesPath: "data.jobId"
+      store_data:
+        - bucket_id: "bucketForApp"
+          store_key: "resultType"
+          jmesPath: "data.resultType"
+          encrypt:
+            enabled: true
+            encrypt_id: encryptDynamicCBC
+

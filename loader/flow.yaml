@@ -1,0 +1,12 @@
+kind: Flow
+# if set to 0, it will run one by one in sequence, 
+# if set to minus, it will run all the queries in sequence
+concurrency: 0
+files:
+  - id: "store"
+    file: "store.yaml"
+    count: 1
+    values: []
+    threadOnlyValues:
+      - key: "DataCount"
+        value: 10
