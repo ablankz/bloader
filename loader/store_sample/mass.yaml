@@ -14,8 +14,10 @@ requests:
     method: POST
     interval: 500ms
     awaitPrevResponse: false
+    headers: {}
     queryParam: {}
     pathVariables: {}
+    body_type: json
     body:
       userId: "{{ .uuid }}"
       name: "{{ .name }}"
@@ -37,6 +39,7 @@ requests:
         - id: badRequest
           op: eq
           value: 400
+    response_type: json
     data:
       - key: "resultType"
         jmesPath: "data.resultType"

@@ -33,6 +33,7 @@ requests:
     awaitPrevResponse: false
     queryParam: {}
     pathVariables: {}
+    body_type: json
     body:
   {{- if .Values.usersList }}
   {{- with index .Values.usersList .Dynamic.LoopCount }}
@@ -46,6 +47,7 @@ requests:
       - count
       - time
       - statusCode/badRequest
+    response_type: json
     break:
       time: 2m
       count: 5
