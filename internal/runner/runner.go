@@ -27,7 +27,6 @@ func Run(ctr *container.Container, filename string, data map[string]any) error {
 	outputCtr := output.NewOutputContainer(ctr.Config.Env, ctr.Config.Outputs)
 	ctx := ctr.Ctx
 
-	path := fmt.Sprintf("%s/%s", ctr.Config.Loader.BasePath, filename)
 	outputRoot := time.Now().Format("20060102_150405")
 
 	for k, v := range data {
@@ -37,7 +36,7 @@ func Run(ctr *container.Container, filename string, data map[string]any) error {
 	if err := baseExecute(
 		ctx,
 		ctr,
-		path,
+		filename,
 		&globalStore,
 		&threadOnlyStore,
 		outputRoot,

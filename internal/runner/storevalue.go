@@ -1,4 +1,4 @@
-package storevalue
+package runner
 
 import (
 	"context"
@@ -69,32 +69,6 @@ func (d StoreValueData) Validate() (ValidStoreValueData, error) {
 		Key:      *d.Key,
 		Value:    *d.Value,
 		Encrypt:  validEncrypt,
-	}, nil
-}
-
-// CredentialEncryptConfig is the configuration for the credential encrypt.
-type CredentialEncryptConfig struct {
-	Enabled   bool    `yaml:"enabled"`
-	EncryptID *string `yaml:"encrypt_id"`
-}
-
-// ValidCredentialEncryptConfig represents the valid auth credential encrypt configuration
-type ValidCredentialEncryptConfig struct {
-	Enabled   bool
-	EncryptID string
-}
-
-// Validate validates the credential encrypt configuration
-func (c CredentialEncryptConfig) Validate() (ValidCredentialEncryptConfig, error) {
-	if !c.Enabled {
-		return ValidCredentialEncryptConfig{}, nil
-	}
-	if c.EncryptID == nil {
-		return ValidCredentialEncryptConfig{}, fmt.Errorf("encrypt_id is required")
-	}
-	return ValidCredentialEncryptConfig{
-		Enabled:   c.Enabled,
-		EncryptID: *c.EncryptID,
 	}, nil
 }
 

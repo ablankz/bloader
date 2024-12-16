@@ -1,5 +1,15 @@
 kind: MassExecute
 type: http
+store_import:
+  enabled: true
+  data:
+    - key: "usersList"
+      bucket_id: "bucketForApp"
+      thread_only: true
+      store_key: "users"
+      encrypt:
+        enabled: true
+        encrypt_id: encryptDynamicCBC
 output:
   enabled: true
   ids: 
@@ -8,7 +18,12 @@ auth:
   enabled: true
   auth_id: authForWeb
 requests:
-{{- range slice .Values.usersList 0 3 }}
+# In the executable file, 
+# variables that are to be loaded in the `storeImport` statement 
+# must be checked to make sure that they are not null, 
+# since they are loaded once as null and then loaded again after re-import.
+{{- if .ThreadValues.usersList }}
+{{- range slice .ThreadValues.usersList 0 3 }}
   - target_id: "apiServer"
     endpoint: "/user-profiles"
     method: POST
@@ -46,6 +61,5 @@ requests:
       - key: "invalid_key"
         jmesPath: "data.result[*].invalid_key"
         onNil: "ignore"
-    # dataOutputFilter:
-    #   jmesPath: "code == '0002:0003'"
+{{- end }}
 {{- end }}

@@ -17,42 +17,41 @@ output:
 auth:
   enabled: true
   auth_id: authForWeb
-data:
-  requests:
-    - target_id: "apiServer"
-      endpoint: "/user-profiles"
-      method: POST
-      interval: 500ms
-      awaitPrevResponse: false
-      queryParam: {}
-      pathVariables: {}
-      body:
-    {{- if .Values.usersList }}
-    {{- with index .Values.usersList .Dynamic.LoopCount }}
-        userId: "{{ .uuid }}"
-        name: "{{ .name }}"
-        email: "{{ .email }}"
-    {{- end }}
-    {{- end }}
-      data:
-        - key: "resultType"
-          jmesPath: "data.resultType"
-        - key: "memory_active"
-          jmesPath: "data.result[*].value"
-          onNil: "ignore" # cancel or ignore(default)
-        - key: "invalid_key"
-          jmesPath: "data.result[*].invalid_key"
-          onNil: "ignore"
-      dataOutputFilter:
-        jmesPath: "code == '0002:0003'"
-      memory_data:
-        - key: "userCreateJobId"
-          jmesPath: "data.jobId"
-      store_data:
-        - bucket_id: "bucketForApp"
-          store_key: "resultType"
-          jmesPath: "data.resultType"
-          encrypt:
-            enabled: true
-            encrypt_id: encryptDynamicCBC
+request:
+  target_id: "apiServer"
+  endpoint: "/user-profiles"
+  method: POST
+  interval: 500ms
+  awaitPrevResponse: false
+  queryParam: {}
+  pathVariables: {}
+  body:
+{{- if .Values.usersList }}
+{{- with index .Values.usersList .Dynamic.LoopCount }}
+    userId: "{{ .uuid }}"
+    name: "{{ .name }}"
+    email: "{{ .email }}"
+{{- end }}
+{{- end }}
+  data:
+    - key: "resultType"
+      jmesPath: "data.resultType"
+    - key: "memory_active"
+      jmesPath: "data.result[*].value"
+      onNil: "ignore" # cancel or ignore(default)
+    - key: "invalid_key"
+      jmesPath: "data.result[*].invalid_key"
+      onNil: "ignore"
+  dataOutputFilter:
+    jmesPath: "code == '0002:0003'"
+  memory_data:
+    - key: "userCreateJobId"
+      jmesPath: "data.jobId"
+  store_data:
+    - bucket_id: "bucketForApp"
+      store_key: "resultType"
+      jmesPath: "data.resultType"
+      encrypt:
+        enabled: true
+        encrypt_id: encryptDynamicCBC
 

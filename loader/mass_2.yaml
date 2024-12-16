@@ -1,4 +1,22 @@
 kind: MassExecute
+store_import:
+  enabled: true
+  data:
+    # - key: "value1"
+    #   bucket_id: "bucketForApp"
+    #   store_key: "users"
+    #   # global or thread only(default: global)
+    #   thread_only: true
+    # - key: "usersList"
+    #   bucket_id: "bucketForApp"
+    #   store_key: "users"
+    #   encrypt:
+    #     enabled: true
+    #     encrypt_id: encryptDynamicCBC
+    # - key: "teamId"
+    #   bucket_id: "bucketForApp"
+    #   store_key: "teamId"
+    #   thread_only: true
 type: http
 output:
   enabled: true
@@ -8,7 +26,6 @@ auth:
   enabled: true
   auth_id: authForWeb
 requests:
-{{- range slice .Values.usersList 0 3 }}
   - target_id: "apiServer"
     endpoint: "/user-profiles"
     method: POST
@@ -17,9 +34,14 @@ requests:
     queryParam: {}
     pathVariables: {}
     body:
+  {{- if .Values.usersList }}
+  {{- with index .Values.usersList .Dynamic.LoopCount }}
       userId: "{{ .uuid }}"
       name: "{{ .name }}"
       email: "{{ .email }}"
+      teamId: "{{ $.ThreadValues.teamId }}"
+  {{- end }}
+  {{- end }}
     successBreak:
       - count
       - time
@@ -46,6 +68,5 @@ requests:
       - key: "invalid_key"
         jmesPath: "data.result[*].invalid_key"
         onNil: "ignore"
-    # dataOutputFilter:
-    #   jmesPath: "code == '0002:0003'"
-{{- end }}
+    dataOutputFilter:
+      jmesPath: "code == '0002:0003'"

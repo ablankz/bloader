@@ -10,12 +10,14 @@ import (
 	"github.com/LabGroupware/go-measure-tui/internal/logger"
 )
 
+// PipelineConfig represents a pipeline configuration
 type PipelineConfig struct {
 	Type        string               `yaml:"type"`
 	Concurrency int                  `yaml:"concurrency"`
 	Files       []PipelineFileConfig `yaml:"files"`
 }
 
+// PipelineFileConfig represents a pipeline file configuration
 type PipelineFileConfig struct {
 	ID               string                        `yaml:"id"`
 	File             string                        `yaml:"file"`
@@ -24,6 +26,7 @@ type PipelineFileConfig struct {
 	ThreadOnlyValues []PipelineFileThreadOnlyValue `yaml:"threadOnlyValues"`
 }
 
+// PipelineFileThreadOnlyValue represents a pipeline file thread only value
 type PipelineFileThreadOnlyValue struct {
 	Key   string `yaml:"key"`
 	Value string `yaml:"value"`

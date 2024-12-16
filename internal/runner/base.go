@@ -18,16 +18,12 @@ import (
 	"github.com/ablankz/bloader/internal/container"
 	"github.com/ablankz/bloader/internal/logger"
 	"github.com/ablankz/bloader/internal/output"
-	"github.com/ablankz/bloader/internal/runner/massexec"
-	"github.com/ablankz/bloader/internal/runner/memoryvalue"
-	"github.com/ablankz/bloader/internal/runner/storeimport"
-	"github.com/ablankz/bloader/internal/runner/storevalue"
 )
 
 func baseExecute(
 	ctx context.Context,
 	ctr *container.Container,
-	filepath string,
+	filename string,
 	str *sync.Map,
 	threadOnlyStr *sync.Map,
 	outputRoot string,
@@ -37,6 +33,8 @@ func baseExecute(
 ) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+
+	filepath := fmt.Sprintf("%s/%s", ctr.Config.Loader.BasePath, filename)
 
 	file, err := os.Open(filepath)
 	if err != nil {
@@ -55,7 +53,7 @@ func baseExecute(
 	}
 	yamlTemplate := buffer.String()
 
-	preTmpl, err := template.New("yaml").Funcs(sprig.TxtFuncMap()).Parse(yamlTemplate)
+	tmpl, err := template.New("yaml").Funcs(sprig.TxtFuncMap()).Parse(yamlTemplate)
 	if err != nil {
 		return fmt.Errorf("failed to parse yaml: %v", err)
 	}
@@ -85,28 +83,37 @@ func baseExecute(
 		return true
 	})
 
-	preData := map[string]any{
+	data := map[string]any{
 		"Values":       replacedValuesData,
 		"ThreadValues": replaceThreadValuesData,
+		"Dynamic": map[string]any{
+			"OutputRoot": outputRoot,
+			"LoopCount":  index,
+			"CallCount":  callCount,
+		},
 	}
 
-	var preYamlBuf *bytes.Buffer = new(bytes.Buffer)
-	if err := preTmpl.Execute(preYamlBuf, preData); err != nil {
+	var yamlBuf *bytes.Buffer = new(bytes.Buffer)
+	if err := tmpl.Execute(yamlBuf, data); err != nil {
 		return fmt.Errorf("failed to execute yaml: %v", err)
 	}
 
-	var preRunner Runner
-	if err := yaml.Unmarshal(preYamlBuf.Bytes(), &preRunner); err != nil {
-		return fmt.Errorf("failed to unmarshal yaml: %v", err)
+	var rawData bytes.Buffer
+	reader := io.TeeReader(yamlBuf, &rawData)
+
+	var runner Runner
+	decoder := yaml.NewDecoder(reader)
+	if err := decoder.Decode(&runner); err != nil {
+		return fmt.Errorf("failed to decode yaml: %v", err)
 	}
 
-	validPreRunner, err := preRunner.Validate()
+	validRunner, err := runner.Validate()
 	if err != nil {
 		return fmt.Errorf("failed to validate runner: %v", err)
 	}
 
-	if validPreRunner.StoreImport.Enabled {
-		for _, d := range validPreRunner.StoreImport.Data {
+	if validRunner.StoreImport.Enabled {
+		for _, d := range validRunner.StoreImport.Data {
 			valBytes, err := ctr.Store.GetObject(d.BucketID, d.StoreKey)
 			if err != nil {
 				return fmt.Errorf("failed to get object: %v", err)
@@ -134,56 +141,51 @@ func baseExecute(
 				replacedValuesData[d.Key] = val
 			}
 		}
-	}
 
-	tmpl, err := template.New("yaml").Funcs(sprig.TxtFuncMap()).Parse(yamlTemplate)
-	if err != nil {
-		return fmt.Errorf("failed to parse yaml: %v", err)
-	}
+		if len(validRunner.StoreImport.Data) > 0 {
+		}
 
-	data := map[string]any{
-		"Values":       replacedValuesData,
-		"ThreadValues": replaceThreadValuesData,
-		"Dynamic": map[string]any{
-			"OutputRoot": outputRoot,
-			"LoopCount":  index,
-			"CallCount":  callCount,
-		},
-	}
+		data = map[string]any{
+			"Values":       replacedValuesData,
+			"ThreadValues": replaceThreadValuesData,
+			"Dynamic": map[string]any{
+				"OutputRoot": outputRoot,
+				"LoopCount":  index,
+				"CallCount":  callCount,
+			},
+		}
 
-	var yamlBuf *bytes.Buffer = new(bytes.Buffer)
-	if err := tmpl.Execute(yamlBuf, data); err != nil {
-		return fmt.Errorf("failed to execute yaml: %v", err)
-	}
+		var yamlBuf *bytes.Buffer = new(bytes.Buffer)
+		if err := tmpl.Execute(yamlBuf, data); err != nil {
+			return fmt.Errorf("failed to execute yaml: %v", err)
+		}
 
-	var rawData bytes.Buffer
-	reader := io.TeeReader(yamlBuf, &rawData)
+		rawData.Reset()
+		reader := io.TeeReader(yamlBuf, &rawData)
 
-	var conf Runner
-	decoder := yaml.NewDecoder(reader)
-	if err := decoder.Decode(&conf); err != nil {
-		return fmt.Errorf("failed to decode yaml: %v", err)
-	}
+		decoder := yaml.NewDecoder(reader)
+		if err := decoder.Decode(&runner); err != nil {
+			return fmt.Errorf("failed to decode yaml: %v", err)
+		}
 
-	validRunner, err := conf.Validate()
-	if err != nil {
-		return fmt.Errorf("failed to validate runner: %v", err)
+		validRunner, err = runner.Validate()
+		if err != nil {
+			return fmt.Errorf("failed to validate runner: %v", err)
+		}
 	}
 
 	if err := wait(ctx, ctr, validRunner, RunnerSleepValueAfterInit); err != nil {
 		return fmt.Errorf("failed to wait: %v", err)
 	}
 
-	fmt.Println("rawData", rawData.String())
-
 	switch validRunner.Kind {
 	case RunnerKindStoreValue:
-		var storeValue storevalue.StoreValue
+		var storeValue StoreValue
 		decoder := yaml.NewDecoder(&rawData)
 		if err := decoder.Decode(&storeValue); err != nil {
 			return fmt.Errorf("failed to decode yaml: %v", err)
 		}
-		var validStoreValue storevalue.ValidStoreValue
+		var validStoreValue ValidStoreValue
 		if validStoreValue, err = storeValue.Validate(); err != nil {
 			return fmt.Errorf("failed to validate store value: %v", err)
 		}
@@ -195,12 +197,12 @@ func baseExecute(
 		}
 		ctr.Logger.Info(ctx, "executed store value")
 	case RunnerKindMemoryValue:
-		var memoryStoreValue memoryvalue.MemoryValue
+		var memoryStoreValue MemoryValue
 		decoder := yaml.NewDecoder(&rawData)
 		if err := decoder.Decode(&memoryStoreValue); err != nil {
 			return fmt.Errorf("failed to decode yaml: %v", err)
 		}
-		var validMemoryValue memoryvalue.ValidMemoryValue
+		var validMemoryValue ValidMemoryValue
 		if validMemoryValue, err = memoryStoreValue.Validate(); err != nil {
 			return fmt.Errorf("failed to validate memory store value: %v", err)
 		}
@@ -212,12 +214,12 @@ func baseExecute(
 		}
 		ctr.Logger.Info(ctx, "executed memory store value")
 	case RunnerKindStoreImport:
-		var storeImport storeimport.StoreImport
+		var storeImport StoreImport
 		decoder := yaml.NewDecoder(&rawData)
 		if err := decoder.Decode(&storeImport); err != nil {
 			return fmt.Errorf("failed to decode yaml: %v", err)
 		}
-		var validStoreImport storeimport.ValidStoreImport
+		var validStoreImport ValidStoreImport
 		if validStoreImport, err = storeImport.Validate(); err != nil {
 			return fmt.Errorf("failed to validate store import: %v", err)
 		}
@@ -228,13 +230,30 @@ func baseExecute(
 			return fmt.Errorf("failed to execute store import: %v", err)
 		}
 		ctr.Logger.Info(ctx, "executed store import")
+	case RunnerKindOneExecute:
+		var oneExec OneExec
+		decoder := yaml.NewDecoder(&rawData)
+		if err := decoder.Decode(&oneExec); err != nil {
+			return fmt.Errorf("failed to decode yaml: %v", err)
+		}
+		var validOneExec ValidOneExec
+		if validOneExec, err = oneExec.Validate(ctr, outputCtr); err != nil {
+			return fmt.Errorf("failed to validate one exec: %v", err)
+		}
+		if err := validOneExec.Run(ctx, ctr, outputRoot, str, threadOnlyStr); err != nil {
+			if err := wait(ctx, ctr, validRunner, RunnerSleepValueAfterFailedExec); err != nil {
+				return fmt.Errorf("failed to wait: %v", err)
+			}
+			return fmt.Errorf("failed to execute one exec: %v", err)
+		}
+		ctr.Logger.Info(ctx, "executed one exec")
 	case RunnerKindMassExecute:
-		var massExec massexec.MassExec
+		var massExec MassExec
 		decoder := yaml.NewDecoder(&rawData)
 		if err := decoder.Decode(&massExec); err != nil {
 			return fmt.Errorf("failed to decode yaml: %v", err)
 		}
-		var validMassExec massexec.ValidMassExec
+		var validMassExec ValidMassExec
 		if validMassExec, err = massExec.Validate(ctr, outputCtr); err != nil {
 			return fmt.Errorf("failed to validate mass exec: %v", err)
 		}
@@ -245,6 +264,23 @@ func baseExecute(
 			return fmt.Errorf("failed to execute mass exec: %v", err)
 		}
 		ctr.Logger.Info(ctx, "executed mass exec")
+	case RunnerKindFlow:
+		var flow Flow
+		decoder := yaml.NewDecoder(&rawData)
+		if err := decoder.Decode(&flow); err != nil {
+			return fmt.Errorf("failed to decode yaml: %v", err)
+		}
+		var validFlow ValidFlow
+		if validFlow, err = flow.Validate(); err != nil {
+			return fmt.Errorf("failed to validate flow: %v", err)
+		}
+		if err := validFlow.Run(ctx, ctr, str, outputRoot, outputCtr, callCount); err != nil {
+			if err := wait(ctx, ctr, validRunner, RunnerSleepValueAfterFailedExec); err != nil {
+				return fmt.Errorf("failed to wait: %v", err)
+			}
+			return fmt.Errorf("failed to execute flow: %v", err)
+		}
+		ctr.Logger.Info(ctx, "executed flow")
 	default:
 		return fmt.Errorf("invalid runner kind: %s", validRunner.Kind)
 	}

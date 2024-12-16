@@ -46,6 +46,4 @@ requests:
       - key: "invalid_key"
         jmesPath: "data.result[*].invalid_key"
         onNil: "ignore"
-    # dataOutputFilter:
-    #   jmesPath: "code == '0002:0003'"
 {{- end }}

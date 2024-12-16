@@ -1,7 +1,7 @@
 {{- $mailDomainList := list "example.com" "test.com" "demo.org" -}}
 kind: MemoryValue
 data:
-  - key: "users"
+  - key: "usersList"
     value:
     {{- range $index, $element := until .Values.DataCount }}
     {{- $randOn3 := randInt 0 3 }}

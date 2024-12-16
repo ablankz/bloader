@@ -1,4 +1,4 @@
-package massexec
+package runner
 
 import (
 	"context"

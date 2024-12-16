@@ -6,7 +6,7 @@ step:
   flows:
     - id: "store"
       type: file
-      file: "store.yaml"
+      file: "store_sample/store.yaml"
       mkdir: false
       values:
         - key: "DataCount"
@@ -14,7 +14,7 @@ step:
       threadOnlyValues: []
     - id: "import"
       type: file
-      file: "store_import.yaml"
+      file: "store_sample/store_import.yaml"
       mkdir: false
       values: []
       threadOnlyValues: []
@@ -26,7 +26,7 @@ step:
         - id: "mass"
           type: file
           mkdir: true
-          file: "mass.yaml"
+          file: "store_sample/mass.yaml"
           count: 10
           values: []
           threadOnlyValues: []

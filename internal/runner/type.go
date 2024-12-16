@@ -19,6 +19,8 @@ const (
 	RunnerKindOneExecute RunnerKind = "OneExecute"
 	// RunnerKindMassExecute represents execute multiple requests runner
 	RunnerKindMassExecute RunnerKind = "MassExecute"
+	// RunnerKindFlow represents the flow runner
+	RunnerKindFlow RunnerKind = "Flow"
 )
 
 // Runner represents a runner
@@ -46,7 +48,8 @@ func (r Runner) Validate() (ValidRunner, error) {
 		RunnerKindMemoryValue,
 		RunnerKindStoreImport,
 		RunnerKindOneExecute,
-		RunnerKindMassExecute:
+		RunnerKindMassExecute,
+		RunnerKindFlow:
 		kind = RunnerKind(*r.Kind)
 	default:
 		return ValidRunner{}, fmt.Errorf("invalid kind value: %s", *r.Kind)
@@ -103,8 +106,6 @@ type RunnerSleepValueAfter string
 const (
 	// RunnerSleepValueAfterInit represents the init after value for a runner sleep value
 	RunnerSleepValueAfterInit RunnerSleepValueAfter = "init"
-	// RunnerSleepValueAfterMetricsBoot represents the metricsBoot after value for a runner sleep value
-	RunnerSleepValueAfterMetricsBoot RunnerSleepValueAfter = "metricsBoot"
 	// RunnerSleepValueAfterExec represents the success after value for a runner sleep value
 	RunnerSleepValueAfterExec RunnerSleepValueAfter = "exec"
 	// RunnerSleepValueAfterFailedExec represents the failed after value for a runner sleep value
@@ -137,7 +138,7 @@ func (r RunnerSleepValue) Validate() (ValidRunnerSleepValue, error) {
 	}
 	var after RunnerSleepValueAfter
 	switch RunnerSleepValueAfter(*r.After) {
-	case RunnerSleepValueAfterInit, RunnerSleepValueAfterMetricsBoot, RunnerSleepValueAfterExec, RunnerSleepValueAfterFailedExec:
+	case RunnerSleepValueAfterInit, RunnerSleepValueAfterExec, RunnerSleepValueAfterFailedExec:
 		after = RunnerSleepValueAfter(*r.After)
 	default:
 		return ValidRunnerSleepValue{}, fmt.Errorf("invalid after value: %s", *r.After)
@@ -191,11 +192,11 @@ func (r RunnerStoreImport) Validate() (ValidRunnerStoreImport, error) {
 
 // RunnerStoreImportData represents the data for the StoreImport runner
 type RunnerStoreImportData struct {
-	BucketID   *string                       `yaml:"bucket_id"`
-	Key        *string                       `yaml:"key"`
-	StoreKey   *string                       `yaml:"store_key"`
-	ThreadOnly bool                          `yaml:"thread_only"`
-	Encrypt    RunnerCredentialEncryptConfig `yaml:"encrypt"`
+	BucketID   *string                 `yaml:"bucket_id"`
+	Key        *string                 `yaml:"key"`
+	StoreKey   *string                 `yaml:"store_key"`
+	ThreadOnly bool                    `yaml:"thread_only"`
+	Encrypt    CredentialEncryptConfig `yaml:"encrypt"`
 }
 
 // ValidRunnerStoreImportData represents the valid data for the StoreImport runner
@@ -204,7 +205,7 @@ type ValidRunnerStoreImportData struct {
 	Key        string
 	StoreKey   string
 	ThreadOnly bool
-	Encrypt    ValidRunnerCredentialEncryptConfig
+	Encrypt    ValidCredentialEncryptConfig
 }
 
 // Validate validates the StoreImportData
@@ -231,27 +232,27 @@ func (d RunnerStoreImportData) Validate() (ValidRunnerStoreImportData, error) {
 	}, nil
 }
 
-// RunnerCredentialEncryptConfig is the configuration for the credential encrypt.
-type RunnerCredentialEncryptConfig struct {
+// CredentialEncryptConfig is the configuration for the credential encrypt.
+type CredentialEncryptConfig struct {
 	Enabled   bool    `yaml:"enabled"`
 	EncryptID *string `yaml:"encrypt_id"`
 }
 
-// ValidRunnerCredentialEncryptConfig represents the valid auth credential encrypt configuration
-type ValidRunnerCredentialEncryptConfig struct {
+// ValidCredentialEncryptConfig represents the valid auth credential encrypt configuration
+type ValidCredentialEncryptConfig struct {
 	Enabled   bool
 	EncryptID string
 }
 
 // Validate validates the credential encrypt configuration
-func (c RunnerCredentialEncryptConfig) Validate() (ValidRunnerCredentialEncryptConfig, error) {
+func (c CredentialEncryptConfig) Validate() (ValidCredentialEncryptConfig, error) {
 	if !c.Enabled {
-		return ValidRunnerCredentialEncryptConfig{}, nil
+		return ValidCredentialEncryptConfig{}, nil
 	}
 	if c.EncryptID == nil {
-		return ValidRunnerCredentialEncryptConfig{}, fmt.Errorf("encrypt_id is required")
+		return ValidCredentialEncryptConfig{}, fmt.Errorf("encrypt_id is required")
 	}
-	return ValidRunnerCredentialEncryptConfig{
+	return ValidCredentialEncryptConfig{
 		Enabled:   c.Enabled,
 		EncryptID: *c.EncryptID,
 	}, nil
