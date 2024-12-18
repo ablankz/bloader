@@ -286,8 +286,8 @@ const (
 // DataExtractor represents the data extractor for the OneExec runner
 type DataExtractor struct {
 	Type     *string `yaml:"type"`
-	JMESPath *string `yaml:"jmesPath"`
-	OnNil    *string `yaml:"onNil"`
+	JMESPath *string `yaml:"jmes_path"`
+	OnNil    *string `yaml:"on_nil"`
 }
 
 // ValidDataExtractor represents the valid data extractor for the OneExec runner

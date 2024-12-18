@@ -11,13 +11,13 @@ step:
       values:
         - key: "DataCount"
           value: 10
-      threadOnlyValues: []
+      thread_only_values: []
     - id: "import"
       type: file
       file: "store_import.yaml"
       mkdir: false
       values: []
-      threadOnlyValues: []
+      thread_only_values: []
     - id: "main"
       type: flow
       mkdir: false
@@ -29,4 +29,4 @@ step:
           file: "mass.yaml"
           count: 10
           values: []
-          threadOnlyValues: []
+          thread_only_values: []

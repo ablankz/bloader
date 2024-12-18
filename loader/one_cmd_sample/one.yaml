@@ -23,10 +23,8 @@ request:
   target_id: "testServer"
   endpoint: "/posts"
   method: POST
-  interval: 500ms
-  awaitPrevResponse: false
-  queryParam: {}
-  # pathVariables:
+  query_param: {}
+  # path_variables:
   #   todo_id: "1"
   body_type: "json"
   body:
@@ -43,38 +41,38 @@ request:
     - key: "ID"
       extractor:
         type: "jmesPath"
-        jmesPath: "id"
-        # onNil: "error" # error or null(default) or empty
+        jmes_path: "id"
+        # on_nil: "error" # error or null(default) or empty
     - key: "UserId"
       extractor:
         type: "jmesPath"
-        jmesPath: "userId"
-        # onNil: "error" # error or null(default) or empty
+        jmes_path: "userId"
+        # on_nil: "error" # error or null(default) or empty
     - key: "Name"
       extractor:
         type: "jmesPath"
-        jmesPath: "name"
+        jmes_path: "name"
     - key: "Email"
       extractor:
         type: "jmesPath"
-        jmesPath: "email"
+        jmes_path: "email"
     - key: "Body"
       extractor:
         type: "jmesPath"
-        jmesPath: "@"
+        jmes_path: "@"
   # memory_data:
   #   - key: "userId"
   #     extractor:
   #       type: "jmesPath"
-  #       jmesPath: "userId"
-  #       onNil: "error" # error or null(default) or empty
+  #       jmes_path: "userId"
+  #       on_nil: "error" # error or null(default) or empty
   # store_data:
   #   - bucket_id: "bucketForApp"
   #     store_key: "user"
   #     extractor:
   #       type: "jmesPath"
-  #       jmesPath: "@"
-  #       onNil: "error" # error or null(default) or empty
+  #       jmes_path: "@"
+  #       on_nil: "error" # error or null(default) or empty
   #     encrypt:
   #       enabled: true
   #       encrypt_id: encryptDynamicCBC

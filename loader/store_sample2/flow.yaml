@@ -11,7 +11,7 @@ step:
       values:
         - key: "DataCount"
           value: 10
-      threadOnlyValues: []
+      thread_only_values: []
     - id: "main"
       type: flow
       mkdir: false
@@ -23,4 +23,4 @@ step:
           file: "store_sample2/mass.yaml"
           count: 10
           values: []
-          threadOnlyValues: []
+          thread_only_values: []

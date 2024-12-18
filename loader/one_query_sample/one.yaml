@@ -23,10 +23,8 @@ request:
   target_id: "testServer"
   endpoint: "/todos/{todo_id}"
   method: GET
-  interval: 500ms
-  awaitPrevResponse: false
-  queryParam: {}
-  pathVariables:
+  query_param: {}
+  path_variables:
     todo_id: "1"
   # body_type: "json"
 #   body:
@@ -42,29 +40,29 @@ request:
     - key: "UserID"
       extractor:
         type: "jmesPath"
-        jmesPath: "userId"
-        # onNil: "error" # error or null(default) or empty
+        jmes_path: "userId"
+        # on_nil: "error" # error or null(default) or empty
     - key: "Title"
       extractor:
         type: "jmesPath"
-        jmesPath: "title"
+        jmes_path: "title"
     - key: "Completed"
       extractor:
         type: "jmesPath"
-        jmesPath: "completed"
+        jmes_path: "completed"
   # memory_data:
   #   - key: "userId"
   #     extractor:
   #       type: "jmesPath"
-  #       jmesPath: "userId"
-  #       onNil: "error" # error or null(default) or empty
+  #       jmes_path: "userId"
+  #       on_nil: "error" # error or null(default) or empty
   # store_data:
   #   - bucket_id: "bucketForApp"
   #     store_key: "user"
   #     extractor:
   #       type: "jmesPath"
-  #       jmesPath: "@"
-  #       onNil: "error" # error or null(default) or empty
+  #       jmes_path: "@"
+  #       on_nil: "error" # error or null(default) or empty
   #     encrypt:
   #       enabled: true
   #       encrypt_id: encryptDynamicCBC

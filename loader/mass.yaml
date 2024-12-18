@@ -13,26 +13,26 @@ requests:
     endpoint: "/user-profiles"
     method: POST
     interval: 500ms
-    awaitPrevResponse: false
+    await_prev_response: false
     headers: {}
-    queryParam: {}
-    pathVariables: {}
+    query_param: {}
+    path_variables: {}
     body_type: json
     body:
       userId: "{{ .uuid }}"
       name: "{{ .name }}"
       email: "{{ .email }}"
-    successBreak:
+    success_break:
       - count
       - time
       - statusCode/badRequest
     break:
       time: 2m
       count: 5
-      sysError: true
-      parseError: true
-      writeError: true
-      statusCode:
+      sys_error: true
+      parse_error: true
+      write_error: true
+      status_code:
         - id: internalServerError
           op: eq
           value: 500
@@ -41,14 +41,24 @@ requests:
           value: 400
     response_type: json
     data:
-      - key: "resultType"
-        jmesPath: "data.resultType"
-      - key: "memory_active"
-        jmesPath: "data.result[*].value"
-        onNil: "ignore" # cancel or ignore(default)
-      - key: "invalid_key"
-        jmesPath: "data.result[*].invalid_key"
-        onNil: "ignore"
-    # dataOutputFilter:
-    #   jmesPath: "code == '0002:0003'"
+      - key: "ID"
+        extractor:
+          type: "jmesPath"
+          jmes_path: "id"
+          # on_nil: "error" # error or null(default) or empty
+      - key: "UserId"
+        extractor:
+          type: "jmesPath"
+          jmes_path: "userId"
+          # on_nil: "error" # error or null(default) or empty
+      - key: "Name"
+        extractor:
+          type: "jmesPath"
+          jmes_path: "name"
+      - key: "Email"
+        extractor:
+          type: "jmesPath"
+          jmes_path: "email"
+    # data_output_filter:
+    #   jmes_path: "code == '0002:0003'"
 {{- end }}

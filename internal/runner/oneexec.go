@@ -126,8 +126,8 @@ type OneExecRequest struct {
 	TargetID      *string                `yaml:"target_id"`
 	Endpoint      *string                `yaml:"endpoint"`
 	Method        *string                `yaml:"method"`
-	QueryParam    map[string]any         `yaml:"queryParam"`
-	PathVariables map[string]string      `yaml:"pathVariables"`
+	QueryParam    map[string]any         `yaml:"query_param"`
+	PathVariables map[string]string      `yaml:"path_variables"`
 	Headers       map[string]any         `yaml:"headers"`
 	BodyType      *string                `yaml:"body_type"`
 	Body          any                    `yaml:"body"`

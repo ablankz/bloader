@@ -88,7 +88,7 @@ type FlowStepFlow struct {
 	Mkdir            bool                `yaml:"mkdir"`
 	Count            *int                `yaml:"count"`
 	Values           []FlowStepFlowValue `yaml:"values"`
-	ThreadOnlyValues []FlowStepFlowValue `yaml:"threadOnlyValues"`
+	ThreadOnlyValues []FlowStepFlowValue `yaml:"thread_only_values"`
 	Flows            []FlowStepFlow      `yaml:"flows"`
 	Concurrency      *int                `yaml:"concurrency"`
 }
