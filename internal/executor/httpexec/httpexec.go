@@ -18,7 +18,7 @@ import (
 // RequestContent represents the request content
 type RequestContent[Req ExecReq] struct {
 	Req          Req
-	ResponseType string
+	ResponseType ResponseType
 }
 
 // RequestExecute executes the request

@@ -15,20 +15,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type ResponseContent struct {
-	Success         bool
-	StartTime       time.Time
-	EndTime         time.Time
-	Res             any
-	ByteResponse    []byte
-	ResponseTime    int64
-	StatusCode      int
-	ReqCreateHasErr bool
-	ParseResHasErr  bool
-	HasSystemErr    bool
-	WithCountLimit  bool
-}
-
 // RequestCountLimit represents the request count limit
 type RequestCountLimit struct {
 	Enabled bool

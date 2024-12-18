@@ -4,11 +4,11 @@ import (
 	"context"
 	"encoding/csv"
 	"fmt"
-	"os"
 
 	"github.com/ablankz/bloader/internal/config"
 	"github.com/ablankz/bloader/internal/container"
 	"github.com/ablankz/bloader/internal/logger"
+	"github.com/ablankz/bloader/internal/utils"
 )
 
 // LocalOutput represents the local output service
@@ -33,6 +33,7 @@ func (o LocalOutput) HTTPDataWriteFactory(
 	ctr *container.Container,
 	enabled bool,
 	uniqueName string,
+	header []string,
 ) (HTTPDataWrite, Close, error) {
 	var filePath string
 	switch o.Format {
@@ -41,7 +42,7 @@ func (o LocalOutput) HTTPDataWriteFactory(
 	default:
 		return nil, nil, fmt.Errorf("unsupported output format: %s", o.Format)
 	}
-	f, err := os.Create(filePath)
+	f, err := utils.CreateFileWithDir(filePath)
 	if err != nil {
 		ctr.Logger.Error(ctx, "failed to create file",
 			logger.Value("error", err), logger.Value("on", "runAsyncProcessing"))
@@ -50,7 +51,6 @@ func (o LocalOutput) HTTPDataWriteFactory(
 	switch o.Format {
 	case config.OutputFormatCSV:
 		writer := csv.NewWriter(f)
-		header := []string{"Success", "SendDatetime", "ReceivedDatetime", "Count", "ResponseTime", "StatusCode", "Data"}
 		if err := writer.Write(header); err != nil {
 			ctr.Logger.Error(ctx, "failed to write header",
 				logger.Value("error", err), logger.Value("on", "runAsyncProcessing"))
@@ -61,7 +61,7 @@ func (o LocalOutput) HTTPDataWriteFactory(
 	return func(
 			ctx context.Context,
 			ctr *container.Container,
-			data WriteHTTPData,
+			data []string,
 		) error {
 			if !enabled {
 				return nil
@@ -71,7 +71,7 @@ func (o LocalOutput) HTTPDataWriteFactory(
 				writer := csv.NewWriter(f)
 				ctr.Logger.Debug(ctx, "Writing data to csv",
 					logger.Value("data", data), logger.Value("on", "runAsyncProcessing"))
-				if err := writer.Write(data.ToSlice()); err != nil {
+				if err := writer.Write(data); err != nil {
 					ctr.Logger.Error(ctx, "failed to write data to csv",
 						logger.Value("error", err), logger.Value("on", "runAsyncProcessing"))
 				}

@@ -32,6 +32,9 @@ const (
 	HTTPRequestBodyTypeForm HTTPRequestBodyType = "form"
 	// HTTPRequestBodyTypeMultipart represents the multipart body type
 	HTTPRequestBodyTypeMultipart HTTPRequestBodyType = "multipart"
+
+	// DefaultHTTPRequestBodyType represents the default HTTP request body type
+	DefaultHTTPRequestBodyType = HTTPRequestBodyTypeJSON
 )
 
 // AttachRequestInfo represents the request info
@@ -81,6 +84,9 @@ func (r HTTPRequest) CreateRequest(ctx context.Context, ctr *container.Container
 	var header = http.Header{}
 	switch r.BodyType {
 	case HTTPRequestBodyTypeJSON:
+		if r.Body == nil {
+			break
+		}
 		bodyBytes, err := json.Marshal(r.Body)
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal request body: %w", err)

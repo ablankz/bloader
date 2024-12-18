@@ -8,7 +8,7 @@ import (
 )
 
 // HTTPDataWrite writes the data to the output
-type HTTPDataWrite func(ctx context.Context, ctr *container.Container, data WriteHTTPData) error
+type HTTPDataWrite func(ctx context.Context, ctr *container.Container, data []string) error
 
 // Output represents a output to be scanned
 type Output interface {
@@ -18,6 +18,7 @@ type Output interface {
 		ctr *container.Container,
 		enabled bool,
 		uniqueName string,
+		header []string,
 	) (HTTPDataWrite, Close, error)
 }
 

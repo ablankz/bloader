@@ -25,6 +25,11 @@ targets:
         url: "http://localhost:10090/api/v1/query"
       - env: "production"
         url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
+  - id: "testServer"
+    type: "http"
+    values:
+      - env: "local"
+        url: "https://jsonplaceholder.typicode.com"
 outputs:
     # The id is required, and it must be unique.
   - id: "outputLocalCSV"

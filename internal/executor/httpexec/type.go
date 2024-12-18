@@ -3,7 +3,9 @@ package httpexec
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ablankz/bloader/internal/container"
 )
@@ -56,6 +58,55 @@ func NewTerminateTypeFromString(s string) (TerminateType, []string, error) {
 		return TerminateTypeByStatusCode, params, nil
 	default:
 		return "", nil, fmt.Errorf("invalid terminate type: %s", s)
+	}
+}
+
+// ResponseContent represents the response content
+type ResponseContent struct {
+	Success         bool
+	StartTime       time.Time
+	EndTime         time.Time
+	Res             any
+	ByteResponse    []byte
+	ResponseTime    int64
+	StatusCode      int
+	ReqCreateHasErr bool
+	ParseResHasErr  bool
+	HasSystemErr    bool
+	WithCountLimit  bool
+}
+
+// ToWriteHTTPData converts the ResponseContent to WriteHTTPData
+func (r ResponseContent) ToWriteHTTPData(count int) WriteHTTPData {
+	return WriteHTTPData{
+		Success:          r.Success,
+		SendDatetime:     r.StartTime.Format(time.RFC3339Nano),
+		ReceivedDatetime: r.EndTime.Format(time.RFC3339Nano),
+		Count:            count,
+		ResponseTime:     int(r.ResponseTime),
+		StatusCode:       strconv.Itoa(r.StatusCode),
+	}
+}
+
+// WriteHTTPData represents the data to be written
+type WriteHTTPData struct {
+	Success          bool
+	SendDatetime     string
+	ReceivedDatetime string
+	Count            int
+	ResponseTime     int
+	StatusCode       string
+}
+
+// ToSlice converts the WriteHTTPData to a slice
+func (d WriteHTTPData) ToSlice() []string {
+	return []string{
+		strconv.FormatBool(d.Success),
+		d.SendDatetime,
+		d.ReceivedDatetime,
+		strconv.Itoa(d.Count),
+		strconv.Itoa(d.ResponseTime),
+		d.StatusCode,
 	}
 }
 

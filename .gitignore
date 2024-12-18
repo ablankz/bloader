@@ -33,3 +33,4 @@ logs
 
 bench/
 local_store/
+outputs/

@@ -142,9 +142,6 @@ func baseExecute(
 			}
 		}
 
-		if len(validRunner.StoreImport.Data) > 0 {
-		}
-
 		data = map[string]any{
 			"Values":       replacedValuesData,
 			"ThreadValues": replaceThreadValuesData,
@@ -240,7 +237,7 @@ func baseExecute(
 		if validOneExec, err = oneExec.Validate(ctr, outputCtr); err != nil {
 			return fmt.Errorf("failed to validate one exec: %v", err)
 		}
-		if err := validOneExec.Run(ctx, ctr, outputRoot, str, threadOnlyStr); err != nil {
+		if err := validOneExec.Run(ctx, ctr, outputRoot, str); err != nil {
 			if err := wait(ctx, ctr, validRunner, RunnerSleepValueAfterFailedExec); err != nil {
 				return fmt.Errorf("failed to wait: %v", err)
 			}

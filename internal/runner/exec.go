@@ -1,0 +1,85 @@
+package runner
+
+import "fmt"
+
+// ExecRequestData represents the data configuration for the OneExec runner
+type ExecRequestData struct {
+	Key       *string        `yaml:"key"`
+	Extractor *DataExtractor `yaml:"extractor"`
+}
+
+// ValidExecRequestData represents the valid data configuration for the OneExec runner
+type ValidExecRequestData struct {
+	Key       string
+	Extractor ValidDataExtractor
+}
+
+// Validate validates the OneExecRequestData
+func (d ExecRequestData) Validate() (ValidExecRequestData, error) {
+	if d.Key == nil {
+		return ValidExecRequestData{}, fmt.Errorf("key is required")
+	}
+	if d.Extractor == nil {
+		return ValidExecRequestData{}, fmt.Errorf("extractor is required")
+	}
+	validExtractor, err := d.Extractor.Validate()
+	if err != nil {
+		return ValidExecRequestData{}, fmt.Errorf("failed to validate extractor: %v", err)
+	}
+	return ValidExecRequestData{
+		Key:       *d.Key,
+		Extractor: validExtractor,
+	}, nil
+}
+
+// ValidExecRequestDataSlice represents a slice of ValidExecRequestData
+type ValidExecRequestDataSlice []ValidExecRequestData
+
+// ExtractHeader extracts the header from the data
+func (s ValidExecRequestDataSlice) ExtractHeader() []string {
+	var header []string
+	for _, d := range s {
+		header = append(header, d.Key)
+	}
+	return header
+}
+
+// ExecRequestStoreData represents the store data configuration for the OneExec runner
+type ExecRequestStoreData struct {
+	BucketID  *string                 `yaml:"bucket_id"`
+	StoreKey  *string                 `yaml:"store_key"`
+	Encrypt   CredentialEncryptConfig `yaml:"encrypt"`
+	Extractor *DataExtractor          `yaml:"extractor"`
+}
+
+// ValidExecRequestStoreData represents the valid store data configuration for the OneExec runner
+type ValidExecRequestStoreData struct {
+	BucketID  string
+	StoreKey  string
+	Encrypt   ValidCredentialEncryptConfig
+	Extractor ValidDataExtractor
+}
+
+// Validate validates the OneExecRequestStoreData
+func (d ExecRequestStoreData) Validate() (ValidExecRequestStoreData, error) {
+	if d.BucketID == nil {
+		return ValidExecRequestStoreData{}, fmt.Errorf("bucket_id is required")
+	}
+	if d.StoreKey == nil {
+		return ValidExecRequestStoreData{}, fmt.Errorf("store_key is required")
+	}
+	validEncrypt, err := d.Encrypt.Validate()
+	if err != nil {
+		return ValidExecRequestStoreData{}, fmt.Errorf("failed to validate encrypt: %v", err)
+	}
+	validExtractor, err := d.Extractor.Validate()
+	if err != nil {
+		return ValidExecRequestStoreData{}, fmt.Errorf("failed to validate extractor: %v", err)
+	}
+	return ValidExecRequestStoreData{
+		BucketID:  *d.BucketID,
+		StoreKey:  *d.StoreKey,
+		Encrypt:   validEncrypt,
+		Extractor: validExtractor,
+	}, nil
+}
