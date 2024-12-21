@@ -2,20 +2,20 @@ package runner
 
 import (
 	"context"
-	"encoding/csv"
 	"fmt"
-	"os"
+	"net/http"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/ablankz/bloader/internal/auth"
-	"github.com/ablankz/bloader/internal/batch/batchtest/batchexecmap"
-	"github.com/ablankz/bloader/internal/batch/batchtest/execbatch"
 	"github.com/ablankz/bloader/internal/config"
 	"github.com/ablankz/bloader/internal/container"
 	"github.com/ablankz/bloader/internal/executor/httpexec"
 	"github.com/ablankz/bloader/internal/logger"
 	"github.com/ablankz/bloader/internal/output"
+	"github.com/ablankz/bloader/internal/runner/matcher"
+	"github.com/ablankz/bloader/internal/utils"
 )
 
 // MassExecType represents the type of MassExec
@@ -65,10 +65,10 @@ func (r MassExec) Validate(ctr *container.Container, oCtr output.OutputContainer
 		return ValidMassExec{}, fmt.Errorf("failed to validate auth: %v", err)
 	}
 	var validRequests []ValidMassExecRequest
-	for _, req := range r.Requests {
+	for i, req := range r.Requests {
 		validRequest, err := req.Validate(ctr, massExecType)
 		if err != nil {
-			return ValidMassExec{}, fmt.Errorf("failed to validate request: %v", err)
+			return ValidMassExec{}, fmt.Errorf("failed to validate request[%d]: %v", i, err)
 		}
 		validRequests = append(validRequests, validRequest)
 	}
@@ -128,31 +128,124 @@ func (a MassExecAuth) Validate(ctr *container.Container) (*auth.Authenticator, e
 	return auth, nil
 }
 
+// MassExecRequestBreak represents the break configuration for the MassExec runner
+type MassExecRequestBreak struct {
+	Time         *string                      `yaml:"time"`
+	Count        *int                         `yaml:"count"`
+	SysError     bool                         `yaml:"sys_error"`
+	ParseError   bool                         `yaml:"parse_error"`
+	WriteError   bool                         `yaml:"write_error"`
+	StatusCode   matcher.StatusCodeConditions `yaml:"status_code"`
+	ResponseBody matcher.BodyConditions       `yaml:"response_body"`
+}
+
+// ValidMassExecRequestBreak represents the valid break configuration for the MassExec runner
+type ValidMassExecRequestBreak struct {
+	Time struct {
+		Enabled bool
+		Time    time.Duration
+	}
+	Count               httpexec.RequestCountLimit
+	SysError            bool
+	ParseError          bool
+	WriteError          bool
+	StatusCodeMatcher   matcher.StatusCodeConditionsMatcher
+	ResponseBodyMatcher matcher.BodyConditionsMatcher
+}
+
+// Validate validates the MassExecRequestBreak
+func (b MassExecRequestBreak) Validate(ctx context.Context, ctr *container.Container) (ValidMassExecRequestBreak, error) {
+	var valid ValidMassExecRequestBreak
+	var err error
+	if b.Time != nil {
+		duration, err := time.ParseDuration(*b.Time)
+		if err != nil {
+			return ValidMassExecRequestBreak{}, fmt.Errorf("failed to parse time: %v", err)
+		}
+		valid.Time.Enabled = true
+		valid.Time.Time = duration
+	}
+	if b.Count != nil {
+		valid.Count.Enabled = true
+		valid.Count.Count = *b.Count
+	}
+	valid.SysError = b.SysError
+	valid.ParseError = b.ParseError
+	valid.WriteError = b.WriteError
+	if valid.StatusCodeMatcher, err = b.StatusCode.MatcherGenerate(ctx, ctr); err != nil {
+		return ValidMassExecRequestBreak{}, fmt.Errorf("failed to generate status code matcher: %v", err)
+	}
+	if valid.ResponseBodyMatcher, err = b.ResponseBody.MatcherGenerate(ctx, ctr); err != nil {
+		return ValidMassExecRequestBreak{}, fmt.Errorf("failed to generate response body matcher: %v", err)
+	}
+	return valid, nil
+}
+
+// MassExecRequestRecordExcludeFilter represents the record exclude filter configuration for the MassExec runner
+type MassExecRequestRecordExcludeFilter struct {
+	Count        matcher.CountConditions      `yaml:"count"`
+	StatusCode   matcher.StatusCodeConditions `yaml:"status_code"`
+	ResponseBody matcher.BodyConditions       `yaml:"response_body"`
+}
+
+// ValidMassExecRequestRecordExcludeFilter represents the valid record exclude filter configuration for the MassExec runner
+type ValidMassExecRequestRecordExcludeFilter struct {
+	CountFilter        matcher.CountConditionsMatcher
+	StatusCodeFilter   matcher.StatusCodeConditionsMatcher
+	ResponseBodyFilter matcher.BodyConditionsMatcher
+}
+
+// Validate validates the MassExecRequestRecordExcludeFilter
+func (f MassExecRequestRecordExcludeFilter) Validate(ctx context.Context, ctr *container.Container) (ValidMassExecRequestRecordExcludeFilter, error) {
+	var valid ValidMassExecRequestRecordExcludeFilter
+	var err error
+	if valid.CountFilter, err = f.Count.MatcherGenerate(ctx, ctr); err != nil {
+		return ValidMassExecRequestRecordExcludeFilter{}, fmt.Errorf("failed to generate count filter: %v", err)
+	}
+	if valid.StatusCodeFilter, err = f.StatusCode.MatcherGenerate(ctx, ctr); err != nil {
+		return ValidMassExecRequestRecordExcludeFilter{}, fmt.Errorf("failed to generate status code filter: %v", err)
+	}
+	if valid.ResponseBodyFilter, err = f.ResponseBody.MatcherGenerate(ctx, ctr); err != nil {
+		return ValidMassExecRequestRecordExcludeFilter{}, fmt.Errorf("failed to generate response body filter: %v", err)
+	}
+	return valid, nil
+}
+
 // MassExecRequest represents the request configuration for the MassExec runner
 type MassExecRequest struct {
-	TargetID      *string           `yaml:"target_id"`
-	Endpoint      *string           `yaml:"endpoint"`
-	Method        *string           `yaml:"method"`
-	QueryParam    map[string]any    `yaml:"query_param"`
-	PathVariables map[string]string `yaml:"path_variables"`
-	Headers       map[string]any    `yaml:"headers"`
-	BodyType      *string           `yaml:"body_type"`
-	Body          any               `yaml:"body"`
-	ResponseType  *string           `yaml:"response_type"`
-	Data          []ExecRequestData `yaml:"data"`
+	TargetID            *string                            `yaml:"target_id"`
+	Endpoint            *string                            `yaml:"endpoint"`
+	Method              *string                            `yaml:"method"`
+	QueryParam          map[string]any                     `yaml:"query_param"`
+	PathVariables       map[string]string                  `yaml:"path_variables"`
+	Headers             map[string]any                     `yaml:"headers"`
+	BodyType            *string                            `yaml:"body_type"`
+	Body                any                                `yaml:"body"`
+	ResponseType        *string                            `yaml:"response_type"`
+	Data                []ExecRequestData                  `yaml:"data"`
+	Interval            *string                            `yaml:"interval"`
+	AwaitPrevResp       bool                               `yaml:"await_prev_response"`
+	SuccessBreak        []string                           `yaml:"success_break"`
+	Break               MassExecRequestBreak               `yaml:"break"`
+	RecordExcludeFilter MassExecRequestRecordExcludeFilter `yaml:"record_exclude_filter"`
 }
 
 // ValidMassExecRequest represents the valid request configuration for the MassExec runner
 type ValidMassExecRequest struct {
-	URL           string
-	Method        string
-	QueryParam    map[string]any
-	PathVariables map[string]string
-	Headers       map[string]any
-	BodyType      httpexec.HTTPRequestBodyType
-	Body          any
-	ResponseType  string
-	Data          ValidExecRequestDataSlice
+	URL                 string
+	Method              string
+	QueryParam          map[string]any
+	PathVariables       map[string]string
+	Headers             map[string]any
+	BodyType            httpexec.HTTPRequestBodyType
+	Body                any
+	ResponseType        string
+	Data                ValidExecRequestDataSlice
+	Interval            time.Duration
+	AwaitPrevResp       bool
+	SuccessBreak        matcher.TerminateTypeAndParamsSlice
+	Break               ValidMassExecRequestBreak
+	RecordExcludeFilter ValidMassExecRequestRecordExcludeFilter
 }
 
 // Validate validates the MassExecRequest
@@ -174,7 +267,6 @@ func (r MassExecRequest) Validate(ctr *container.Container, targetType MassExecT
 		return ValidMassExecRequest{}, fmt.Errorf("method is required")
 	}
 	valid.Method = *r.Method
-
 	valid.QueryParam = r.QueryParam
 	valid.PathVariables = r.PathVariables
 	valid.Headers = r.Headers
@@ -193,12 +285,28 @@ func (r MassExecRequest) Validate(ctr *container.Container, targetType MassExecT
 		return ValidMassExecRequest{}, fmt.Errorf("response_type is required")
 	}
 	valid.ResponseType = *r.ResponseType
-	for _, d := range r.Data {
+	for i, d := range r.Data {
 		validData, err := d.Validate()
 		if err != nil {
-			return ValidMassExecRequest{}, fmt.Errorf("failed to validate data: %v", err)
+			return ValidMassExecRequest{}, fmt.Errorf("failed to validate data[%d]: %v", i, err)
 		}
 		valid.Data = append(valid.Data, validData)
+	}
+	if r.Interval == nil {
+		return ValidMassExecRequest{}, fmt.Errorf("interval is required")
+	}
+	if valid.Interval, err = time.ParseDuration(*r.Interval); err != nil {
+		return ValidMassExecRequest{}, fmt.Errorf("failed to parse interval: %v", err)
+	}
+	valid.AwaitPrevResp = r.AwaitPrevResp
+	if valid.SuccessBreak, err = matcher.NewTerminateTypeAndParamsSliceFromStringSlice(r.SuccessBreak); err != nil {
+		return ValidMassExecRequest{}, fmt.Errorf("failed to parse success break: %v", err)
+	}
+	if valid.Break, err = r.Break.Validate(ctr.Ctx, ctr); err != nil {
+		return ValidMassExecRequest{}, fmt.Errorf("failed to validate break: %v", err)
+	}
+	if valid.RecordExcludeFilter, err = r.RecordExcludeFilter.Validate(ctr.Ctx, ctr); err != nil {
+		return ValidMassExecRequest{}, fmt.Errorf("failed to validate record exclude filter: %v", err)
 	}
 	return valid, nil
 }
@@ -208,12 +316,10 @@ func (r ValidMassExec) Run(
 	ctx context.Context,
 	ctr *container.Container,
 	outputRoot string,
-	str *sync.Map,
-	threadOnlyStore *sync.Map,
 ) error {
 	switch r.Type {
 	case MassExecTypeHTTP:
-		return r.runHTTP(ctx, ctr, outputRoot, str)
+		return r.runHTTP(ctx, ctr, outputRoot)
 	}
 	return nil
 }
@@ -222,86 +328,119 @@ func (r ValidMassExec) runHTTP(
 	ctx context.Context,
 	ctr *container.Container,
 	outputRoot string,
-	str *sync.Map,
 ) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	concurrentCount := len(r.Requests)
 
 	threadExecutors := make([]*MassiveExecThreadExecutor, concurrentCount)
+	uniqueName := fmt.Sprintf("%s/%s", outputRoot, utils.GenerateUniqueID())
 
 	for i := 0; i < concurrentCount; i++ {
-		request := massExec.Data.Requests[i]
+		request := r.Requests[i]
 		threadExecutors[i] = &MassiveExecThreadExecutor{
 			ID: i + 1,
 		}
 
-		if massExec.Output.Enabled {
-			logFilePath := fmt.Sprintf("%s/massive_execute_%010d.csv", outputRoot, i+1)
-			file, err := os.Create(logFilePath)
-			if err != nil {
-				return fmt.Errorf("failed to create file: %v", err)
-			}
-			threadExecutors[i].outputFile = file
-			defer threadExecutors[i].Close(ctx)
-
-			writer := csv.NewWriter(file)
-			header := []string{"Success", "SendDatetime", "ReceivedDatetime", "Count", "ResponseTime", "StatusCode", "Data"}
-			if err := writer.Write(header); err != nil {
-				return fmt.Errorf("failed to write header: %v", err)
-			}
-			writer.Flush()
-		}
-
-		endType := massExec.Data.Requests[i].EndpointType
-		execType := batchexecmap.NewExecTypeFromString(endType)
-		if execType == 0 {
-			return fmt.Errorf("failed to parse exec type: %s", endType)
-		}
-		factor := batchexecmap.TypeFactoryMap[execType]
-		// INFO: close on factor.Factory(response handler), because only it will write to this channel
-		termChan := make(chan execbatch.TerminateType)
-		validatedReq := &execbatch.ValidatedExecRequest{}
-		if err := execbatch.ValidateExecReq(ctx, ctr, request.ExecRequest, validatedReq); err != nil {
-			return fmt.Errorf("failed to validate execute request: %v", err)
-		}
-		writeFunc := func(
-			ctx context.Context,
-			ctr *app.Container,
-			id int,
-			data execbatch.WriteData,
-		) error {
-			if !massExec.Output.Enabled {
+		req := httpexec.HTTPRequest{
+			Method:        request.Method,
+			URL:           request.URL,
+			Headers:       request.Headers,
+			QueryParams:   request.QueryParam,
+			PathVariables: request.PathVariables,
+			BodyType:      request.BodyType,
+			Body:          request.Body,
+			AttachRequestInfo: func(ctx context.Context, ctr *container.Container, req *http.Request) error {
+				(*r.Auth).SetOnRequest(ctx, ctr.Store, req)
 				return nil
+			},
+		}
+		resChan := make(chan httpexec.ResponseContent)
+		exe := httpexec.MassRequestContent[httpexec.HTTPRequest]{
+			Req:          req,
+			Interval:     request.Interval,
+			ResponseWait: request.AwaitPrevResp,
+			ResChan:      resChan,
+			CountLimit:   request.Break.Count,
+			ResponseType: httpexec.ResponseType(request.ResponseType),
+		}
+
+		writers := make([]output.HTTPDataWrite, 0)
+		uName := fmt.Sprintf("%s_%d", uniqueName, i+1)
+		var writeCloser []output.Close
+		for _, o := range r.Output {
+			writer, close, err := o.HTTPDataWriteFactory(
+				ctx,
+				ctr,
+				true,
+				uName,
+				append(
+					[]string{
+						"Success",
+						"SendDatetime",
+						"ReceivedDatetime",
+						"Count",
+						"ResponseTime",
+						"StatusCode",
+					},
+					request.Data.ExtractHeader()...,
+				),
+			)
+			if err != nil {
+				return fmt.Errorf("failed to create writer: %v", err)
 			}
-			writer := csv.NewWriter(threadExecutors[i].outputFile)
-			ctr.Logger.Debug(ctx, "Writing data to csv",
-				logger.Value("id", id), logger.Value("data", data), logger.Value("on", "runAsyncProcessing"))
-			if err := writer.Write(data.ToSlice()); err != nil {
-				ctr.Logger.Error(ctx, "failed to write data to csv",
-					logger.Value("error", err), logger.Value("on", "runAsyncProcessing"))
+			writeCloser = append(writeCloser, close)
+			writers = append(writers, writer)
+		}
+
+		closer := func() error {
+			for _, c := range writeCloser {
+				c()
 			}
-			writer.Flush()
+			close(resChan)
 			return nil
 		}
-		executor, _, err := factor.Factory(
-			ctx,
-			ctr,
-			i+1,
-			validatedReq,
-			termChan,
-			ctr.AuthToken,
-			ctr.Config.Web.API.Url,
-			writeFunc,
-		)
-		ctr.Logger.Info(ctx, "created executor",
-			logger.Value("id", i+1), logger.Value("type", endType), logger.Value("executor", executor))
-		if err != nil {
-			return fmt.Errorf("failed to create executor: %v", err)
-		}
-		threadExecutors[i].RequestExecutor = executor
+
+		termChan := make(chan termChanType)
+
+		threadExecutors[i].closer = closer
+		threadExecutors[i].RequestExecutor = exe
 		threadExecutors[i].TermChan = termChan
 		threadExecutors[i].successBreak = request.SuccessBreak
+
+		consumer := func(
+			ctx context.Context,
+			ctr *container.Container,
+			id int,
+			data WriteData,
+		) error {
+			var additionalData []string
+			for _, d := range request.Data {
+				result, err := d.Extractor.Extract(data.RawData)
+				if err != nil {
+					return fmt.Errorf("failed to extract data: %v", err)
+				}
+				additionalData = append(additionalData, fmt.Sprint(result))
+			}
+
+			for _, w := range writers {
+				if err := w(ctx, ctr, append(data.ToSlice(), additionalData...)); err != nil {
+					return fmt.Errorf("failed to write data: %v", err)
+				}
+			}
+
+			return nil
+		}
+
+		RunAsyncProcessing(
+			ctx,
+			ctr,
+			threadExecutors[i].ID,
+			r.Requests[i],
+			termChan,
+			resChan,
+			consumer,
+		)
 	}
 
 	var wg sync.WaitGroup
@@ -310,6 +449,12 @@ func (r ValidMassExec) runHTTP(
 	for _, executor := range threadExecutors {
 		wg.Add(1)
 		go func(exec *MassiveExecThreadExecutor) {
+			defer func() {
+				if err := exec.Close(ctx); err != nil {
+					ctr.Logger.Error(ctx, "failed to close",
+						logger.Value("error", err), logger.Value("id", exec.ID))
+				}
+			}()
 			defer wg.Done()
 			if err := exec.Execute(ctx, ctr, startChan); err != nil {
 				atomicErr.Store(err)
@@ -332,22 +477,38 @@ func (r ValidMassExec) runHTTP(
 	return nil
 }
 
-type MassiveExecThreadExecutor struct {
-	ID              int
-	outputFile      *os.File
-	RequestExecutor httpexec.MassRequestExecutor
-	TermChan        chan execbatch.TerminateType
-	successBreak    []string
+// termChanType represents the type of termChan
+type termChanType struct {
+	termType matcher.TerminateType
+	param    string
 }
 
+// NewTermChanType creates a new termChanType
+func NewTermChanType(termType matcher.TerminateType, param string) termChanType {
+	return termChanType{
+		termType: termType,
+		param:    param,
+	}
+}
+
+// MassiveExecThreadExecutor represents the thread executor for the MassExec runner
+type MassiveExecThreadExecutor struct {
+	ID              int
+	RequestExecutor httpexec.MassRequestExecutor
+	TermChan        chan termChanType
+	successBreak    matcher.TerminateTypeAndParamsSlice
+	closer          func() error
+}
+
+// NewMassiveRequestThreadExecutor creates a new MassiveExecThreadExecutor
 func NewMassiveRequestThreadExecutor(
 	id int,
-	outputFile *os.File,
+	closer func() error,
 	req httpexec.MassRequestExecutor,
 ) *MassiveExecThreadExecutor {
 	return &MassiveExecThreadExecutor{
 		ID:              id,
-		outputFile:      outputFile,
+		closer:          closer,
 		RequestExecutor: req,
 	}
 }
@@ -362,6 +523,8 @@ func (e *MassiveExecThreadExecutor) Execute(
 
 	<-startChan
 
+	fmt.Println("Execute Start", e.ID)
+
 	ctr.Logger.Info(ctx, "Execute Start",
 		logger.Value("ExecutorID", e.ID))
 	err := e.RequestExecutor.MassRequestExecute(ctx, ctr)
@@ -372,16 +535,17 @@ func (e *MassiveExecThreadExecutor) Execute(
 	termType := <-e.TermChan
 	ctr.Logger.Info(ctx, "Execute End For Break",
 		logger.Value("ExecuteID", e.ID))
-	for _, breakType := range e.successBreak {
-		if termType == execbatch.NewTerminateTypeFromString(breakType) {
-			ctr.Logger.Info(ctx, "Execute End For Success Break", logger.Value("ExecuteID", e.ID))
-			return nil
-		}
+	if e.successBreak.Match(termType.termType, termType.param) {
+		fmt.Println("Execute End For Success Break", e.ID)
+		ctr.Logger.Info(ctx, "Execute End For Success Break", logger.Value("ExecuteID", e.ID))
+		return nil
 	}
-	return fmt.Errorf("execute End For Fail Break: %s", termType.String())
+	return fmt.Errorf("execute End For Fail Break: %v(%v)", termType.termType, termType.param)
 }
 
 func (e *MassiveExecThreadExecutor) Close(ctx context.Context) error {
-	e.outputFile.Close()
+	if e.closer != nil {
+		return e.closer()
+	}
 	return nil
 }

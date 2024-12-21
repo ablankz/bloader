@@ -2,64 +2,11 @@ package httpexec
 
 import (
 	"context"
-	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/ablankz/bloader/internal/container"
 )
-
-// TerminateType represents the type of terminate
-type TerminateType string
-
-const (
-	// TerminateTypeByContext represents the context type
-	TerminateTypeByContext TerminateType = "context"
-	// TerminateTypeByCount represents the count type
-	TerminateTypeByCount TerminateType = "count"
-	// TerminateTypeBySystemError represents the system error type
-	TerminateTypeBySystemError TerminateType = "sysError"
-	// TerminateTypeByCreateRequestErr represents the create request error type
-	TerminateTypeByCreateRequestErr TerminateType = "createRequestError"
-	// TerminateTypeByParseResponseErr represents the parse response error type
-	TerminateTypeByParseResponseErr TerminateType = "parseError"
-	// TerminateTypeByWriteError represents the write error type
-	TerminateTypeByWriteError TerminateType = "writeError"
-	// TerminateTypeByTimeout represents the timeout type
-	TerminateTypeByTimeout TerminateType = "time"
-	// TerminateTypeByResponseBody represents the response body type
-	TerminateTypeByResponseBody TerminateType = "responseBody"
-	// TerminateTypeByStatusCode represents the status code type
-	TerminateTypeByStatusCode TerminateType = "statusCode"
-)
-
-func NewTerminateTypeFromString(s string) (TerminateType, []string, error) {
-	strs := strings.Split(s, "/")
-	params := strings.Split(strs[1], ",")
-	switch TerminateType(strs[0]) {
-	case TerminateTypeByContext:
-		return TerminateTypeByContext, nil, nil
-	case TerminateTypeByCount:
-		return TerminateTypeByCount, nil, nil
-	case TerminateTypeBySystemError:
-		return TerminateTypeBySystemError, nil, nil
-	case TerminateTypeByCreateRequestErr:
-		return TerminateTypeByCreateRequestErr, nil, nil
-	case TerminateTypeByParseResponseErr:
-		return TerminateTypeByParseResponseErr, nil, nil
-	case TerminateTypeByWriteError:
-		return TerminateTypeByWriteError, nil, nil
-	case TerminateTypeByTimeout:
-		return TerminateTypeByTimeout, nil, nil
-	case TerminateTypeByResponseBody:
-		return TerminateTypeByResponseBody, params, nil
-	case TerminateTypeByStatusCode:
-		return TerminateTypeByStatusCode, params, nil
-	default:
-		return "", nil, fmt.Errorf("invalid terminate type: %s", s)
-	}
-}
 
 // ResponseContent represents the response content
 type ResponseContent struct {
@@ -67,6 +14,7 @@ type ResponseContent struct {
 	StartTime       time.Time
 	EndTime         time.Time
 	Res             any
+	Count           int
 	ByteResponse    []byte
 	ResponseTime    int64
 	StatusCode      int
@@ -82,7 +30,7 @@ func (r ResponseContent) ToWriteHTTPData(count int) WriteHTTPData {
 		Success:          r.Success,
 		SendDatetime:     r.StartTime.Format(time.RFC3339Nano),
 		ReceivedDatetime: r.EndTime.Format(time.RFC3339Nano),
-		Count:            count,
+		Count:            r.Count,
 		ResponseTime:     int(r.ResponseTime),
 		StatusCode:       strconv.Itoa(r.StatusCode),
 	}

@@ -115,6 +115,7 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 							Success:        false,
 							StartTime:      startTime,
 							EndTime:        endTime,
+							Count:          count,
 							ResponseTime:   endTime.Sub(startTime).Milliseconds(),
 							HasSystemErr:   true,
 							WithCountLimit: countOver,
@@ -142,6 +143,7 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 							Res:            response,
 							StartTime:      startTime,
 							EndTime:        endTime,
+							Count:          count,
 							ResponseTime:   endTime.Sub(startTime).Milliseconds(),
 							StatusCode:     statusCode,
 							ParseResHasErr: true,
@@ -178,6 +180,7 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 							ByteResponse:   responseByte,
 							StartTime:      startTime,
 							EndTime:        endTime,
+							Count:          count,
 							ResponseTime:   endTime.Sub(startTime).Milliseconds(),
 							StatusCode:     statusCode,
 							ParseResHasErr: true,
@@ -195,6 +198,7 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 						Res:            response,
 						StartTime:      startTime,
 						EndTime:        endTime,
+						Count:          count,
 						ResponseTime:   endTime.Sub(startTime).Milliseconds(),
 						StatusCode:     statusCode,
 						WithCountLimit: countOver,
@@ -210,7 +214,6 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 
 				if countLimitOver {
 					<-ctx.Done()
-
 					ctr.Logger.Info(ctx, "request processing is interrupted due to count limit",
 						logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
 					return

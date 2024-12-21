@@ -1,17 +1,21 @@
 package runner
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/ablankz/bloader/internal/runner/matcher"
+)
 
 // ExecRequestData represents the data configuration for the OneExec runner
 type ExecRequestData struct {
-	Key       *string        `yaml:"key"`
-	Extractor *DataExtractor `yaml:"extractor"`
+	Key       *string                `yaml:"key"`
+	Extractor *matcher.DataExtractor `yaml:"extractor"`
 }
 
 // ValidExecRequestData represents the valid data configuration for the OneExec runner
 type ValidExecRequestData struct {
 	Key       string
-	Extractor ValidDataExtractor
+	Extractor matcher.ValidDataExtractor
 }
 
 // Validate validates the OneExecRequestData
@@ -49,7 +53,7 @@ type ExecRequestStoreData struct {
 	BucketID  *string                 `yaml:"bucket_id"`
 	StoreKey  *string                 `yaml:"store_key"`
 	Encrypt   CredentialEncryptConfig `yaml:"encrypt"`
-	Extractor *DataExtractor          `yaml:"extractor"`
+	Extractor *matcher.DataExtractor  `yaml:"extractor"`
 }
 
 // ValidExecRequestStoreData represents the valid store data configuration for the OneExec runner
@@ -57,7 +61,7 @@ type ValidExecRequestStoreData struct {
 	BucketID  string
 	StoreKey  string
 	Encrypt   ValidCredentialEncryptConfig
-	Extractor ValidDataExtractor
+	Extractor matcher.ValidDataExtractor
 }
 
 // Validate validates the OneExecRequestStoreData

@@ -254,7 +254,7 @@ func baseExecute(
 		if validMassExec, err = massExec.Validate(ctr, outputCtr); err != nil {
 			return fmt.Errorf("failed to validate mass exec: %v", err)
 		}
-		if err := validMassExec.Run(ctx, ctr, outputRoot, str, threadOnlyStr); err != nil {
+		if err := validMassExec.Run(ctx, ctr, outputRoot); err != nil {
 			if err := wait(ctx, ctr, validRunner, RunnerSleepValueAfterFailedExec); err != nil {
 				return fmt.Errorf("failed to wait: %v", err)
 			}
