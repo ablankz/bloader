@@ -144,7 +144,7 @@ type ValidOneExecRequest struct {
 	QueryParam    map[string]any
 	PathVariables map[string]string
 	Headers       map[string]any
-	BodyType      httpexec.HTTPRequestBodyType
+	BodyType      HTTPRequestBodyType
 	Body          any
 	ResponseType  string
 	Data          ValidExecRequestDataSlice
@@ -177,11 +177,11 @@ func (r OneExecRequest) Validate(ctr *container.Container, targetType OneExecTyp
 	valid.Headers = r.Headers
 	valid.Body = r.Body
 	if r.BodyType == nil {
-		valid.BodyType = httpexec.DefaultHTTPRequestBodyType
+		valid.BodyType = DefaultHTTPRequestBodyType
 	} else {
-		switch httpexec.HTTPRequestBodyType(*r.BodyType) {
-		case httpexec.HTTPRequestBodyTypeJSON, httpexec.HTTPRequestBodyTypeForm, httpexec.HTTPRequestBodyTypeMultipart:
-			valid.BodyType = httpexec.HTTPRequestBodyTypeJSON
+		switch HTTPRequestBodyType(*r.BodyType) {
+		case HTTPRequestBodyTypeJSON, HTTPRequestBodyTypeForm, HTTPRequestBodyTypeMultipart:
+			valid.BodyType = HTTPRequestBodyTypeJSON
 		default:
 			return ValidOneExecRequest{}, fmt.Errorf("invalid body_type value: %s", *r.BodyType)
 		}
@@ -234,7 +234,7 @@ func (r ValidOneExec) runHTTP(
 	outputRoot string,
 	str *sync.Map,
 ) error {
-	req := httpexec.HTTPRequest{
+	req := HTTPRequest{
 		Method:        r.Request.Method,
 		URL:           r.Request.URL,
 		Headers:       r.Request.Headers,
@@ -247,7 +247,7 @@ func (r ValidOneExec) runHTTP(
 			return nil
 		},
 	}
-	exe := httpexec.RequestContent[httpexec.HTTPRequest]{
+	exe := httpexec.RequestContent[HTTPRequest]{
 		Req:          req,
 		ResponseType: httpexec.ResponseType(r.Request.ResponseType),
 	}

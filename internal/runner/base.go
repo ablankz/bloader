@@ -6,10 +6,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"io"
 	"os"
 	"sync"
+	"text/template"
 	"time"
 
 	"github.com/Masterminds/sprig/v3"
@@ -57,7 +57,6 @@ func baseExecute(
 	if err != nil {
 		return fmt.Errorf("failed to parse yaml: %v", err)
 	}
-
 	replacedValuesData := make(map[string]any)
 	replaceThreadValuesData := make(map[string]any)
 
@@ -251,7 +250,7 @@ func baseExecute(
 			return fmt.Errorf("failed to decode yaml: %v", err)
 		}
 		var validMassExec ValidMassExec
-		if validMassExec, err = massExec.Validate(ctr, outputCtr); err != nil {
+		if validMassExec, err = massExec.Validate(ctr, outputCtr, yamlTemplate, data); err != nil {
 			return fmt.Errorf("failed to validate mass exec: %v", err)
 		}
 		if err := validMassExec.Run(ctx, ctr, outputRoot); err != nil {

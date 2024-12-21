@@ -26,7 +26,7 @@ func (q RequestContent[Req]) RequestExecute(
 	ctx context.Context,
 	ctr *container.Container,
 ) (ResponseContent, error) {
-	req, err := q.Req.CreateRequest(ctx, ctr)
+	req, err := q.Req.CreateRequest(ctx, ctr, 0)
 	if err != nil {
 		ctr.Logger.Error(ctx, "failed to create request",
 			logger.Value("error", err), logger.Value("on", "RequestContent.QueryExecute"))

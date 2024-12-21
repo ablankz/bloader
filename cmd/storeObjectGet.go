@@ -47,8 +47,8 @@ bloader store object get --bucket 1234 objectKey`,
 			}
 			objVal = b
 		}
-		green := color.New(color.FgGreen).SprintFunc()
-		fmt.Println(green("Object retrieved"), string(objVal))
+		// green := color.New(color.FgGreen).SprintFunc()
+		fmt.Println(string(objVal))
 	},
 }
 

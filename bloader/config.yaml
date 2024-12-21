@@ -1,4 +1,4 @@
-env: "local"
+env: "production"
 loader:
   base_path: "loader"
 targets:
@@ -18,13 +18,12 @@ targets:
       - env: "production"
         url: "wss://ws.state.api.cresplanex.org/ws"
   - id: "metricsServer"
-    type: "metrics"
-    metrics_type: "prometheus"
+    type: "http"
     values:
       - env: "local"
         url: "http://localhost:10090/api/v1/query"
       - env: "production"
-        url: "https://prometheus.state.api.cresplanex.org/api/v1/query"
+        url: "https://prometheus.state.api.cresplanex.org"
   - id: "testServer"
     type: "http"
     values:
@@ -151,37 +150,37 @@ clock:
 language:
   default: "en"
 # The bottom one takes precedence.
-override:
-  - type: "file"
-    # The file_type is required to load the file, supported types are `yaml`, `json`.
-    file_type: "yaml"
-    path: "bloader/partial_override.yaml"
-    partial: true
-    vars:
-      - key: auth[0].oauth2.client_id
-        value: "auth.clientId"
-      - key: auth[0].oauth2.client_secret
-        value: "auth.clientSecret"
-    # If enabled_env is not set, it will be enabled all environments.
-    # enabled_env:
-  - type: "file"
-    file_type: "yaml"
-    path: "bloader/local_override.yaml"
-    # If enabled_env is not set, it will be enabled all environments.
-    enabled_env:
-      - "local"
-  - type: "file"
-    file_type: "yaml"
-    path: "bloader/production_override.yaml"
-    enabled_env:
-      - "production"
-  - type: "static"
-    key: "auth[0].oauth2.auth_url"
-    value: "http://localhost:8080/oauth2/authorize"
-    enabled_env:
-      - "local"
-  - type: "static"
-    key: "auth[0].oauth2.token_url"
-    value: "http://localhost:8080/oauth2/token"
-    enabled_env:
-      - "local"
+override: []
+  # - type: "file"
+  #   # The file_type is required to load the file, supported types are `yaml`, `json`.
+  #   file_type: "yaml"
+  #   path: "bloader/partial_override.yaml"
+  #   partial: true
+  #   vars:
+  #     - key: auth[0].oauth2.client_id
+  #       value: "auth.clientId"
+  #     - key: auth[0].oauth2.client_secret
+  #       value: "auth.clientSecret"
+  #   # If enabled_env is not set, it will be enabled all environments.
+  #   # enabled_env:
+  # - type: "file"
+  #   file_type: "yaml"
+  #   path: "bloader/local_override.yaml"
+  #   # If enabled_env is not set, it will be enabled all environments.
+  #   enabled_env:
+  #     - "local"
+  # - type: "file"
+  #   file_type: "yaml"
+  #   path: "bloader/production_override.yaml"
+  #   enabled_env:
+  #     - "production"
+  # - type: "static"
+  #   key: "auth[0].oauth2.auth_url"
+  #   value: "http://localhost:8080/oauth2/authorize"
+  #   enabled_env:
+  #     - "local"
+  # - type: "static"
+  #   key: "auth[0].oauth2.token_url"
+  #   value: "http://localhost:8080/oauth2/token"
+  #   enabled_env:
+  #     - "local"

@@ -1,0 +1,41 @@
+kind: MassExecute
+type: http
+output:
+  enabled: true
+  ids: 
+    - outputLocalCSV
+auth: 
+  enabled: true
+  auth_id: authForWeb
+requests:
+{{- range slice .Values.usersLists 0 .Values.ThreadCount }}
+  - target_id: "apiServer"
+    endpoint: "/user-profiles"
+    method: POST
+    interval: {{ $.ThreadValues.Interval }}
+    await_prev_response: false
+    headers: {}
+    query_param: {}
+    path_variables: {}
+    body_type: json
+{{- if hasKey $.Dynamic "RequestLoopCount" }}
+{{- with index .usersList $.Dynamic.RequestLoopCount }}
+    body:
+      userId: "{{ .uuid }}"
+      name: "{{ .name }}"
+      email: "{{ .email }}"
+{{- end }}
+{{- end }}
+    success_break:
+      - time
+    break:
+      time: {{ $.ThreadValues.BreakTime }}
+      sys_error: true
+      parse_error: true
+      write_error: true
+      status_code:
+        - id: error
+          op: ne
+          value: 200
+    response_type: json
+{{- end }}
