@@ -4,22 +4,6 @@ step:
   # if set to minus, it will run all the queries in sequence
   concurrency: 0
   flows:
-    # - id: "store"
-    #   type: file
-    #   file: "sc/sc1/store.yaml"
-    #   mkdir: false
-    #   values:
-    #     - key: "ThreadCount"
-    #       value: 100
-    #     - key: "RequestCount"
-    #       value: 3000
-    #   thread_only_values: []
-    - id: "import"
-      type: file
-      file: "sc/sc1/store_import.yaml"
-      mkdir: false
-      values: []
-      thread_only_values: []
     - id: "main"
       type: flow
       mkdir: false
@@ -38,7 +22,7 @@ step:
         - id: "request"
           type: file
           mkdir: true
-          file: "sc/sc1/main.yaml"
+          file: "sc/sc11/main.yaml"
           values:
             - key: "ThreadCount"
               value: 100

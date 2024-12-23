@@ -47,6 +47,18 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 		chanForWait := make(chan struct{})
 		defer close(chanForWait)
 
+		client := &http.Client{
+			Timeout: 10 * time.Minute,
+			Transport: &utils.DelayedTransport{
+				Transport: &http.Transport{
+					MaxIdleConns:        200,
+					MaxIdleConnsPerHost: 180,
+					IdleConnTimeout:     30 * time.Second,
+				},
+				// Delay:     2 * time.Second,
+			},
+		}
+
 		for {
 			select {
 			case <-ctx.Done():
@@ -72,14 +84,14 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 					countLimitOver = true
 				}
 
-				go func(count int, countOver bool) {
+				go func(countInternal int, countOver bool) {
 					defer func() {
 						if waitForResponse {
 							chanForWait <- struct{}{}
 						}
 					}()
 
-					req, err := q.Req.CreateRequest(ctx, ctr, count)
+					req, err := q.Req.CreateRequest(ctx, ctr, countInternal)
 					if err != nil {
 						ctr.Logger.Error(ctx, "failed to create request",
 							logger.Value("error", err), logger.Value("on", "RequestContent.QueryExecute"))
@@ -92,27 +104,20 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 							Success:        false,
 							HasSystemErr:   true,
 							WithCountLimit: countLimitOver,
+							Count:          countInternal,
 						}: // do nothing
 						}
 
 						return
 					}
 
-					client := &http.Client{
-						Timeout: 10 * time.Minute,
-						Transport: &utils.DelayedTransport{
-							Transport: http.DefaultTransport,
-							// Delay:     2 * time.Second,
-						},
-					}
-
 					ctr.Logger.Debug(ctx, "sending request",
-						logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL), logger.Value("count", count))
+						logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL), logger.Value("count", countInternal))
 					startTime := time.Now()
 					resp, err := client.Do(req)
 					endTime := time.Now()
 					ctr.Logger.Debug(ctx, "received response",
-						logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL), logger.Value("count", count))
+						logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL), logger.Value("count", countInternal))
 					if err != nil {
 						ctr.Logger.Error(ctx, "response error",
 							logger.Value("error", err), logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
@@ -125,14 +130,14 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 							Success:        false,
 							StartTime:      startTime,
 							EndTime:        endTime,
-							Count:          count,
+							Count:          countInternal,
 							ResponseTime:   endTime.Sub(startTime).Milliseconds(),
 							HasSystemErr:   true,
 							WithCountLimit: countOver,
 						}: // do nothing
 							fmt.Println("startTime", startTime)
 							fmt.Println("endTime", endTime)
-							fmt.Println("count", count)
+							fmt.Println("count", countInternal)
 							fmt.Println("responseTime", endTime.Sub(startTime).Milliseconds())
 							fmt.Println("countOver", countOver)
 							fmt.Println("err", err)
@@ -159,7 +164,7 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 							Res:            response,
 							StartTime:      startTime,
 							EndTime:        endTime,
-							Count:          count,
+							Count:          countInternal,
 							ResponseTime:   endTime.Sub(startTime).Milliseconds(),
 							StatusCode:     statusCode,
 							ParseResHasErr: true,
@@ -196,7 +201,7 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 							ByteResponse:   responseByte,
 							StartTime:      startTime,
 							EndTime:        endTime,
-							Count:          count,
+							Count:          countInternal,
 							ResponseTime:   endTime.Sub(startTime).Milliseconds(),
 							StatusCode:     statusCode,
 							ParseResHasErr: true,
@@ -206,7 +211,7 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 							fmt.Println("response", response)
 							fmt.Println("startTime", startTime)
 							fmt.Println("endTime", endTime)
-							fmt.Println("count", count)
+							fmt.Println("count", countInternal)
 							fmt.Println("statusCode", statusCode)
 						}
 						return
@@ -220,7 +225,7 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 						Res:            response,
 						StartTime:      startTime,
 						EndTime:        endTime,
-						Count:          count,
+						Count:          countInternal,
 						ResponseTime:   endTime.Sub(startTime).Milliseconds(),
 						StatusCode:     statusCode,
 						WithCountLimit: countOver,

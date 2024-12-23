@@ -1,0 +1,36 @@
+kind: MassExecute
+type: http
+output:
+  enabled: true
+  ids: 
+    - outputLocalCSV
+auth: 
+  enabled: true
+  auth_id: authForWeb
+requests:
+{{- range until .Values.ThreadCount }}
+  - target_id: "apiServer"
+    endpoint: "/user-profiles"
+    method: GET
+    interval: {{ $.ThreadValues.Interval }}
+    await_prev_response: false
+    headers: {}
+    query_param:
+      limit: 30
+      offset: 0
+      pagination: "offset"
+    path_variables: {}
+    body_type: json
+    success_break:
+      - time
+    break:
+      time: {{ $.ThreadValues.BreakTime }}
+      sys_error: true
+      parse_error: true
+      write_error: true
+      status_code:
+        - id: error
+          op: ne
+          value: 200
+    response_type: json
+{{- end }}
