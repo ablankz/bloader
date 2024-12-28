@@ -1,0 +1,33 @@
+kind: Flow
+step:
+  # if set to 0, it will run one by one in sequence,(default: 0)
+  # if set to minus, it will run all the queries in sequence
+  concurrency: 0
+  flows:
+    - id: "main"
+      type: flow
+      mkdir: false
+      concurrency: -1
+      flows:
+        - id: "metrics"
+          type: file
+          mkdir: true
+          file: "sc/metrics/main.yaml"
+          values:
+            - key: "MetricsInterval"
+              value: "5s"
+            - key: "MetricsBreakTime"
+              value: "10m"
+          thread_only_values: []
+        - id: "request"
+          type: file
+          mkdir: true
+          file: "sc/sc13/main.yaml"
+          values:
+            - key: "ThreadCount"
+              value: 100
+          thread_only_values:
+            - key: "Interval"
+              value: "100ms"
+            - key: "BreakTime"
+              value: "5m"

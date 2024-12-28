@@ -38,9 +38,6 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 ) error {
 	go func() {
 		// defer close(q.ResChan) // TODO: close channel
-
-		ticker := time.NewTicker(q.Interval)
-		defer ticker.Stop()
 		var waitForResponse = q.ResponseWait
 		var count int
 		var countLimitOver bool
@@ -53,11 +50,13 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 				Transport: &http.Transport{
 					MaxIdleConns:        200,
 					MaxIdleConnsPerHost: 180,
-					IdleConnTimeout:     30 * time.Second,
+					IdleConnTimeout:     5 * time.Minute,
 				},
 				// Delay:     2 * time.Second,
 			},
 		}
+		ticker := time.NewTicker(q.Interval)
+		defer ticker.Stop()
 
 		for {
 			select {
@@ -170,6 +169,13 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 							ParseResHasErr: true,
 							WithCountLimit: countOver,
 						}: // do nothing
+							fmt.Println("responseByte", string(responseByte))
+							fmt.Println("response", response)
+							fmt.Println("startTime", startTime)
+							fmt.Println("endTime", endTime)
+							fmt.Println("count", countInternal)
+							fmt.Println("statusCode", statusCode)
+							fmt.Println("err", err)
 						}
 						return
 					}

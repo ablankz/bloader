@@ -20,3 +20,19 @@ step:
       type: file
       file: "sc/metrics/memory_rate.yaml"
       mkdir: true
+    - id: "db_cpu"
+      type: file
+      file: "sc/metrics/db_cpu.yaml"
+      mkdir: true
+    - id: "db_cpu_rate"
+      type: file
+      file: "sc/metrics/db_cpu_rate.yaml"
+      mkdir: true
+    - id: "db_memory"
+      type: file
+      file: "sc/metrics/db_memory.yaml"
+      mkdir: true
+    - id: "db_memory_rate"
+      type: file
+      file: "sc/metrics/db_memory_rate.yaml"
+      mkdir: true
