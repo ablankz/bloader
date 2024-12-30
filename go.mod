@@ -23,8 +23,8 @@ require (
 )
 
 require (
-	buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-20241230183919-3d902674ee30.2 // indirect
-	buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-20241230183919-3d902674ee30.1 // indirect
+	buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-00000000000000-07ef1abe5121.2 // indirect
+	buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-07ef1abe5121.1 // indirect
 	dario.cat/mergo v1.0.1 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.3.0 // indirect

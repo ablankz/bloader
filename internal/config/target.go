@@ -8,10 +8,6 @@ type TargetType string
 const (
 	// TargetTypeHTTP represents the HTTP target service
 	TargetTypeHTTP TargetType = "http"
-	// TargetTypeWebSocket represents the WebSocket target service
-	TargetTypeWebSocket TargetType = "websocket"
-	// TargetTypeMetrics represents the Metrics target service
-	TargetTypeMetrics TargetType = "metrics"
 )
 
 // TargetRespectiveValueConfig represents the configuration for the target respective service value
@@ -83,10 +79,6 @@ func (c TargetConfig) Validate() (ValidTargetConfig, error) {
 		switch *target.Type {
 		case string(TargetTypeHTTP):
 			validRespective.Type = TargetTypeHTTP
-		case string(TargetTypeWebSocket):
-			validRespective.Type = TargetTypeWebSocket
-		case string(TargetTypeMetrics):
-			validRespective.Type = TargetTypeMetrics
 		default:
 			return ValidTargetConfig{}, fmt.Errorf("target[%d].type: %w", i, ErrTargetTypeInvalid)
 		}

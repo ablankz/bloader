@@ -9,6 +9,8 @@ import "cresplanex/bloader/v1/target.proto";
 service BloaderSlaveService {
     rpc Connect(ConnectRequest) returns (ConnectResponse);
 
+    rpc Disconnect(DisconnectRequest) returns (DisconnectResponse);
+
     rpc SlaveCommand(SlaveCommandRequest) returns (SlaveCommandResponse);
 
     rpc CallExec(CallExecRequest) returns (stream CallExecResponse);
@@ -30,6 +32,13 @@ message ConnectRequest {
 
 message ConnectResponse {
     string connection_id = 1;
+}
+
+message DisconnectRequest {
+    string connection_id = 1;
+}
+
+message DisconnectResponse {
 }
 
 message SlaveCommandRequest {

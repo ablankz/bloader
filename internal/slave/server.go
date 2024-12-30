@@ -12,15 +12,15 @@ import (
 
 // Server represents the server for the worker node
 type Server struct {
-	ctr   *container.Container
-	slCtr *slcontainer.SlaveContainer
+	ctr      *container.Container
+	slCtrMap map[string]*slcontainer.SlaveContainer
 }
 
 // NewServer creates a new server for the worker node
-func NewServer(ctr *container.Container, slCtr *slcontainer.SlaveContainer) *Server {
+func NewServer(ctr *container.Container) *Server {
 	return &Server{
-		ctr:   ctr,
-		slCtr: slCtr,
+		ctr:      ctr,
+		slCtrMap: make(map[string]*slcontainer.SlaveContainer),
 	}
 }
 
@@ -30,8 +30,16 @@ func (s *Server) Connect(ctx context.Context, req *pb.ConnectRequest) (*pb.Conne
 	if req.Environment != s.ctr.Config.Env {
 		return nil, ErrInvalidEnvironment
 	}
-	response.ConnectionId = utils.GenerateUniqueID()
+	uid := utils.GenerateUniqueID()
+	s.slCtrMap[uid] = slcontainer.NewSlaveContainer(s.ctr)
+	response.ConnectionId = uid
 	return response, nil
+}
+
+// Disconnect handles the disconnection request from the master node
+func (s *Server) Disconnect(ctx context.Context, req *pb.DisconnectRequest) (*pb.DisconnectResponse, error) {
+	delete(s.slCtrMap, req.ConnectionId)
+	return &pb.DisconnectResponse{}, nil
 }
 
 // SlaveCommand handles the command request from the master node

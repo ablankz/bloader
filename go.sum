@@ -1,5 +1,11 @@
+buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-00000000000000-07ef1abe5121.2 h1:xyRknzuQYDzByoirQgs3lFt6aRBdscWayyU+ZzDX49A=
+buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-00000000000000-07ef1abe5121.2/go.mod h1:GFyefzJ/Nsm08QXq8lXR6BYXr2N0bjcU1vpziC1kGew=
+buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-20241230183919-3d902674ee30.1 h1:3HvblTulqRQKWZlTcPWe3OtU9OjYVlQ/Dj3WB9l7l28=
+buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-20241230183919-3d902674ee30.1/go.mod h1:kQNd/4ZBqTzMsp8k1LtOPGWKmMMUOmZ7f+PKEEMY3H0=
 buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-20241230183919-3d902674ee30.2 h1:PL277yNQ08WcEu4TMHljgVXhJVFkw+WVMR5voW0ZP4o=
 buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-20241230183919-3d902674ee30.2/go.mod h1:2eBd1F97vIzDfMydQR2uJn5nKmRXiY+RHxNzvGbdKn8=
+buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-07ef1abe5121.1 h1:8MZceJdpTYX0jhQBGuDIxmQZ/fISewJXSmCw3bGces8=
+buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-07ef1abe5121.1/go.mod h1:gyq/+6VX/BGNTQr+gfwFiQiRO7Hl7iNpf3WC/Gs2BfI=
 buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-20241230183919-3d902674ee30.1 h1:Ul3h4BxrX54S/7ZM2uJYnVXYCIgLRV3A4XhnL9R/t+I=
 buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-20241230183919-3d902674ee30.1/go.mod h1:gyq/+6VX/BGNTQr+gfwFiQiRO7Hl7iNpf3WC/Gs2BfI=
 dario.cat/mergo v1.0.1 h1:Ra4+bf83h2ztPIQYNP99R6m+Y7KfnARDfID+a+vLl4s=
