@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package cresplanex.bloader.v1;
+
+import "cresplanex/bloader/v1/encrypt.proto";
+
+message StoreData {
+    string bucket_id = 1;
+    string store_key = 2;
+    bytes data = 3;
+    Encryption encryption = 4;
+}
+
+message StoreImportRequest {
+    string bucket_id = 1;
+    string store_key = 2;
+    Encryption encryption = 4;
+}

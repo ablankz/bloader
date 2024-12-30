@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/ablankz/bloader/internal/config"
+	"github.com/ablankz/bloader/internal/utils"
 	"github.com/boltdb/bolt"
 )
 
@@ -18,6 +19,10 @@ type BoltStore struct {
 func (b *BoltStore) SetupStore(env string, conf config.ValidStoreConfig) error {
 	for _, f := range conf.File {
 		if f.Env == env {
+			_, err := utils.CreateFileWithDir(f.Path)
+			if err != nil {
+				return fmt.Errorf("failed to create file: %v", err)
+			}
 			db, err := bolt.Open(f.Path, 0600, &bolt.Options{
 				// Timeout: 3 * time.Second,
 			})

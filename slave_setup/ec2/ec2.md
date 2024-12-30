@@ -1,4 +1,11 @@
-# AWS EC2 Setup
+# Terraform
+
+``` sh
+terraform -chdir=slave_setup/ec2 init
+terraform -chdir=slave_setup/ec2 apply
+```
+
+# Manual
 
 ``` sh
 sudo dnf update -y
@@ -26,4 +33,14 @@ go version
 
 ``` sh
 git clone https://github.com/ablankz/bloader.git
+cd bloader
+```
+
+
+## With TLS
+
+Copy the ca.cert generated on the Master side to the Slave.
+
+``` sh
+chmod +x generate_certs.sh
 ```

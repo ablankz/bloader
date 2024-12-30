@@ -1,0 +1,58 @@
+kind: Flow
+step:
+  # if set to 0, it will run one by one in sequence,(default: 0)
+  # if set to minus, it will run all the queries in sequence
+  concurrency: 0
+  flows:
+    - id: "store"
+      type: file
+      file: "sc/sc1/store.yaml"
+      mkdir: false
+      values:
+        - key: "ThreadCount"
+          value: 100
+        - key: "RequestCount"
+          value: 3000
+      thread_only_values: []
+    - id: "import"
+      type: file
+      file: "sc/sc1/store_import.yaml"
+      mkdir: false
+      values: []
+      thread_only_values: []
+    - id: "main"
+      type: flow
+      mkdir: false
+      concurrency: -1
+      flows:
+        - id: "metrics"
+          type: file
+          mkdir: true
+          file: "sc/metrics/main.yaml"
+          values:
+            - key: "MetricsInterval"
+              value: "5s"
+            - key: "MetricsBreakTime"
+              value: "10m"
+          thread_only_values: []
+        - id: "request"
+          type: slaveCmd
+          mkdir: true
+          executors:
+            - slave_id: "sl1"
+              output:
+                enabled: true
+              inherit_values: true
+              additional_values: []
+              additional_thread_only_values: []
+          command:
+            type: file
+            file: "sc/sc1/main.yaml"
+            values:
+              - key: "ThreadCount"
+                value: 100
+            thread_only_values:
+              - key: "Interval"
+                value: "100ms"
+              - key: "BreakTime"
+                value: "5m"

@@ -1,0 +1,15 @@
+region           = "ap-northeast-1"
+profile_name     = "terraform"
+tls_enabled      = true
+tls_period_hours = 8760
+ca_cert_file_path = "../../certs/ca.cert" # Attention: This is a relative path from the main.tf directory
+ca_key_file_path  = "../../certs/ca.key" # Attention: This is a relative path from the main.tf directory
+slave_ca_cert_file_path = "certs/slave_ca.cert" # Attention: This is a relative path from the bloader directory
+slave_ca_key_file_path  = "certs/slave_ca.key" # Attention: This is a relative path from the bloader directory
+slave_cert_file_path = "certs/slave.cert" # Attention: This is a relative path from the bloader directory
+slave_key_file_path  = "certs/slave.key" # Attention: This is a relative path from the bloader directory
+availability_zone = "ap-northeast-1a"
+instance_count    = 2
+instance_type     = "t2.micro"
+instance_architecture = "x86_64" # "x86_64" or "arm64"
+ssh_keys_path     = "../../ssh_keys"

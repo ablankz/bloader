@@ -34,3 +34,5 @@ logs
 bench/
 local_store/
 outputs/
+certs/
+ssh_keys/
