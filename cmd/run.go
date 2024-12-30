@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ablankz/bloader/internal/config"
 	"github.com/ablankz/bloader/internal/runner"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -37,6 +38,11 @@ var runCmd = &cobra.Command{
 	Long: `This command runs the load test.
 It sends requests to the specified server and measures the response time.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		if ctr.Config.Type == config.ConfigTypeSlave {
+			color.Red("This command is not available in slave mode")
+			return
+		}
+
 		data := make(map[string]any)
 		var err error
 		for _, d := range runnerData {

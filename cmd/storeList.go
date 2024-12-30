@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/ablankz/bloader/internal/config"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -17,6 +18,11 @@ var storeListCmd = &cobra.Command{
 	Short:   "List a list of buckets in the store.",
 	Long:    `You can view a list of buckets currently held in the store.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		if ctr.Config.Type == config.ConfigTypeSlave {
+			color.Red("This command is not available in slave mode")
+			return
+		}
+
 		buckets, err := ctr.Store.ListBuckets()
 		if err != nil {
 			color.Red("Failed to list the store: %v", err)

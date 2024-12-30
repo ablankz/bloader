@@ -4,6 +4,7 @@ Copyright © 2024 hayashi kenta <k.hayashi@cresplanex.com>
 package cmd
 
 import (
+	"github.com/ablankz/bloader/internal/config"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -15,6 +16,11 @@ var loginCmd = &cobra.Command{
 	Long: `This command logs in to the application.
 It sends a request to the authorization server to get an access token.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		if ctr.Config.Type == config.ConfigTypeSlave {
+			color.Red("This command is not available in slave mode")
+			return
+		}
+
 		target := authID
 		if target == "" {
 			target = ctr.AuthenticatorContainer.DefaultAuthenticator

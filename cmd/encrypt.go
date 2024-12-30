@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/ablankz/bloader/internal/config"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -21,6 +22,11 @@ var encryptCmd = &cobra.Command{
 	Long: `This command encrypts text.
 It encrypts the text using the encryption key.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		if ctr.Config.Type == config.ConfigTypeSlave {
+			color.Red("This command is not available in slave mode")
+			return
+		}
+
 		if len(args) == 0 {
 			color.Red("Text is required")
 			return

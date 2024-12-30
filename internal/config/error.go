@@ -3,6 +3,10 @@ package config
 import "fmt"
 
 var (
+	// ErrTypeInvalid is the error for the invalid config type.
+	ErrTypeInvalid = fmt.Errorf("config type is invalid")
+	// ErrTypeRequired is the error for the required config type.
+	ErrTypeRequired = fmt.Errorf("config type is required")
 	// ErrEnvRequired is the error for the required environment.
 	ErrEnvRequired = fmt.Errorf("environment is required")
 	// ErrLoaderRequired is the error for the required loader.
@@ -27,6 +31,8 @@ var (
 	ErrLanguageRequired = fmt.Errorf("language is required")
 	// ErrOverrideRequired is the error for the required override.
 	ErrOverrideRequired = fmt.Errorf("override is required")
+	// ErrSlaveSettingRequired is the error for the required slave
+	ErrSlaveSettingRequired = fmt.Errorf("slave setting is required")
 	// ErrServerPortRequired is the error for the required server port.
 	ErrServerPortRequired = fmt.Errorf("server port is required")
 	// ErrLoggingOutputTypeRequired is the error for the required logging output type.
@@ -191,4 +197,10 @@ var (
 	ErrOverrideValueRequired = fmt.Errorf("override value is required")
 	// ErrLoaderBasePathRequired is the error for the required loader base path.
 	ErrLoaderBasePathRequired = fmt.Errorf("loader base path is required")
+	// ErrSlaveCertificateSlaveCertPathRequired is the error for the required slave certificate slave certificate path.
+	ErrSlaveCertificateSlaveCertPathRequired = fmt.Errorf("slave certificate slave certificate path is required")
+	// ErrSlaveCertificateSlaveKeyPathRequired is the error for the required slave certificate slave key path.
+	ErrSlaveCertificateSlaveKeyPathRequired = fmt.Errorf("slave certificate slave key path is required")
+	// ErrSlaveSettingEncryptIDRequired is the error for the required slave setting encrypt ID.
+	ErrSlaveSettingEncryptIDRequired = fmt.Errorf("slave setting encrypt ID is required")
 )

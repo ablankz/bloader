@@ -1,8 +1,8 @@
 type: slave
-slave_settings:
+env: "production" # Must be set to the same value as the master.
+slave_setting:
   certificate:
     enabled: true
-    ca_cert: "certs/ca.crt"
     slave_cert: "certs/slave.crt"
     slave_key: "certs/slave.key"
   encrypt:

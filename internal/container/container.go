@@ -91,6 +91,10 @@ func (c *Container) Init(cfg config.ValidConfig) error {
 		return fmt.Errorf("failed to setup logger: %w", err)
 	}
 
+	if cfg.Type == config.ConfigTypeSlave {
+		return nil
+	}
+
 	// ----------------------------------------
 	// Set Store
 	// ----------------------------------------

@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/ablankz/bloader/internal/config"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -21,6 +22,11 @@ For example:
 
 bloader store object delete --bucket 1234 objectKey`,
 	Run: func(cmd *cobra.Command, args []string) {
+		if ctr.Config.Type == config.ConfigTypeSlave {
+			color.Red("This command is not available in slave mode")
+			return
+		}
+
 		if len(args) == 0 {
 			fmt.Println("Please provide the object key")
 			return

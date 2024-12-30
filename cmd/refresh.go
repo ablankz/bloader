@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/ablankz/bloader/internal/config"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -17,6 +18,11 @@ var refreshCmd = &cobra.Command{
 	Long: `This command refreshes the access token for the application.
 It reads the refresh token from the configuration file and sends a request to the authorization server to get a new access token.`,
 	Run: func(_ *cobra.Command, args []string) {
+		if ctr.Config.Type == config.ConfigTypeSlave {
+			color.Red("This command is not available in slave mode")
+			return
+		}
+
 		target := authID
 		if target == "" {
 			target = ctr.AuthenticatorContainer.DefaultAuthenticator

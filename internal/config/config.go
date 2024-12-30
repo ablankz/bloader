@@ -1,6 +1,16 @@
 // Package config provides configuration for the application.
 package config
 
+// ConfigType represents the configuration type
+type ConfigType string
+
+const (
+	// ConfigTypeMaster represents the master configuration type
+	ConfigTypeMaster ConfigType = "master"
+	// ConfigTypeSlave represents the slave configuration type
+	ConfigTypeSlave ConfigType = "slave"
+)
+
 // ConfigForOverride represents the configuration for the override service
 type ConfigForOverride struct {
 	Env      *string         `mapstructure:"env"`
@@ -34,142 +44,224 @@ func (c ConfigForOverride) Validate() (ValidConfigForOverride, error) {
 
 // Config represents the application configuration
 type Config struct {
-	Env      *string         `mapstructure:"env"`
-	Loader   *LoaderConfig   `mapstructure:"loader"`
-	Targets  *TargetConfig   `mapstructure:"targets"`
-	Outputs  *OutputConfig   `mapstructure:"outputs"`
-	Store    *StoreConfig    `mapstructure:"store"`
-	Encrypts *EncryptConfig  `mapstructure:"encrypts"`
-	Auth     *AuthConfig     `mapstructure:"auth"`
-	Server   *ServerConfig   `mapstructure:"server"`
-	Logging  *LoggingConfig  `mapstructure:"logging"`
-	Clock    *ClockConfig    `mapstructure:"clock"`
-	Language *LanguageConfig `mapstructure:"language"`
-	Override *OverrideConfig `mapstructure:"override"`
+	Type         *string             `mapstructure:"type"`
+	Env          *string             `mapstructure:"env"`
+	Loader       *LoaderConfig       `mapstructure:"loader"`
+	Targets      *TargetConfig       `mapstructure:"targets"`
+	Outputs      *OutputConfig       `mapstructure:"outputs"`
+	Store        *StoreConfig        `mapstructure:"store"`
+	Encrypts     *EncryptConfig      `mapstructure:"encrypts"`
+	Auth         *AuthConfig         `mapstructure:"auth"`
+	Server       *ServerConfig       `mapstructure:"server"`
+	Logging      *LoggingConfig      `mapstructure:"logging"`
+	Clock        *ClockConfig        `mapstructure:"clock"`
+	Language     *LanguageConfig     `mapstructure:"language"`
+	Override     *OverrideConfig     `mapstructure:"override"`
+	SlaveSetting *SlaveSettingConfig `mapstructure:"slave_setting"`
 }
 
 // ValidConfig represents the application configuration
 type ValidConfig struct {
-	Env      string
-	Loader   ValidLoaderConfig
-	Targets  ValidTargetConfig
-	Outputs  ValidOutputConfig
-	Store    ValidStoreConfig
-	Encrypts ValidEncryptConfig
-	Auth     ValidAuthConfig
-	Server   ValidServerConfig
-	Logging  ValidLoggingConfig
-	Clock    ValidClockConfig
-	Language ValidLanguageConfig
-	Override ValidOverrideConfig
+	Type         ConfigType
+	Env          string
+	Loader       ValidLoaderConfig
+	Targets      ValidTargetConfig
+	Outputs      ValidOutputConfig
+	Store        ValidStoreConfig
+	Encrypts     ValidEncryptConfig
+	Auth         ValidAuthConfig
+	Server       ValidServerConfig
+	Logging      ValidLoggingConfig
+	Clock        ValidClockConfig
+	Language     ValidLanguageConfig
+	Override     ValidOverrideConfig
+	SlaveSetting ValidSlaveSettingConfig
 }
 
 // Validate validates the configuration
 func (c Config) Validate() (ValidConfig, error) {
 	var valid ValidConfig
+	if c.Type == nil {
+		return ValidConfig{}, ErrTypeRequired
+	}
+	switch *c.Type {
+	case string(ConfigTypeMaster):
+		valid.Type = ConfigTypeMaster
+		err := c.validateMaster(&valid)
+		if err != nil {
+			return ValidConfig{}, err
+		}
+	case string(ConfigTypeSlave):
+		valid.Type = ConfigTypeSlave
+		err := c.validateSlave(&valid)
+		if err != nil {
+			return ValidConfig{}, err
+		}
+	default:
+		return ValidConfig{}, ErrTypeInvalid
+	}
+
+	return valid, nil
+}
+
+func (c Config) validateMaster(valid *ValidConfig) error {
 	if c.Env == nil {
-		return ValidConfig{}, ErrEnvRequired
+		return ErrEnvRequired
 	}
 	valid.Env = *c.Env
 
 	if c.Loader == nil {
-		return ValidConfig{}, ErrLoaderRequired
+		return ErrLoaderRequired
 	}
 	validLoader, err := c.Loader.Validate()
 	if err != nil {
-		return ValidConfig{}, err
+		return err
 	}
 	valid.Loader = validLoader
 
 	if c.Targets == nil {
-		return ValidConfig{}, ErrTargetsRequired
+		return ErrTargetsRequired
 	}
 	validTargets, err := c.Targets.Validate()
 	if err != nil {
-		return ValidConfig{}, err
+		return err
 	}
 	valid.Targets = validTargets
 
 	if c.Outputs == nil {
-		return ValidConfig{}, ErrOutputsRequired
+		return ErrOutputsRequired
 	}
 	validOutputs, err := c.Outputs.Validate()
 	if err != nil {
-		return ValidConfig{}, err
+		return err
 	}
 	valid.Outputs = validOutputs
 
 	if c.Store == nil {
-		return ValidConfig{}, ErrStoreRequired
+		return ErrStoreRequired
 	}
 	validStore, err := c.Store.Validate()
 	if err != nil {
-		return ValidConfig{}, err
+		return err
 	}
 	valid.Store = validStore
 
 	if c.Encrypts == nil {
-		return ValidConfig{}, ErrEncryptsRequired
+		return ErrEncryptsRequired
 	}
 	validEncrypts, err := c.Encrypts.Validate()
 	if err != nil {
-		return ValidConfig{}, err
+		return err
 	}
 	valid.Encrypts = validEncrypts
 
 	if c.Auth == nil {
-		return ValidConfig{}, ErrAuthRequired
+		return ErrAuthRequired
 	}
 	validAuth, err := c.Auth.Validate()
 	if err != nil {
-		return ValidConfig{}, err
+		return err
 	}
 	valid.Auth = validAuth
 
 	if c.Server == nil {
-		return ValidConfig{}, ErrServerRequired
+		return ErrServerRequired
 	}
 	validServer, err := c.Server.Validate()
 	if err != nil {
-		return ValidConfig{}, err
+		return err
 	}
 	valid.Server = validServer
 
 	if c.Logging == nil {
-		return ValidConfig{}, ErrLoggingRequired
+		return ErrLoggingRequired
 	}
 	validLogging, err := c.Logging.Validate()
 	if err != nil {
-		return ValidConfig{}, err
+		return err
 	}
 	valid.Logging = validLogging
 
 	if c.Clock == nil {
-		return ValidConfig{}, ErrClockRequired
+		return ErrClockRequired
 	}
 	validClock, err := c.Clock.Validate()
 	if err != nil {
-		return ValidConfig{}, err
+		return err
 	}
 	valid.Clock = validClock
 
 	if c.Language == nil {
-		return ValidConfig{}, ErrLanguageRequired
+		return ErrLanguageRequired
 	}
 	validLanguage, err := c.Language.Validate()
 	if err != nil {
-		return ValidConfig{}, err
+		return err
 	}
 	valid.Language = validLanguage
 
 	if c.Override == nil {
-		return ValidConfig{}, ErrOverrideRequired
+		return ErrOverrideRequired
 	}
 	validOverride, err := c.Override.Validate()
 	if err != nil {
-		return ValidConfig{}, err
+		return err
 	}
 	valid.Override = validOverride
 
-	return valid, nil
+	return nil
+}
+
+func (c Config) validateSlave(valid *ValidConfig) error {
+	if c.Env == nil {
+		return ErrEnvRequired
+	}
+	valid.Env = *c.Env
+
+	if c.Logging == nil {
+		return ErrLoggingRequired
+	}
+	validLogging, err := c.Logging.Validate()
+	if err != nil {
+		return err
+	}
+	valid.Logging = validLogging
+
+	if c.Clock == nil {
+		return ErrClockRequired
+	}
+	validClock, err := c.Clock.Validate()
+	if err != nil {
+		return err
+	}
+	valid.Clock = validClock
+
+	if c.Language == nil {
+		return ErrLanguageRequired
+	}
+	validLanguage, err := c.Language.Validate()
+	if err != nil {
+		return err
+	}
+	valid.Language = validLanguage
+
+	if c.Override == nil {
+		return ErrOverrideRequired
+	}
+	validOverride, err := c.Override.Validate()
+	if err != nil {
+		return err
+	}
+	valid.Override = validOverride
+
+	if c.SlaveSetting == nil {
+		return ErrSlaveSettingRequired
+	}
+	validSlaveSetting, err := c.SlaveSetting.Validate()
+	if err != nil {
+		return err
+	}
+	valid.SlaveSetting = validSlaveSetting
+
+	return nil
 }

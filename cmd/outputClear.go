@@ -6,6 +6,7 @@ package cmd
 import (
 	"os"
 
+	"github.com/ablankz/bloader/internal/config"
 	"github.com/ablankz/bloader/internal/utils"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -20,6 +21,11 @@ var outputClearCmd = &cobra.Command{
 	Long: `This command clears the output.
 It removes all the output file.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		if ctr.Config.Type == config.ConfigTypeSlave {
+			color.Red("This command is not available in slave mode")
+			return
+		}
+
 		if !outputClearAll && len(outputIDs) == 0 {
 			color.Yellow("Please specify the output ID to clear or use the --all flag to clear all the outputs")
 			return
