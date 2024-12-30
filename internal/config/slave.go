@@ -2,12 +2,14 @@ package config
 
 // SlaveCertificateConfig represents the configuration for the slave certificate
 type SlaveSettingConfig struct {
+	Port        *int                    `mapstructure:"port"`
 	Certificate SlaveCertificateConfig  `mapstructure:"certificate"`
 	Encrypt     CredentialEncryptConfig `mapstructure:"encrypt"`
 }
 
 // ValidSlaveSettingConfig represents the valid slave setting configuration
 type ValidSlaveSettingConfig struct {
+	Port        int
 	Certificate ValidSlaveCertificateConfig
 	Encrypt     ValidCredentialEncryptConfig
 }
@@ -16,6 +18,10 @@ type ValidSlaveSettingConfig struct {
 func (c SlaveSettingConfig) Validate() (ValidSlaveSettingConfig, error) {
 	var valid ValidSlaveSettingConfig
 	var err error
+	if c.Port == nil {
+		return ValidSlaveSettingConfig{}, ErrSlaveSettingPortRequired
+	}
+	valid.Port = *c.Port
 	valid.Certificate, err = c.Certificate.Validate()
 	if err != nil {
 		return ValidSlaveSettingConfig{}, err

@@ -1,6 +1,7 @@
 type: slave
 env: "production" # Must be set to the same value as the master.
 slave_setting:
+  port: 50051
   certificate:
     enabled: true
     slave_cert: "certs/slave.crt"

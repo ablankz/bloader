@@ -197,6 +197,8 @@ var (
 	ErrOverrideValueRequired = fmt.Errorf("override value is required")
 	// ErrLoaderBasePathRequired is the error for the required loader base path.
 	ErrLoaderBasePathRequired = fmt.Errorf("loader base path is required")
+	// ErrSlaveSettingPortRequired is the error for the required slave setting port.
+	ErrSlaveSettingPortRequired = fmt.Errorf("slave setting port is required")
 	// ErrSlaveCertificateSlaveCertPathRequired is the error for the required slave certificate slave certificate path.
 	ErrSlaveCertificateSlaveCertPathRequired = fmt.Errorf("slave certificate slave certificate path is required")
 	// ErrSlaveCertificateSlaveKeyPathRequired is the error for the required slave certificate slave key path.

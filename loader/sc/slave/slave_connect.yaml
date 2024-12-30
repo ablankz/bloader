@@ -13,6 +13,7 @@ slaves:
 {{- range slice .Values.slaveLists 0 .Values.ThreadCount }}
   - id: "{{ .ID }}"
     host: "{{ .Host }}"
+    port: {{ .Port }}
     certificate:
       enabled: true
       ca_cert: "certs/ca.crt"

@@ -5,6 +5,7 @@ data:
     value:
       - uuid: {{ uuidv4 }}
         address: "172.28.231.57"
-    encrypt:
-      enabled: true
-      encrypt_id: encryptDynamicCBC
+        port: 50051
+        encrypt:
+          enabled: true
+          encrypt_id: encryptDynamicCBC
