@@ -8,6 +8,7 @@ import (
 
 	pb "buf.build/gen/go/cresplanex/bloader/protocolbuffers/go/cresplanex/bloader/v1"
 	"github.com/ablankz/bloader/internal/container"
+	"github.com/ablankz/bloader/internal/encrypt"
 	"github.com/ablankz/bloader/internal/logger"
 	"github.com/ablankz/bloader/internal/runner"
 	"github.com/ablankz/bloader/internal/slave/slcontainer"
@@ -18,21 +19,23 @@ import (
 
 // Server represents the server for the worker node
 type Server struct {
-	mu        *sync.RWMutex
-	env       string
-	log       logger.Logger
-	slCtrMap  map[string]*slcontainer.SlaveContainer
-	reqConMap *slcontainer.RequestConnectionMapper
+	mu         *sync.RWMutex
+	encryptCtr encrypt.EncrypterContainer
+	env        string
+	log        logger.Logger
+	slCtrMap   map[string]*slcontainer.SlaveContainer
+	reqConMap  *slcontainer.RequestConnectionMapper
 }
 
 // NewServer creates a new server for the worker node
 func NewServer(ctr *container.Container) *Server {
 	return &Server{
-		mu:        &sync.RWMutex{},
-		env:       ctr.Config.Env,
-		log:       ctr.Logger,
-		slCtrMap:  make(map[string]*slcontainer.SlaveContainer),
-		reqConMap: slcontainer.NewRequestConnectionMapper(),
+		mu:         &sync.RWMutex{},
+		encryptCtr: ctr.EncypterContainer,
+		env:        ctr.Config.Env,
+		log:        ctr.Logger,
+		slCtrMap:   make(map[string]*slcontainer.SlaveContainer),
+		reqConMap:  slcontainer.NewRequestConnectionMapper(),
 	}
 }
 
@@ -182,6 +185,7 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 
 	exec := runner.BaseExecutor{
 		Logger:       s.log,
+		EncryptCtr:   s.encryptCtr,
 		TmplFactor:   tmplFactor,
 		TargetFactor: targetFactor,
 		AuthFactor:   authFactor,

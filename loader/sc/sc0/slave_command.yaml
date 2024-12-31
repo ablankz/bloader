@@ -1,9 +1,0 @@
-kind: SlaveCommand
-executors:
-  - slave_id: "sl1"
-    output:
-      enabled: true
-command:
-  file: "sc/sc0/main.yaml"
-
-

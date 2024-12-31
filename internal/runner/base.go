@@ -11,11 +11,13 @@ import (
 	"github.com/Masterminds/sprig/v3"
 	"gopkg.in/yaml.v3"
 
+	"github.com/ablankz/bloader/internal/encrypt"
 	"github.com/ablankz/bloader/internal/logger"
 )
 
 // BaseExecutor represents the base executor
 type BaseExecutor struct {
+	EncryptCtr   encrypt.EncrypterContainer
 	Logger       logger.Logger
 	TmplFactor   TmplFactor
 	Store        Store
@@ -249,6 +251,7 @@ func (e BaseExecutor) Execute(
 		if err := validFlow.Run(
 			ctx,
 			e.Logger,
+			e.EncryptCtr,
 			e.TmplFactor,
 			e.Store,
 			e.AuthFactor,

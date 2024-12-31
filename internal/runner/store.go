@@ -50,11 +50,11 @@ func (l LocalStore) Store(ctx context.Context, data []ValidStoreValueData, cb St
 			return fmt.Errorf("failed to marshal store data: %v", err)
 		}
 		if d.Encrypt.Enabled {
-			encryptor, ok := l.encCtr[d.Encrypt.EncryptID]
+			encrypter, ok := l.encCtr[d.Encrypt.EncryptID]
 			if !ok {
-				return fmt.Errorf("encryptor not found: %s", d.Encrypt.EncryptID)
+				return fmt.Errorf("encrypter not found: %s", d.Encrypt.EncryptID)
 			}
-			encryptedVal, err := encryptor.Encrypt(valBytes)
+			encryptedVal, err := encrypter.Encrypt(valBytes)
 			if err != nil {
 				return fmt.Errorf("failed to encrypt value: %v", err)
 			}
@@ -84,11 +84,11 @@ func (l LocalStore) StoreWithExtractor(ctx context.Context, res any, data []Vali
 			return fmt.Errorf("failed to marshal store data: %v", err)
 		}
 		if d.Encrypt.Enabled {
-			encryptor, ok := l.encCtr[d.Encrypt.EncryptID]
+			encrypter, ok := l.encCtr[d.Encrypt.EncryptID]
 			if !ok {
-				return fmt.Errorf("encryptor not found: %s", d.Encrypt.EncryptID)
+				return fmt.Errorf("encrypter not found: %s", d.Encrypt.EncryptID)
 			}
-			encryptedVal, err := encryptor.Encrypt(valBytes)
+			encryptedVal, err := encrypter.Encrypt(valBytes)
 			if err != nil {
 				return err
 			}
@@ -114,11 +114,11 @@ func (l LocalStore) Import(ctx context.Context, data []ValidStoreImportData, cb 
 			return fmt.Errorf("failed to get object: %v", err)
 		}
 		if d.Encrypt.Enabled {
-			encryptor, ok := l.encCtr[d.Encrypt.EncryptID]
+			encrypter, ok := l.encCtr[d.Encrypt.EncryptID]
 			if !ok {
-				return fmt.Errorf("encryptor not found: %s", d.Encrypt.EncryptID)
+				return fmt.Errorf("encrypter not found: %s", d.Encrypt.EncryptID)
 			}
-			decryptedVal, err := encryptor.Decrypt(string(valBytes))
+			decryptedVal, err := encrypter.Decrypt(string(valBytes))
 			if err != nil {
 				return fmt.Errorf("failed to decrypt value: %v", err)
 			}

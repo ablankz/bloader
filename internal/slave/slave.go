@@ -13,15 +13,31 @@ import (
 )
 
 func SlaveRun(ctr *container.Container) error {
-	creds, err := credentials.NewServerTLSFromFile(
-		ctr.Config.SlaveSetting.Certificate.SlaveCert,
-		ctr.Config.SlaveSetting.Certificate.SlaveKey,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to load certificate: %v", err)
+	var grpcServerOptions []grpc.ServerOption
+	if ctr.Config.SlaveSetting.Certificate.Enabled {
+		creds, err := credentials.NewServerTLSFromFile(
+			ctr.Config.SlaveSetting.Certificate.SlaveCert,
+			ctr.Config.SlaveSetting.Certificate.SlaveKey,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to load certificate: %v", err)
+		}
+		grpcServerOptions = append(grpcServerOptions, grpc.Creds(creds))
 	}
 
-	grpcServer := grpc.NewServer(grpc.Creds(creds))
+	if ctr.Config.SlaveSetting.Encrypt.Enabled {
+		encrypter, ok := ctr.EncypterContainer[ctr.Config.SlaveSetting.Encrypt.EncryptID]
+		if !ok {
+			return fmt.Errorf("encrypter not found: %s", ctr.Config.SlaveSetting.Encrypt.EncryptID)
+		}
+		grpcServerOptions = append(
+			grpcServerOptions,
+			grpc.UnaryInterceptor(UnaryServerEncryptInterceptor(encrypter)),
+			grpc.StreamInterceptor(StreamServerInterceptor(encrypter)),
+		)
+	}
+
+	grpcServer := grpc.NewServer(grpcServerOptions...)
 
 	rpc.RegisterBloaderSlaveServiceServer(grpcServer, NewServer(ctr))
 	lister, err := net.Listen("tcp", fmt.Sprintf(":%d", ctr.Config.SlaveSetting.Port))

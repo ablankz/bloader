@@ -21,6 +21,8 @@ const (
 	RunnerKindMassExecute RunnerKind = "MassExecute"
 	// RunnerKindFlow represents the flow runner
 	RunnerKindFlow RunnerKind = "Flow"
+	// RunnerKindSlaveConnect represents the slave connect runner
+	RunnerKindSlaveConnect RunnerKind = "SlaveConnect"
 )
 
 // Runner represents a runner
@@ -49,7 +51,8 @@ func (r Runner) Validate() (ValidRunner, error) {
 		RunnerKindStoreImport,
 		RunnerKindOneExecute,
 		RunnerKindMassExecute,
-		RunnerKindFlow:
+		RunnerKindFlow,
+		RunnerKindSlaveConnect:
 		kind = RunnerKind(*r.Kind)
 	default:
 		return ValidRunner{}, fmt.Errorf("invalid kind value: %s", *r.Kind)

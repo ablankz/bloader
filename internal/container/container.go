@@ -91,19 +91,17 @@ func (c *Container) Init(cfg config.ValidConfig) error {
 		return fmt.Errorf("failed to setup logger: %w", err)
 	}
 
-	if cfg.Type == config.ConfigTypeSlave {
-		return nil
-	}
-
-	// ----------------------------------------
-	// Set Store
-	// ----------------------------------------
-	c.Store, err = store.NewStoreFromConfig(cfg.Store)
-	if err != nil {
-		return fmt.Errorf("failed to create store: %w", err)
-	}
-	if err := c.Store.SetupStore(cfg.Env, cfg.Store); err != nil {
-		return fmt.Errorf("failed to setup store: %w", err)
+	if cfg.Type != config.ConfigTypeSlave {
+		// ----------------------------------------
+		// Set Store
+		// ----------------------------------------
+		c.Store, err = store.NewStoreFromConfig(cfg.Store)
+		if err != nil {
+			return fmt.Errorf("failed to create store: %w", err)
+		}
+		if err := c.Store.SetupStore(cfg.Env, cfg.Store); err != nil {
+			return fmt.Errorf("failed to setup store: %w", err)
+		}
 	}
 
 	// ----------------------------------------
@@ -112,6 +110,10 @@ func (c *Container) Init(cfg config.ValidConfig) error {
 	c.EncypterContainer, err = encrypt.NewEncrypterContainerFromConfig(c.Store, cfg.Encrypts)
 	if err != nil {
 		return fmt.Errorf("failed to create encrypter: %w", err)
+	}
+
+	if cfg.Type == config.ConfigTypeSlave {
+		return nil
 	}
 
 	// ----------------------------------------

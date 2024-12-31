@@ -35,6 +35,7 @@ func Run(ctr *container.Container, filename string, data map[string]any) error {
 
 	baseExecutor := BaseExecutor{
 		Logger:       ctr.Logger,
+		EncryptCtr:   ctr.EncypterContainer,
 		TmplFactor:   NewLocalTmplFactor(ctr.Config.Loader.BasePath),
 		Store:        NewLocalStore(ctr.EncypterContainer, ctr.Store),
 		AuthFactor:   NewLocalAuthenticatorFactor(ctr.AuthenticatorContainer),

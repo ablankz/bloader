@@ -61,6 +61,8 @@ var (
 	ErrEncryptIDDuplicate = fmt.Errorf("encrypt ID is duplicate")
 	// ErrEncryptTypeRequired is the error for the required encrypt type.
 	ErrEncryptTypeRequired = fmt.Errorf("encrypt type is required")
+	// ErrEncryptTypeUnsupportedOnSlave is the error for the unsupported encrypt type on the slave.
+	ErrEncryptTypeUnsupportedOnSlave = fmt.Errorf("encrypt type is unsupported on the slave")
 	// ErrEncryptTypeInvalid is the error for the invalid encrypt type.
 	ErrEncryptTypeInvalid = fmt.Errorf("encrypt type is invalid")
 	// ErrEncryptKeyRequired is the error for the required encrypt key.

@@ -6,6 +6,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/ablankz/bloader/internal/encrypt"
 	"github.com/ablankz/bloader/internal/logger"
 )
 
@@ -210,6 +211,7 @@ type flowExecutor struct {
 func (f ValidFlow) Run(
 	ctx context.Context,
 	log logger.Logger,
+	encryptCtr encrypt.EncrypterContainer,
 	tmplFactor TmplFactor,
 	store Store,
 	authFactor AuthenticatorFactor,
@@ -222,6 +224,7 @@ func (f ValidFlow) Run(
 	return run(
 		ctx,
 		log,
+		encryptCtr,
 		tmplFactor,
 		store,
 		authFactor,
@@ -238,6 +241,7 @@ func (f ValidFlow) Run(
 func run(
 	ctx context.Context,
 	log logger.Logger,
+	encryptCtr encrypt.EncrypterContainer,
 	tmplFactor TmplFactor,
 	store Store,
 	authFactor AuthenticatorFactor,
@@ -326,6 +330,7 @@ func run(
 			switch executor.flowType {
 			case FlowStepFlowTypeFile:
 				baseExecutor := BaseExecutor{
+					EncryptCtr:   encryptCtr,
 					Logger:       log,
 					TmplFactor:   tmplFactor,
 					Store:        store,
@@ -351,6 +356,7 @@ func run(
 				err := run(
 					ctx,
 					log,
+					encryptCtr,
 					tmplFactor,
 					store,
 					authFactor,
@@ -387,6 +393,7 @@ func run(
 				case FlowStepFlowTypeFile:
 					baseExecutor := BaseExecutor{
 						Logger:       log,
+						EncryptCtr:   encryptCtr,
 						TmplFactor:   tmplFactor,
 						Store:        store,
 						AuthFactor:   authFactor,
@@ -413,6 +420,7 @@ func run(
 					err := run(
 						ctx,
 						log,
+						encryptCtr,
 						tmplFactor,
 						store,
 						authFactor,

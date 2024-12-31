@@ -218,6 +218,15 @@ func (c Config) validateSlave(valid *ValidConfig) error {
 	}
 	valid.Env = *c.Env
 
+	if c.Encrypts == nil {
+		return ErrEncryptsRequired
+	}
+	validEncrypts, err := c.Encrypts.ValidateOnSlave()
+	if err != nil {
+		return err
+	}
+	valid.Encrypts = validEncrypts
+
 	if c.Logging == nil {
 		return ErrLoggingRequired
 	}

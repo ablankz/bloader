@@ -86,3 +86,40 @@ func (c EncryptConfig) Validate() (ValidEncryptConfig, error) {
 	}
 	return valid, nil
 }
+
+// ValidateOnSlave validates the encrypt configuration on the slave.
+func (c EncryptConfig) ValidateOnSlave() (ValidEncryptConfig, error) {
+	var valid ValidEncryptConfig
+	var idSet = make(map[string]struct{})
+	for i, ec := range c {
+		var validRespective ValidEncryptRespectiveConfig
+		if ec.ID == nil {
+			return ValidEncryptConfig{}, fmt.Errorf("encrypt[%d].id: %w", i, ErrEncryptIDRequired)
+		}
+		if _, ok := idSet[*ec.ID]; ok {
+			return ValidEncryptConfig{}, fmt.Errorf("encrypt[%d].id: %w", i, ErrEncryptIDDuplicate)
+		}
+		idSet[*ec.ID] = struct{}{}
+		validRespective.ID = *ec.ID
+		if ec.Type == nil {
+			return ValidEncryptConfig{}, fmt.Errorf("encrypt[%d].type: %w", i, ErrEncryptTypeRequired)
+		}
+		switch EncryptType(*ec.Type) {
+		case EncryptTypeStaticCBC, EncryptTypeStaticCFB, EncryptTypeStaticCTR:
+			validRespective.Type = EncryptType(*ec.Type)
+			if ec.Key == nil {
+				return ValidEncryptConfig{}, fmt.Errorf("encrypt[%d].key: %w", i, ErrEncryptKeyRequired)
+			}
+			validRespective.Key = []byte(*ec.Key)
+			if len(*ec.Key) != 16 && len(*ec.Key) != 24 && len(*ec.Key) != 32 {
+				return ValidEncryptConfig{}, fmt.Errorf("encrypt[%d].key: %w", i, ErrEncryptRSAKeySizeInvalid)
+			}
+		case EncryptTypeDynamicCBC, EncryptTypeDynamicCFB, EncryptTypeDynamicCTR:
+			return ValidEncryptConfig{}, fmt.Errorf("encrypt[%d].type: %w", i, ErrEncryptTypeUnsupportedOnSlave)
+		default:
+			return ValidEncryptConfig{}, fmt.Errorf("encrypt[%d].type: %w", i, ErrEncryptTypeInvalid)
+		}
+		valid = append(valid, validRespective)
+	}
+	return valid, nil
+}

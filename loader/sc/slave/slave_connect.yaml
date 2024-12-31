@@ -12,11 +12,12 @@ store_import:
 slaves:
 {{- range slice .Values.slaveLists 0 .Values.ThreadCount }}
   - id: "{{ .ID }}"
-    host: "{{ .Host }}"
-    port: {{ .Port }}
+    uri: "ipv4:{{ .Host }}:{{ .Port }}" # support schema https://github.com/grpc/grpc/blob/master/doc/naming.md
     certificate:
       enabled: true
       ca_cert: "certs/ca.crt"
+      server_name_override: "localhost"
+      insecure_skip_verify: false
     encrypt:
       enabled: true
       encrypt_id: "encryptStaticCBC"
