@@ -161,14 +161,14 @@ func (r ValidRunner) RetrieveSleepValue(after RunnerSleepValueAfter) (time.Durat
 
 // RunnerStoreImport represents the StoreImport runner
 type RunnerStoreImport struct {
-	Enabled bool                    `yaml:"enabled"`
-	Data    []RunnerStoreImportData `yaml:"data"`
+	Enabled bool              `yaml:"enabled"`
+	Data    []StoreImportData `yaml:"data"`
 }
 
 // ValidRunnerStoreImport represents the valid RunnerStoreImport runner
 type ValidRunnerStoreImport struct {
 	Enabled bool
-	Data    []ValidRunnerStoreImportData
+	Data    []ValidStoreImportData
 }
 
 // Validate validates the RunnerStoreImport
@@ -176,7 +176,7 @@ func (r RunnerStoreImport) Validate() (ValidRunnerStoreImport, error) {
 	if !r.Enabled {
 		return ValidRunnerStoreImport{}, nil
 	}
-	var validData []ValidRunnerStoreImportData
+	var validData []ValidStoreImportData
 	for i, d := range r.Data {
 		valid, err := d.Validate()
 		if err != nil {
@@ -187,48 +187,6 @@ func (r RunnerStoreImport) Validate() (ValidRunnerStoreImport, error) {
 	return ValidRunnerStoreImport{
 		Enabled: r.Enabled,
 		Data:    validData,
-	}, nil
-}
-
-// RunnerStoreImportData represents the data for the StoreImport runner
-type RunnerStoreImportData struct {
-	BucketID   *string                 `yaml:"bucket_id"`
-	Key        *string                 `yaml:"key"`
-	StoreKey   *string                 `yaml:"store_key"`
-	ThreadOnly bool                    `yaml:"thread_only"`
-	Encrypt    CredentialEncryptConfig `yaml:"encrypt"`
-}
-
-// ValidRunnerStoreImportData represents the valid data for the StoreImport runner
-type ValidRunnerStoreImportData struct {
-	BucketID   string
-	Key        string
-	StoreKey   string
-	ThreadOnly bool
-	Encrypt    ValidCredentialEncryptConfig
-}
-
-// Validate validates the StoreImportData
-func (d RunnerStoreImportData) Validate() (ValidRunnerStoreImportData, error) {
-	if d.BucketID == nil {
-		return ValidRunnerStoreImportData{}, fmt.Errorf("bucket_id is required")
-	}
-	if d.Key == nil {
-		return ValidRunnerStoreImportData{}, fmt.Errorf("key is required")
-	}
-	if d.StoreKey == nil {
-		return ValidRunnerStoreImportData{}, fmt.Errorf("store_key is required")
-	}
-	validEncrypt, err := d.Encrypt.Validate()
-	if err != nil {
-		return ValidRunnerStoreImportData{}, fmt.Errorf("failed to validate encrypt: %v", err)
-	}
-	return ValidRunnerStoreImportData{
-		BucketID:   *d.BucketID,
-		Key:        *d.Key,
-		StoreKey:   *d.StoreKey,
-		ThreadOnly: d.ThreadOnly,
-		Encrypt:    validEncrypt,
 	}, nil
 }
 

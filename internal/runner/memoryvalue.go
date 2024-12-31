@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sync"
-
-	"github.com/ablankz/bloader/internal/container"
 )
 
 // MemoryValue represents the MemoryValue runner
@@ -60,7 +58,7 @@ func (d MemoryValueData) Validate() (ValidMemoryValueData, error) {
 }
 
 // Run runs the MemoryValue runner
-func (r ValidMemoryValue) Run(ctx context.Context, ctr *container.Container, store *sync.Map) error {
+func (r ValidMemoryValue) Run(ctx context.Context, store *sync.Map) error {
 	for _, d := range r.Data {
 		store.Store(d.Key, d.Value)
 	}

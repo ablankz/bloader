@@ -6,9 +6,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/ablankz/bloader/internal/container"
 	"github.com/ablankz/bloader/internal/logger"
-	"github.com/ablankz/bloader/internal/output"
 )
 
 // Flow represents the flow runner
@@ -211,18 +209,26 @@ type flowExecutor struct {
 // Run runs a flow step flow
 func (f ValidFlow) Run(
 	ctx context.Context,
-	ctr *container.Container,
+	log logger.Logger,
+	tmplFactor TmplFactor,
+	store Store,
+	authFactor AuthenticatorFactor,
+	outFactor OutputFactor,
+	targetFactor TargetFactor,
 	str *sync.Map,
 	outputRoot string,
-	outputCtr output.OutputContainer,
 	callCount int,
 ) error {
 	return run(
 		ctx,
-		ctr,
+		log,
+		tmplFactor,
+		store,
+		authFactor,
+		outFactor,
+		targetFactor,
 		str,
 		outputRoot,
-		outputCtr,
 		callCount,
 		f.Step.Flows,
 		f.Step.Concurrency,
@@ -231,10 +237,14 @@ func (f ValidFlow) Run(
 
 func run(
 	ctx context.Context,
-	ctr *container.Container,
+	log logger.Logger,
+	tmplFactor TmplFactor,
+	store Store,
+	authFactor AuthenticatorFactor,
+	outFactor OutputFactor,
+	targetFactor TargetFactor,
 	str *sync.Map,
 	outputRoot string,
-	outputCtr output.OutputContainer,
 	callCount int,
 	flows []ValidFlowStepFlow,
 	concurrency int,
@@ -315,39 +325,49 @@ func run(
 		for i, executor := range executors {
 			switch executor.flowType {
 			case FlowStepFlowTypeFile:
-				err := baseExecute(
+				baseExecutor := BaseExecutor{
+					Logger:       log,
+					TmplFactor:   tmplFactor,
+					Store:        store,
+					AuthFactor:   authFactor,
+					OutputFactor: outFactor,
+					TargetFactor: targetFactor,
+				}
+				err := baseExecutor.Execute(
 					ctx,
-					ctr,
 					executor.filename,
 					str,
 					executor.threadOnlyStore,
 					executor.rootDir,
-					outputCtr,
 					executor.loopCount,
 					callCount+1,
 				)
 				if err != nil {
-					ctr.Logger.Error(ctr.Ctx, fmt.Sprintf("failed to execute flow[%d]", i),
+					log.Error(ctx, fmt.Sprintf("failed to execute flow[%d]", i),
 						logger.Value("error", err), logger.Value("on", "Flow"))
 					return fmt.Errorf("failed to execute flow: %v", err)
 				}
 			case FlowStepFlowTypeFlow:
 				err := run(
 					ctx,
-					ctr,
+					log,
+					tmplFactor,
+					store,
+					authFactor,
+					outFactor,
+					targetFactor,
 					str,
 					executor.rootDir,
-					outputCtr,
 					callCount+1,
 					executor.flows,
 					executor.concurrency,
 				)
 				if err != nil {
-					ctr.Logger.Error(ctr.Ctx, fmt.Sprintf("failed to execute flow[%d]", i),
+					log.Error(ctx, fmt.Sprintf("failed to execute flow[%d]", i),
 						logger.Value("error", err), logger.Value("on", "Flow"))
 					return fmt.Errorf("failed to execute flow: %v", err)
 				}
-				ctr.Logger.Debug(ctr.Ctx, "flow finished",
+				log.Debug(ctx, "flow finished",
 					logger.Value("on", "Flow"))
 			}
 		}
@@ -365,20 +385,26 @@ func run(
 
 				switch preExecutor.flowType {
 				case FlowStepFlowTypeFile:
-					err := baseExecute(
+					baseExecutor := BaseExecutor{
+						Logger:       log,
+						TmplFactor:   tmplFactor,
+						Store:        store,
+						AuthFactor:   authFactor,
+						OutputFactor: outFactor,
+						TargetFactor: targetFactor,
+					}
+					err := baseExecutor.Execute(
 						ctx,
-						ctr,
 						preExecutor.filename,
 						str,
 						preExecutor.threadOnlyStore,
 						preExecutor.rootDir,
-						outputCtr,
 						preExecutor.loopCount,
 						callCount+1,
 					)
 					if err != nil {
 						atomicErr.Store(err)
-						ctr.Logger.Error(ctr.Ctx, fmt.Sprintf("failed to execute flow[%d]", i),
+						log.Error(ctx, fmt.Sprintf("failed to execute flow[%d]", i),
 							logger.Value("error", err), logger.Value("on", "Flow"))
 						cancel()
 						return
@@ -386,23 +412,27 @@ func run(
 				case FlowStepFlowTypeFlow:
 					err := run(
 						ctx,
-						ctr,
+						log,
+						tmplFactor,
+						store,
+						authFactor,
+						outFactor,
+						targetFactor,
 						str,
 						preExecutor.rootDir,
-						outputCtr,
 						callCount+1,
 						preExecutor.flows,
 						preExecutor.concurrency,
 					)
 					if err != nil {
 						atomicErr.Store(err)
-						ctr.Logger.Error(ctr.Ctx, fmt.Sprintf("failed to execute flow[%d]", i),
+						log.Error(ctx, fmt.Sprintf("failed to execute flow[%d]", i),
 							logger.Value("error", err), logger.Value("on", "Flow"))
 						cancel()
 						return
 					}
 				}
-				ctr.Logger.Debug(ctr.Ctx, "flow finished",
+				log.Debug(ctx, "flow finished",
 					logger.Value("on", "Flow"))
 
 				<-sem
@@ -414,7 +444,7 @@ func run(
 		close(sem)
 
 		if err := atomicErr.Load(); err != nil {
-			ctr.Logger.Error(ctr.Ctx, "failed to find error",
+			log.Error(ctx, "failed to find error",
 				logger.Value("error", err.(error)), logger.Value("on", "Flow"))
 			return err.(error)
 		}

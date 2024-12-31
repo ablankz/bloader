@@ -2,15 +2,13 @@ package runner
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"sync"
 
 	"github.com/ablankz/bloader/internal/auth"
-	"github.com/ablankz/bloader/internal/config"
-	"github.com/ablankz/bloader/internal/container"
 	"github.com/ablankz/bloader/internal/executor/httpexec"
+	"github.com/ablankz/bloader/internal/logger"
 	"github.com/ablankz/bloader/internal/output"
 	"github.com/ablankz/bloader/internal/utils"
 )
@@ -35,12 +33,17 @@ type OneExec struct {
 type ValidOneExec struct {
 	Type    OneExecType
 	Output  []output.Output
-	Auth    *auth.Authenticator
+	Auth    auth.SetAuthor
 	Request ValidOneExecRequest
 }
 
 // Validate validates the OneExec
-func (r OneExec) Validate(ctr *container.Container, oCtr output.OutputContainer) (ValidOneExec, error) {
+func (r OneExec) Validate(
+	ctx context.Context,
+	authFactor AuthenticatorFactor,
+	outFactor OutputFactor,
+	targetFactor TargetFactor,
+) (ValidOneExec, error) {
 	var oneExecType OneExecType
 	if r.Type == nil {
 		return ValidOneExec{}, fmt.Errorf("type is required")
@@ -52,16 +55,16 @@ func (r OneExec) Validate(ctr *container.Container, oCtr output.OutputContainer)
 		return ValidOneExec{}, fmt.Errorf("invalid type value: %s", *r.Type)
 	}
 	var validOutput []output.Output
-	var validAuth *auth.Authenticator
-	validOutput, err := r.Output.Validate(oCtr)
+	var validAuth auth.SetAuthor
+	validOutput, err := r.Output.Validate(ctx, outFactor)
 	if err != nil {
 		return ValidOneExec{}, fmt.Errorf("failed to validate output: %v", err)
 	}
-	validAuth, err = r.Auth.Validate(ctr)
+	validAuth, err = r.Auth.Validate(ctx, authFactor)
 	if err != nil {
 		return ValidOneExec{}, fmt.Errorf("failed to validate auth: %v", err)
 	}
-	validRequest, err := r.Request.Validate(ctr, oneExecType)
+	validRequest, err := r.Request.Validate(ctx, targetFactor)
 	if err != nil {
 		return ValidOneExec{}, fmt.Errorf("failed to validate request: %v", err)
 	}
@@ -80,17 +83,17 @@ type OneExecOutput struct {
 }
 
 // Validate validates the OneExecOutput
-func (o OneExecOutput) Validate(oCtr output.OutputContainer) ([]output.Output, error) {
+func (o OneExecOutput) Validate(ctx context.Context, outFactor OutputFactor) ([]output.Output, error) {
 	if !o.Enabled {
 		return nil, nil
 	}
 	var outputs []output.Output
 	for _, id := range o.IDs {
-		output, exists := oCtr[id]
-		if !exists {
-			return nil, fmt.Errorf("output id does not exist")
+		if output, err := outFactor.Factorize(ctx, id); err != nil {
+			return nil, fmt.Errorf("failed to factorize output: %v", err)
+		} else {
+			outputs = append(outputs, output)
 		}
-		outputs = append(outputs, output)
 	}
 	return outputs, nil
 }
@@ -102,23 +105,26 @@ type OneExecAuth struct {
 }
 
 // Validate validates the OneExecAuth
-func (a OneExecAuth) Validate(ctr *container.Container) (*auth.Authenticator, error) {
+func (a OneExecAuth) Validate(ctx context.Context, authFactor AuthenticatorFactor) (auth.SetAuthor, error) {
 	if !a.Enabled {
 		return nil, nil
 	}
-	var auth *auth.Authenticator
-	var exists bool
 	var authID string
+	var isDefault bool
 	if a.AuthID == nil {
-		authID = ctr.AuthenticatorContainer.DefaultAuthenticator
+		isDefault = true
 	} else {
 		authID = *a.AuthID
 	}
-	auth, exists = ctr.AuthenticatorContainer.Container[authID]
-	if !exists {
-		return nil, fmt.Errorf("auth_id: %s does not exist", authID)
+	if auth, err := authFactor.Factorize(
+		ctx,
+		authID,
+		isDefault,
+	); err != nil {
+		return nil, fmt.Errorf("failed to factorize auth: %v", err)
+	} else {
+		return auth, nil
 	}
-	return auth, nil
 }
 
 // OneExecRequest represents the request configuration for the OneExec runner
@@ -153,7 +159,7 @@ type ValidOneExecRequest struct {
 }
 
 // Validate validates the OneExecRequest
-func (r OneExecRequest) Validate(ctr *container.Container, targetType OneExecType) (ValidOneExecRequest, error) {
+func (r OneExecRequest) Validate(ctx context.Context, targetFactor TargetFactor) (ValidOneExecRequest, error) {
 	var valid ValidOneExecRequest
 	var err error
 	if r.TargetID == nil {
@@ -163,9 +169,11 @@ func (r OneExecRequest) Validate(ctr *container.Container, targetType OneExecTyp
 		return ValidOneExecRequest{}, fmt.Errorf("endpoint is required")
 	}
 	var urlRoot string
-	if urlRoot, err = ctr.TargetContainer.FindTarget(*r.TargetID, config.TargetType(targetType)); err != nil {
-		return ValidOneExecRequest{}, fmt.Errorf("failed to find target: %v", err)
+	tg, err := targetFactor.Factorize(ctx, *r.TargetID)
+	if err != nil {
+		return ValidOneExecRequest{}, fmt.Errorf("failed to factorize target: %v", err)
 	}
+	urlRoot = tg.URL
 	valid.URL = fmt.Sprintf("%s%s", urlRoot, *r.Endpoint)
 	if r.Method == nil {
 		return ValidOneExecRequest{}, fmt.Errorf("method is required")
@@ -217,22 +225,24 @@ func (r OneExecRequest) Validate(ctr *container.Container, targetType OneExecTyp
 // Run runs the OneExec runner
 func (r ValidOneExec) Run(
 	ctx context.Context,
-	ctr *container.Container,
 	outputRoot string,
 	str *sync.Map,
+	log logger.Logger,
+	store Store,
 ) error {
 	switch r.Type {
 	case OneExecTypeHTTP:
-		return r.runHTTP(ctx, ctr, outputRoot, str)
+		return r.runHTTP(ctx, outputRoot, str, log, store)
 	}
 	return nil
 }
 
 func (r ValidOneExec) runHTTP(
 	ctx context.Context,
-	ctr *container.Container,
 	outputRoot string,
 	str *sync.Map,
+	log logger.Logger,
+	store Store,
 ) error {
 	req := HTTPRequest{
 		Method:        r.Request.Method,
@@ -242,8 +252,8 @@ func (r ValidOneExec) runHTTP(
 		PathVariables: r.Request.PathVariables,
 		BodyType:      r.Request.BodyType,
 		Body:          r.Request.Body,
-		AttachRequestInfo: func(ctx context.Context, ctr *container.Container, req *http.Request) error {
-			(*r.Auth).SetOnRequest(ctx, ctr.Store, req)
+		AttachRequestInfo: func(ctx context.Context, req *http.Request) error {
+			r.Auth.SetOnRequest(ctx, req)
 			return nil
 		},
 	}
@@ -257,7 +267,7 @@ func (r ValidOneExec) runHTTP(
 	for _, o := range r.Output {
 		writer, close, err := o.HTTPDataWriteFactory(
 			ctx,
-			ctr,
+			log,
 			true,
 			uniqueName,
 			append(
@@ -279,7 +289,7 @@ func (r ValidOneExec) runHTTP(
 		writers = append(writers, writer)
 	}
 
-	resp, err := exe.RequestExecute(ctx, ctr)
+	resp, err := exe.RequestExecute(ctx, log)
 	if err != nil {
 		return fmt.Errorf("failed to execute request: %v", err)
 	}
@@ -292,7 +302,7 @@ func (r ValidOneExec) runHTTP(
 		data = append(data, fmt.Sprint(result))
 	}
 	for _, w := range writers {
-		if err := w(ctx, ctr, append(resp.ToWriteHTTPData(1).ToSlice(), data...)); err != nil {
+		if err := w(ctx, log, append(resp.ToWriteHTTPData(1).ToSlice(), data...)); err != nil {
 			return fmt.Errorf("failed to write data: %v", err)
 		}
 	}
@@ -305,29 +315,8 @@ func (r ValidOneExec) runHTTP(
 		str.Store(d.Key, result)
 	}
 
-	for _, d := range r.Request.StoreData {
-		result, err := d.Extractor.Extract(resp.Res)
-		if err != nil {
-			return fmt.Errorf("failed to extract store data: %v", err)
-		}
-		byteData, err := json.Marshal(result)
-		if err != nil {
-			return fmt.Errorf("failed to marshal store data: %v", err)
-		}
-		if d.Encrypt.Enabled {
-			enc, ok := ctr.EncypterContainer[d.Encrypt.EncryptID]
-			if !ok {
-				return fmt.Errorf("encrypt_id: %s does not exist", d.Encrypt.EncryptID)
-			}
-			strData, err := enc.Encrypt(byteData)
-			if err != nil {
-				return fmt.Errorf("failed to encrypt store data: %v", err)
-			}
-			byteData = []byte(strData)
-		}
-		if err := ctr.Store.PutObject(d.BucketID, d.StoreKey, byteData); err != nil {
-			return fmt.Errorf("failed to put store data: %v", err)
-		}
+	if err := store.StoreWithExtractor(ctx, resp.Res, r.Request.StoreData, nil); err != nil {
+		return fmt.Errorf("failed to store data: %v", err)
 	}
 
 	return nil

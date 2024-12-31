@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/ablankz/bloader/internal/container"
 	"github.com/ablankz/bloader/internal/logger"
 )
 
@@ -56,7 +55,7 @@ type statusCodeBetweenVal struct {
 type StatusCodeConditionMatcher func(statusCode int) bool
 
 // MatcherGenerate generates the status code matcher
-func (scc StatusCodeCondition) MatcherGenerate(ctx context.Context, ctr *container.Container) (StatusCodeConditionMatcher, error) {
+func (scc StatusCodeCondition) MatcherGenerate(ctx context.Context, log logger.Logger) (StatusCodeConditionMatcher, error) {
 	if scc.ID == nil {
 		return nil, fmt.Errorf("id is required")
 	}
@@ -217,7 +216,7 @@ func (scc StatusCodeCondition) MatcherGenerate(ctx context.Context, ctr *contain
 			return preRequireRegex.MatchString(strconv.Itoa(statusCode))
 		}, nil
 	default:
-		ctr.Logger.Error(ctx, "unknown operator",
+		log.Error(ctx, "unknown operator",
 			logger.Value("operator", scc.Op), logger.Value("on", "statusCodeMatherFactory"))
 		return nil, fmt.Errorf("unknown operator: %s", *scc.Op)
 	}
@@ -230,10 +229,10 @@ type StatusCodeConditions []StatusCodeCondition
 type StatusCodeConditionsMatcher func(statusCode int) (string, bool)
 
 // MatcherGenerate generates the status code conditions matcher
-func (sccs StatusCodeConditions) MatcherGenerate(ctx context.Context, ctr *container.Container) (StatusCodeConditionsMatcher, error) {
+func (sccs StatusCodeConditions) MatcherGenerate(ctx context.Context, log logger.Logger) (StatusCodeConditionsMatcher, error) {
 	matchers := make([]StatusCodeConditionMatcher, 0, len(sccs))
 	for _, scc := range sccs {
-		matcher, err := scc.MatcherGenerate(ctx, ctr)
+		matcher, err := scc.MatcherGenerate(ctx, log)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate matcher: %w", err)
 		}

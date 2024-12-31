@@ -2,6 +2,7 @@ package slcontainer
 
 import (
 	"fmt"
+	"sync"
 
 	pb "buf.build/gen/go/cresplanex/bloader/protocolbuffers/go/cresplanex/bloader/v1"
 	"github.com/ablankz/bloader/internal/config"
@@ -10,22 +11,40 @@ import (
 
 // Target represents the target container for the slave node
 type Target struct {
+	mu *sync.RWMutex
 	target.TargetContainer
+}
+
+// NewTarget creates a new target container for the slave node
+func NewTarget() *Target {
+	return &Target{
+		mu:              &sync.RWMutex{},
+		TargetContainer: make(map[string]target.Target),
+	}
 }
 
 // Exists checks if the target exists
 func (t Target) Exists(id string) bool {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+
 	_, ok := t.TargetContainer[id]
 	return ok
 }
 
 // Add adds a new target to the container
 func (t *Target) Add(id string, target target.Target) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	t.TargetContainer[id] = target
 }
 
 // Remove removes a target from the container
 func (t *Target) Remove(id string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	delete(t.TargetContainer, id)
 }
 
@@ -42,4 +61,18 @@ func (t Target) AddFromProto(id string, pbT *pb.Target) error {
 	}
 
 	return fmt.Errorf("invalid target type: %v", pbT.Type)
+}
+
+// Find finds a target from the container
+func (t Target) Find(id string) (target.Target, bool) {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+
+	target, ok := t.TargetContainer[id]
+	return target, ok
+}
+
+// TargetResourceRequest represents a target resource request
+type TargetResourceRequest struct {
+	TargetID string
 }

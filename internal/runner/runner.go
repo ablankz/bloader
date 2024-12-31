@@ -33,14 +33,21 @@ func Run(ctr *container.Container, filename string, data map[string]any) error {
 		globalStore.Store(k, v)
 	}
 
-	if err := baseExecute(
+	baseExecutor := BaseExecutor{
+		Logger:       ctr.Logger,
+		TmplFactor:   NewLocalTmplFactor(ctr.Config.Loader.BasePath),
+		Store:        NewLocalStore(ctr.EncypterContainer, ctr.Store),
+		AuthFactor:   NewLocalAuthenticatorFactor(ctr.AuthenticatorContainer),
+		OutputFactor: NewLocalOutputFactor(outputCtr),
+		TargetFactor: NewLocalTargetFactor(ctr.TargetContainer),
+	}
+
+	if err := baseExecutor.Execute(
 		ctx,
-		ctr,
 		filename,
 		&globalStore,
 		&threadOnlyStore,
 		outputRoot,
-		outputCtr,
 		0,
 		0,
 	); err != nil {

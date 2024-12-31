@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ablankz/bloader/internal/container"
 	"github.com/ablankz/bloader/internal/logger"
 )
 
@@ -18,7 +17,7 @@ type BodyCondition struct {
 type BodyConditionMatcher func(body any) (bool, error)
 
 // MatcherGenerate generates the body matcher
-func (bc BodyCondition) MatcherGenerate(ctx context.Context, ctr *container.Container) (BodyConditionMatcher, error) {
+func (bc BodyCondition) MatcherGenerate(ctx context.Context, log logger.Logger) (BodyConditionMatcher, error) {
 	if bc.ID == nil {
 		return nil, fmt.Errorf("id is required")
 	}
@@ -40,7 +39,7 @@ func (bc BodyCondition) MatcherGenerate(ctx context.Context, ctr *container.Cont
 				match = true
 			}
 		} else {
-			ctr.Logger.Warn(ctx, "The result of the jmespath query is not a boolean",
+			log.Warn(ctx, "The result of the jmespath query is not a boolean",
 				logger.Value("on", "runResponseHandler"))
 		}
 		return match, nil
@@ -54,10 +53,10 @@ type BodyConditions []BodyCondition
 type BodyConditionsMatcher func(body any) (string, bool, error)
 
 // MatcherGenerate generates the body matcher
-func (bcs BodyConditions) MatcherGenerate(ctx context.Context, ctr *container.Container) (BodyConditionsMatcher, error) {
+func (bcs BodyConditions) MatcherGenerate(ctx context.Context, log logger.Logger) (BodyConditionsMatcher, error) {
 	var matchers []BodyConditionMatcher
 	for _, bc := range bcs {
-		matcher, err := bc.MatcherGenerate(ctx, ctr)
+		matcher, err := bc.MatcherGenerate(ctx, log)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate body matcher: %v", err)
 		}

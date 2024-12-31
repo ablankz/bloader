@@ -28,7 +28,7 @@ func (a *APIKeyAuthenticator) Authenticate(ctx context.Context, str store.Store)
 }
 
 // SetOnRequest sets the authentication information on the request
-func (a *APIKeyAuthenticator) SetOnRequest(ctx context.Context, str store.Store, r *http.Request) {
+func (a *APIKeyAuthenticator) SetOnRequest(ctx context.Context, r *http.Request) {
 	r.Header.Set(a.HeaderName, a.APIKey)
 }
 
@@ -41,3 +41,6 @@ func (a *APIKeyAuthenticator) IsExpired(ctx context.Context, str store.Store) bo
 func (a *APIKeyAuthenticator) Refresh(ctx context.Context, str store.Store) error {
 	return nil
 }
+
+var _ Authenticator = &APIKeyAuthenticator{}
+var _ SetAuthor = &APIKeyAuthenticator{}

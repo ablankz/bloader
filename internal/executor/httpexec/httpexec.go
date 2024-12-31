@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ablankz/bloader/internal/container"
 	"github.com/ablankz/bloader/internal/logger"
 	"github.com/ablankz/bloader/internal/utils"
 	"gopkg.in/yaml.v3"
@@ -24,11 +23,11 @@ type RequestContent[Req ExecReq] struct {
 // RequestExecute executes the request
 func (q RequestContent[Req]) RequestExecute(
 	ctx context.Context,
-	ctr *container.Container,
+	log logger.Logger,
 ) (ResponseContent, error) {
-	req, err := q.Req.CreateRequest(ctx, ctr, 0)
+	req, err := q.Req.CreateRequest(ctx, log, 0)
 	if err != nil {
-		ctr.Logger.Error(ctx, "failed to create request",
+		log.Error(ctx, "failed to create request",
 			logger.Value("error", err), logger.Value("on", "RequestContent.QueryExecute"))
 		return ResponseContent{}, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -41,16 +40,16 @@ func (q RequestContent[Req]) RequestExecute(
 		},
 	}
 
-	ctr.Logger.Debug(ctx, "sending request",
+	log.Debug(ctx, "sending request",
 		logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
 	startTime := time.Now()
 	resp, err := client.Do(req)
 	endTime := time.Now()
-	ctr.Logger.Debug(ctx, "received response",
+	log.Debug(ctx, "received response",
 		logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
 
 	if err != nil {
-		ctr.Logger.Error(ctx, "response error",
+		log.Error(ctx, "response error",
 			logger.Value("error", err), logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
 		return ResponseContent{
 			Success:      false,
@@ -66,7 +65,7 @@ func (q RequestContent[Req]) RequestExecute(
 	var response any
 	responseByte, err := io.ReadAll(resp.Body)
 	if err != nil {
-		ctr.Logger.Error(ctx, "failed to read response",
+		log.Error(ctx, "failed to read response",
 			logger.Value("error", err), logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
 
 		return ResponseContent{
@@ -94,7 +93,7 @@ func (q RequestContent[Req]) RequestExecute(
 		err = fmt.Errorf("invalid response type: %s", q.ResponseType)
 	}
 	if err != nil {
-		ctr.Logger.Error(ctx, "failed to parse response",
+		log.Error(ctx, "failed to parse response",
 			logger.Value("error", err), logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
 		return ResponseContent{
 			Success:        false,
@@ -107,7 +106,7 @@ func (q RequestContent[Req]) RequestExecute(
 			ParseResHasErr: true,
 		}, nil
 	}
-	ctr.Logger.Debug(ctx, "response OK",
+	log.Debug(ctx, "response OK",
 		logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
 	return ResponseContent{
 		Success:      true,

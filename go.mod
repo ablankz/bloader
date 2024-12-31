@@ -3,8 +3,11 @@ module github.com/ablankz/bloader
 go 1.23.3
 
 require (
+	buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-00000000000000-03d3e25b08bc.2
+	buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-03d3e25b08bc.1
 	github.com/BurntSushi/toml v1.4.0
 	github.com/Masterminds/sprig/v3 v3.3.0
+	github.com/ablankz/common-proto/lib/go v0.0.0-20241231190449-4518b0398e04
 	github.com/boltdb/bolt v1.3.1
 	github.com/fatih/color v1.14.1
 	github.com/google/uuid v1.6.0
@@ -23,8 +26,7 @@ require (
 )
 
 require (
-	buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-00000000000000-07ef1abe5121.2 // indirect
-	buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-07ef1abe5121.1 // indirect
+	buf.build/gen/go/cresplanex/types/protocolbuffers/go v1.36.1-20241229081036-5cfa13fd79a9.1 // indirect
 	dario.cat/mergo v1.0.1 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.3.0 // indirect

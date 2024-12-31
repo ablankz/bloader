@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sync"
-
-	"github.com/ablankz/bloader/internal/container"
 )
 
 // StoreImport represents the StoreImport runner
@@ -35,18 +33,20 @@ func (r StoreImport) Validate() (ValidStoreImport, error) {
 
 // StoreImportData represents the data for the StoreImport runner
 type StoreImportData struct {
-	BucketID *string                 `yaml:"bucket_id"`
-	Key      *string                 `yaml:"key"`
-	StoreKey *string                 `yaml:"store_key"`
-	Encrypt  CredentialEncryptConfig `yaml:"encrypt"`
+	BucketID   *string                 `yaml:"bucket_id"`
+	Key        *string                 `yaml:"key"`
+	StoreKey   *string                 `yaml:"store_key"`
+	ThreadOnly bool                    `yaml:"thread_only"`
+	Encrypt    CredentialEncryptConfig `yaml:"encrypt"`
 }
 
 // ValidStoreImportData represents the valid data for the StoreImport runner
 type ValidStoreImportData struct {
-	BucketID string
-	Key      string
-	StoreKey string
-	Encrypt  ValidCredentialEncryptConfig
+	BucketID   string
+	Key        string
+	StoreKey   string
+	ThreadOnly bool
+	Encrypt    ValidCredentialEncryptConfig
 }
 
 // Validate validates the StoreImportData
@@ -65,32 +65,22 @@ func (d StoreImportData) Validate() (ValidStoreImportData, error) {
 		return ValidStoreImportData{}, fmt.Errorf("failed to validate encrypt: %v", err)
 	}
 	return ValidStoreImportData{
-		BucketID: *d.BucketID,
-		Key:      *d.Key,
-		StoreKey: *d.StoreKey,
-		Encrypt:  validEncrypt,
+		BucketID:   *d.BucketID,
+		Key:        *d.Key,
+		StoreKey:   *d.StoreKey,
+		ThreadOnly: d.ThreadOnly,
+		Encrypt:    validEncrypt,
 	}, nil
 }
 
 // Run runs the StoreImport runner
-func (r ValidStoreImport) Run(ctx context.Context, ctr *container.Container, store *sync.Map) error {
-	for _, d := range r.Data {
-		valBytes, err := ctr.Store.GetObject(d.BucketID, d.StoreKey)
-		if err != nil {
-			return fmt.Errorf("failed to get object: %v", err)
-		}
-		if d.Encrypt.Enabled {
-			encryptor, ok := ctr.EncypterContainer[d.Encrypt.EncryptID]
-			if !ok {
-				return fmt.Errorf("encryptor not found: %s", d.Encrypt.EncryptID)
-			}
-			decryptedVal, err := encryptor.Decrypt(string(valBytes))
-			if err != nil {
-				return fmt.Errorf("failed to decrypt value: %v", err)
-			}
-			valBytes = []byte(decryptedVal)
-		}
-		store.Store(d.Key, valBytes)
+func (r ValidStoreImport) Run(ctx context.Context, str Store, store *sync.Map) error {
+	if err := str.Import(ctx, r.Data, func(ctx context.Context, data ValidStoreImportData, val any) error {
+		store.Store(data.Key, val)
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to import data: %v", err)
 	}
+
 	return nil
 }

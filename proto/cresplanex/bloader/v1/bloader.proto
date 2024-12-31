@@ -5,6 +5,7 @@ package cresplanex.bloader.v1;
 import "cresplanex/bloader/v1/auth.proto";
 import "cresplanex/bloader/v1/store.proto";
 import "cresplanex/bloader/v1/target.proto";
+import "cresplanex/flex/v1/flex.proto";
 
 service BloaderSlaveService {
     rpc Connect(ConnectRequest) returns (ConnectResponse);
@@ -22,6 +23,8 @@ service BloaderSlaveService {
     rpc SendAuth(SendAuthRequest) returns (SendAuthResponse);
 
     rpc SendStoreData(SendStoreDataRequest) returns (SendStoreDataResponse);
+
+    rpc SendStoreOk(SendStoreOkRequest) returns (SendStoreOkResponse);
 
     rpc SendTarget(SendTargetRequest) returns (SendTargetResponse);
 }
@@ -44,6 +47,9 @@ message DisconnectResponse {
 message SlaveCommandRequest {
     string connection_id = 1;
     string loader_id = 2;
+    cresplanex.flex.v1.FlexMap default_store = 3;
+    cresplanex.flex.v1.FlexMap default_thread_only_store = 4;
+    string output_root = 5;
 }
 
 message SlaveCommandResponse {
@@ -83,8 +89,8 @@ message ReceiveChanelConnectResponse {
         ReceiveChanelConnectLoaderResourceRequest loader_resource_request = 3;
         ReceiveChanelConnectAuthResourceRequest auth_resource_request = 4;
         ReceiveChanelConnectStore store = 5;
-        ReceiveChanelConnectResourceStore resource_store = 6;
-        ReceiveChanelConnectResourceTarget resource_target = 7;
+        ReceiveChanelConnectStoreResourceRequest store_resource_request = 6;
+        ReceiveChanelConnectTargetResourceRequest target_resource_request = 7;
         ReceiveChanelConnectTerminateCommand terminate_load = 8;
     }
 }
@@ -105,17 +111,18 @@ message ReceiveChanelConnectLoaderResourceRequest {
 
 message ReceiveChanelConnectAuthResourceRequest {
     string auth_id = 1;
+    bool is_default = 2;
 }
 
 message ReceiveChanelConnectStore {
     repeated StoreData store_data = 1;
 }
 
-message ReceiveChanelConnectResourceStore {
+message ReceiveChanelConnectStoreResourceRequest {
     repeated StoreImportRequest store_import_request = 1;
 }
 
-message ReceiveChanelConnectResourceTarget {
+message ReceiveChanelConnectTargetResourceRequest {
     string target_id = 1;
 }
 
@@ -138,6 +145,7 @@ message SendAuthRequest {
     string request_id = 1;
     string auth_id = 2;
     Auth auth = 3;
+    bool is_default = 4;
 }
 
 message SendAuthResponse {
@@ -151,6 +159,13 @@ message SendStoreDataRequest {
 }
 
 message SendStoreDataResponse {
+}
+
+message SendStoreOkRequest {
+    string request_id = 1;
+}
+
+message SendStoreOkResponse {
 }
 
 message SendTargetRequest {

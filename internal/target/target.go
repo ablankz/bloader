@@ -1,8 +1,6 @@
 package target
 
 import (
-	"fmt"
-
 	"github.com/ablankz/bloader/internal/config"
 )
 
@@ -38,14 +36,4 @@ func NewTargetContainer(env string, cfg config.ValidTargetConfig) TargetContaine
 		targets[target.ID] = t
 	}
 	return targets
-}
-
-// FindTarget returns a list of targets
-func (tc TargetContainer) FindTarget(id string, targetType config.TargetType) (string, error) {
-	if target, ok := tc[id]; ok {
-		if target.Type == targetType {
-			return target.URL, nil
-		}
-	}
-	return "", fmt.Errorf("target(%s) not found on target(%s)", id, targetType)
 }

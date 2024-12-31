@@ -24,6 +24,7 @@ message Auth {
 
 message AuthOAuth2 {
     string access_token = 1;
+    string token_type = 2;
 }
 
 message AuthApiKey {

@@ -28,7 +28,7 @@ func (a *BasicAuthenticator) Authenticate(ctx context.Context, str store.Store) 
 }
 
 // SetOnRequest sets the authentication information on the request
-func (a *BasicAuthenticator) SetOnRequest(ctx context.Context, str store.Store, r *http.Request) {
+func (a *BasicAuthenticator) SetOnRequest(ctx context.Context, r *http.Request) {
 	r.SetBasicAuth(a.Username, a.Password)
 }
 
@@ -43,3 +43,4 @@ func (a *BasicAuthenticator) Refresh(ctx context.Context, str store.Store) error
 }
 
 var _ Authenticator = &BasicAuthenticator{}
+var _ SetAuthor = &BasicAuthenticator{}

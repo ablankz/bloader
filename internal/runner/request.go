@@ -15,17 +15,10 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
-	"github.com/ablankz/bloader/internal/container"
+	"github.com/ablankz/bloader/internal/executor/httpexec"
 	"github.com/ablankz/bloader/internal/logger"
-	"github.com/ablankz/bloader/internal/output"
 	"gopkg.in/yaml.v3"
 )
-
-// ExecReq represents the request executor
-type ExecReq interface {
-	// CreateRequest creates the http.Request object for the query
-	CreateRequest(ctx context.Context, ctr *container.Container, count int) (*http.Request, error)
-}
 
 // HTTPRequestBodyType represents the HTTP request body type
 type HTTPRequestBodyType string
@@ -43,7 +36,7 @@ const (
 )
 
 // AttachRequestInfo represents the request info
-type AttachRequestInfo func(ctx context.Context, ctr *container.Container, req *http.Request) error
+type AttachRequestInfo func(ctx context.Context, req *http.Request) error
 
 // HTTPRequest represents the HTTP request
 type HTTPRequest struct {
@@ -57,7 +50,9 @@ type HTTPRequest struct {
 	AttachRequestInfo AttachRequestInfo
 	TmplStr           string
 	ReplaceData       *sync.Map
-	OCtr              output.OutputContainer
+	OutputFactor      OutputFactor
+	AuthFactor        AuthenticatorFactor
+	TargetFactor      TargetFactor
 	IsMass            bool
 	ReqIndex          int
 }
@@ -70,13 +65,8 @@ func solvePathVariables(path string, pathVariables map[string]string) string {
 }
 
 // CreateRequest creates the http.Request object for the query
-func (r HTTPRequest) CreateRequest(ctx context.Context, ctr *container.Container, count int) (*http.Request, error) {
+func (r HTTPRequest) CreateRequest(ctx context.Context, log logger.Logger, count int) (*http.Request, error) {
 	if r.IsMass {
-		// if v, ok := r.ReplaceData["Dynamic"]; ok {
-		// 	if mapV, ok := v.(map[string]any); ok {
-		// 		mapV["RequestLoopCount"] = count
-		// 	}
-		// }
 		replaceData := make(map[string]any)
 		dynamicData := make(map[string]any)
 		r.ReplaceData.Range(func(key, value any) bool {
@@ -105,7 +95,15 @@ func (r HTTPRequest) CreateRequest(ctx context.Context, ctr *container.Container
 		if err := yaml.Unmarshal(buffer.Bytes(), &massExec); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal json: %w", err)
 		}
-		validMassExec, err := massExec.Validate(ctr, r.OCtr, r.TmplStr, replaceData)
+		validMassExec, err := massExec.Validate(
+			ctx,
+			log,
+			r.AuthFactor,
+			r.OutputFactor,
+			r.TargetFactor,
+			r.TmplStr,
+			replaceData,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to validate mass exec: %w", err)
 		}
@@ -136,7 +134,7 @@ func (r HTTPRequest) CreateRequest(ctx context.Context, ctr *container.Container
 		queryParams.Set(key, fmt.Sprint(value))
 	}
 	fullURL.RawQuery = queryParams.Encode()
-	ctr.Logger.Debug(ctx, "GET request to file objects endpoint URL created",
+	log.Debug(ctx, "GET request to file objects endpoint URL created",
 		logger.Value("url", fullURL.String()), logger.Value("on", "GetFileObjectsReq.CreateRequest"))
 
 	var body io.Reader = nil
@@ -215,7 +213,7 @@ func (r HTTPRequest) CreateRequest(ctx context.Context, ctr *container.Container
 	}
 	req.Header = header
 	if r.AttachRequestInfo != nil {
-		err = r.AttachRequestInfo(ctx, ctr, req)
+		err = r.AttachRequestInfo(ctx, req)
 		if err != nil {
 			return nil, fmt.Errorf("failed to attach request info: %w", err)
 		}
@@ -234,4 +232,4 @@ func (r HTTPRequest) CreateRequest(ctx context.Context, ctr *container.Container
 	return req, nil
 }
 
-var _ ExecReq = (*HTTPRequest)(nil)
+var _ httpexec.ExecReq = (*HTTPRequest)(nil)

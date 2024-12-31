@@ -9,12 +9,17 @@ import (
 	"github.com/ablankz/bloader/internal/store"
 )
 
+// SetAuthor sets the author on the request
+type SetAuthor interface {
+	// SetOnRequest sets the authentication information on the request
+	SetOnRequest(ctx context.Context, r *http.Request)
+}
+
 // Authenticator is an interface for authenticating
 type Authenticator interface {
+	SetAuthor
 	// Authenticate authenticates the user
 	Authenticate(ctx context.Context, str store.Store) error
-	// SetOnRequest sets the authentication information on the request
-	SetOnRequest(ctx context.Context, str store.Store, r *http.Request)
 	// IsExpired checks if the authentication information is expired
 	IsExpired(ctx context.Context, str store.Store) bool
 	// Refresh refreshes the authentication information

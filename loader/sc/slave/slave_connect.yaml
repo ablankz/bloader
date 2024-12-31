@@ -17,19 +17,8 @@ slaves:
     certificate:
       enabled: true
       ca_cert: "certs/ca.crt"
-      # slave_cert: "certs/slave.crt"
-      # slave_key: "certs/slave.key"
     encrypt:
       enabled: true
       encrypt_id: "encryptStaticCBC"
-    thread_only: true
-    default: {{ .Default }}
-    enabled: {{ .Enabled }}
-    {{- if .Default }}
-    default: true
-    {{- end }}
-    {{- if .Enabled }}
-    enabled: true
-    {{- end }}
 {{- end }}
 

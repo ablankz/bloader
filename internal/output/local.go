@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/ablankz/bloader/internal/config"
-	"github.com/ablankz/bloader/internal/container"
 	"github.com/ablankz/bloader/internal/logger"
 	"github.com/ablankz/bloader/internal/utils"
 )
@@ -30,7 +29,7 @@ func NewLocalOutput(cfg config.ValidOutputRespectiveValueConfig) LocalOutput {
 // HTTPDataWriteFactory returns the HTTPDataWrite function
 func (o LocalOutput) HTTPDataWriteFactory(
 	ctx context.Context,
-	ctr *container.Container,
+	log logger.Logger,
 	enabled bool,
 	uniqueName string,
 	header []string,
@@ -44,7 +43,7 @@ func (o LocalOutput) HTTPDataWriteFactory(
 	}
 	f, err := utils.CreateFileWithDir(filePath)
 	if err != nil {
-		ctr.Logger.Error(ctx, "failed to create file",
+		log.Error(ctx, "failed to create file",
 			logger.Value("error", err), logger.Value("on", "runAsyncProcessing"))
 		return nil, nil, fmt.Errorf("failed to create file: %w", err)
 	}
@@ -52,7 +51,7 @@ func (o LocalOutput) HTTPDataWriteFactory(
 	case config.OutputFormatCSV:
 		writer := csv.NewWriter(f)
 		if err := writer.Write(header); err != nil {
-			ctr.Logger.Error(ctx, "failed to write header",
+			log.Error(ctx, "failed to write header",
 				logger.Value("error", err), logger.Value("on", "runAsyncProcessing"))
 			return nil, nil, fmt.Errorf("failed to write header: %w", err)
 		}
@@ -60,7 +59,7 @@ func (o LocalOutput) HTTPDataWriteFactory(
 	}
 	return func(
 			ctx context.Context,
-			ctr *container.Container,
+			log logger.Logger,
 			data []string,
 		) error {
 			if !enabled {
@@ -69,10 +68,10 @@ func (o LocalOutput) HTTPDataWriteFactory(
 			switch o.Format {
 			case config.OutputFormatCSV:
 				writer := csv.NewWriter(f)
-				ctr.Logger.Debug(ctx, "Writing data to csv",
+				log.Debug(ctx, "Writing data to csv",
 					logger.Value("data", data), logger.Value("on", "runAsyncProcessing"))
 				if err := writer.Write(data); err != nil {
-					ctr.Logger.Error(ctx, "failed to write data to csv",
+					log.Error(ctx, "failed to write data to csv",
 						logger.Value("error", err), logger.Value("on", "runAsyncProcessing"))
 				}
 				writer.Flush()

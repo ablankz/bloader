@@ -39,7 +39,7 @@ cd bloader
 
 ## With TLS
 
-Copy the ca.cert generated on the Master side to the Slave.
+Copy the ca.crt generated on the Master side to the Slave.
 
 ``` sh
 chmod +x generate_certs.sh

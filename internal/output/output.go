@@ -4,18 +4,18 @@ import (
 	"context"
 
 	"github.com/ablankz/bloader/internal/config"
-	"github.com/ablankz/bloader/internal/container"
+	"github.com/ablankz/bloader/internal/logger"
 )
 
 // HTTPDataWrite writes the data to the output
-type HTTPDataWrite func(ctx context.Context, ctr *container.Container, data []string) error
+type HTTPDataWrite func(ctx context.Context, log logger.Logger, data []string) error
 
 // Output represents a output to be scanned
 type Output interface {
 	// HTTPDataWriteFactory returns the HTTPDataWrite function
 	HTTPDataWriteFactory(
 		ctx context.Context,
-		ctr *container.Container,
+		log logger.Logger,
 		enabled bool,
 		uniqueName string,
 		header []string,

@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ablankz/bloader/internal/container"
+	"github.com/ablankz/bloader/internal/logger"
 )
 
 // ResponseContent represents the response content
@@ -77,11 +77,11 @@ const (
 // RequestExecutor represents the request executor
 type RequestExecutor interface {
 	// RequestExecute executes the request
-	RequestExecute(ctx context.Context, ctr *container.Container) (ResponseContent, error)
+	RequestExecute(ctx context.Context, log logger.Logger) (ResponseContent, error)
 }
 
 // MassRequestExecutor represents the request executor
 type MassRequestExecutor interface {
 	// MassRequestExecute executes the request
-	MassRequestExecute(ctx context.Context, ctr *container.Container) error
+	MassRequestExecute(ctx context.Context, log logger.Logger) error
 }

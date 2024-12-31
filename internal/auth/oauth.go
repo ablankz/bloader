@@ -25,7 +25,7 @@ type OAuthAuthenticator struct {
 	password             string
 	redirectPort         int
 	credentialConf       config.ValidAuthCredentialConfig
-	authToken            *AuthToken
+	authToken            *OAuthToken
 }
 
 const (
@@ -90,7 +90,7 @@ func NewOAuthAuthenticator(str store.Store, redirectPort int, conf config.ValidA
 	authenticator.redirectPort = redirectPort
 	authenticator.credentialConf = conf.Credential
 
-	authenticator.authToken = &AuthToken{}
+	authenticator.authToken = &OAuthToken{}
 	if authToken, err := credentialGet(str, conf.Credential); err == nil {
 		authenticator.authToken = authToken
 	}
@@ -98,22 +98,22 @@ func NewOAuthAuthenticator(str store.Store, redirectPort int, conf config.ValidA
 	return authenticator, nil
 }
 
-type AuthToken struct {
+type OAuthToken struct {
 	AccessToken  string    `json:"access_token"`
 	RefreshToken string    `json:"refresh_token"`
 	TokenType    string    `json:"token_type"`
 	Expiry       time.Time `json:"expiry"`
 }
 
-func (t *AuthToken) setAuthHeader(r *http.Request) {
+func (t *OAuthToken) SetOnRequest(ctx context.Context, r *http.Request) {
 	r.Header.Set("Authorization", t.TokenType+" "+t.AccessToken)
 }
 
-func (t *AuthToken) isExpired() bool {
+func (t *OAuthToken) isExpired() bool {
 	return t.Expiry.Before(time.Now())
 }
 
-func (t *AuthToken) refresh(
+func (t *OAuthToken) refresh(
 	ctx context.Context,
 	str store.Store,
 	credentialConf config.ValidAuthCredentialConfig,
@@ -197,8 +197,8 @@ func (a *OAuthAuthenticator) Authenticate(ctx context.Context, str store.Store) 
 	return nil
 }
 
-func credentialSet(t *AuthToken, token *oauth2.Token, str store.Store, credentialConf config.ValidAuthCredentialConfig) error {
-	authToken := AuthToken{
+func credentialSet(t *OAuthToken, token *oauth2.Token, str store.Store, credentialConf config.ValidAuthCredentialConfig) error {
+	authToken := OAuthToken{
 		AccessToken:  token.AccessToken,
 		TokenType:    token.TokenType,
 		Expiry:       token.Expiry,
@@ -219,12 +219,12 @@ func credentialSet(t *AuthToken, token *oauth2.Token, str store.Store, credentia
 	return nil
 }
 
-func credentialGet(str store.Store, credentialConf config.ValidAuthCredentialConfig) (*AuthToken, error) {
+func credentialGet(str store.Store, credentialConf config.ValidAuthCredentialConfig) (*OAuthToken, error) {
 	authTokenBytes, err := str.GetObject(credentialConf.Store.BucketID, credentialConf.Store.Key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get token from store: %w", err)
 	}
-	authToken := &AuthToken{}
+	authToken := &OAuthToken{}
 	if err := json.Unmarshal(authTokenBytes, authToken); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal token: %w", err)
 	}
@@ -232,8 +232,8 @@ func credentialGet(str store.Store, credentialConf config.ValidAuthCredentialCon
 }
 
 // SetOnRequest sets the authentication information on the request
-func (a *OAuthAuthenticator) SetOnRequest(ctx context.Context, str store.Store, r *http.Request) {
-	a.authToken.setAuthHeader(r)
+func (a *OAuthAuthenticator) SetOnRequest(ctx context.Context, r *http.Request) {
+	a.authToken.SetOnRequest(ctx, r)
 }
 
 // IsExpired checks if the authentication information is expired
@@ -290,3 +290,7 @@ func handlerCallbackFactory(
 		shutdownFlag <- true
 	}
 }
+
+var _ SetAuthor = &OAuthToken{}
+var _ SetAuthor = &OAuthAuthenticator{}
+var _ Authenticator = &OAuthAuthenticator{}

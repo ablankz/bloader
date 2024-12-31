@@ -42,7 +42,7 @@ if [ "${var.tls_enabled}" = true ]; then
   mkdir -p $(dirname "${var.slave_cert_file_path}")
   mkdir -p $(dirname "${var.slave_key_file_path}")
   cat <<EOF_TLS_CERT > ${var.slave_ca_cert_file_path}
-${tls_self_signed_cert.ca_cert[0].cert_pem}
+${tls_self_signed_cert.ca_cert[0].crt_pem}
 EOF_TLS_CERT
   cat <<EOF_TLS_KEY > ${var.slave_ca_key_file_path}
 ${tls_private_key.ca_key[0].private_key_pem}

@@ -26,7 +26,7 @@ resource "tls_self_signed_cert" "ca_cert" {
 resource "local_file" "ca_cert_file" {
   count = var.tls_enabled ? 1 : 0
 
-  content  = tls_self_signed_cert.ca_cert[0].cert_pem
+  content  = tls_self_signed_cert.ca_cert[0].crt_pem
   filename = var.ca_cert_file_path
 }
 

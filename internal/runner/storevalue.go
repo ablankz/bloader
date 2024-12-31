@@ -2,10 +2,7 @@ package runner
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-
-	"github.com/ablankz/bloader/internal/container"
 )
 
 // StoreValue represents the StoreValue runner
@@ -73,24 +70,9 @@ func (d StoreValueData) Validate() (ValidStoreValueData, error) {
 }
 
 // Run runs the StoreValue runner
-func (r ValidStoreValue) Run(ctx context.Context, ctr *container.Container) error {
-	for _, d := range r.Data {
-		valBytes, err := json.Marshal(d.Value)
-		if err != nil {
-			return fmt.Errorf("failed to marshal value: %v", err)
-		}
-		if d.Encrypt.Enabled {
-			encryptor, ok := ctr.EncypterContainer[d.Encrypt.EncryptID]
-			if !ok {
-				return fmt.Errorf("encryptor not found: %s", d.Encrypt.EncryptID)
-			}
-			encryptedVal, err := encryptor.Encrypt(valBytes)
-			if err != nil {
-				return fmt.Errorf("failed to encrypt value: %v", err)
-			}
-			valBytes = []byte(encryptedVal)
-		}
-		ctr.Store.PutObject(d.BucketID, d.Key, valBytes)
+func (r ValidStoreValue) Run(ctx context.Context, str Store) error {
+	if err := str.Store(ctx, r.Data, nil); err != nil {
+		return fmt.Errorf("failed to store data: %v", err)
 	}
 	return nil
 }

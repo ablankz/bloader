@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/ablankz/bloader/internal/container"
 	"github.com/ablankz/bloader/internal/logger"
 )
 
@@ -60,7 +59,7 @@ type countBetweenVal struct {
 type CountConditionMatcher func(count int) bool
 
 // MatcherGenerate generates the status code matcher
-func (scc CountCondition) MatcherGenerate(ctx context.Context, ctr *container.Container) (CountConditionMatcher, error) {
+func (scc CountCondition) MatcherGenerate(ctx context.Context, log logger.Logger) (CountConditionMatcher, error) {
 	if scc.ID == nil {
 		return nil, fmt.Errorf("id is required")
 	}
@@ -243,7 +242,7 @@ func (scc CountCondition) MatcherGenerate(ctx context.Context, ctr *container.Co
 			return preRequireRegex.MatchString(strconv.Itoa(count))
 		}, nil
 	default:
-		ctr.Logger.Error(ctx, "unknown operator",
+		log.Error(ctx, "unknown operator",
 			logger.Value("operator", scc.Op), logger.Value("on", "countMatherFactory"))
 		return nil, fmt.Errorf("unknown operator: %s", *scc.Op)
 	}
@@ -256,10 +255,10 @@ type CountConditions []CountCondition
 type CountConditionsMatcher func(count int) (string, bool)
 
 // MatcherGenerate generates the status code conditions matcher
-func (sccs CountConditions) MatcherGenerate(ctx context.Context, ctr *container.Container) (CountConditionsMatcher, error) {
+func (sccs CountConditions) MatcherGenerate(ctx context.Context, log logger.Logger) (CountConditionsMatcher, error) {
 	matchers := make([]CountConditionMatcher, 0, len(sccs))
 	for _, scc := range sccs {
-		matcher, err := scc.MatcherGenerate(ctx, ctr)
+		matcher, err := scc.MatcherGenerate(ctx, log)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate matcher: %w", err)
 		}

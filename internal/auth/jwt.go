@@ -26,7 +26,7 @@ func (a *JWTAuthenticator) Authenticate(ctx context.Context, str store.Store) er
 }
 
 // SetOnRequest sets the authentication information on the request
-func (a *JWTAuthenticator) SetOnRequest(ctx context.Context, str store.Store, r *http.Request) {
+func (a *JWTAuthenticator) SetOnRequest(ctx context.Context, r *http.Request) {
 }
 
 // IsExpired checks if the authentication information is expired
@@ -38,3 +38,6 @@ func (a *JWTAuthenticator) IsExpired(ctx context.Context, str store.Store) bool 
 func (a *JWTAuthenticator) Refresh(ctx context.Context, str store.Store) error {
 	return nil
 }
+
+var _ Authenticator = &JWTAuthenticator{}
+var _ SetAuthor = &JWTAuthenticator{}
