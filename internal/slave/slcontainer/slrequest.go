@@ -243,35 +243,6 @@ func (r *ReceiveChanelRequestContainer) SendTargetResourceRequests(
 	return r.termCaster.RegisterRequest(requestID)
 }
 
-// SendTerminateLoad sends the terminate load request
-func (r *ReceiveChanelRequestContainer) SendTerminateLoad(
-	ctx context.Context,
-	cmdID string,
-	success bool,
-	req TerminateLoadRequest,
-) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	requestID := utils.GenerateUniqueID()
-
-	pbReq := &pb.ReceiveChanelConnectResponse{
-		RequestId:   requestID,
-		RequestType: pb.RequestType_REQUEST_TYPE_TERMINATE_LOAD,
-		Request: &pb.ReceiveChanelConnectResponse_TerminateLoad{
-			TerminateLoad: &pb.ReceiveChanelConnectTerminateCommand{
-				CommandId: cmdID,
-				Success:   success,
-			},
-		},
-	}
-
-	select {
-	case <-ctx.Done():
-	case r.ReqChan <- pbReq: // nothing
-	}
-}
-
 // Cast casts a term to the request
 func (r *ReceiveChanelRequestContainer) Cast(reqID string) {
 	r.mu.RLock()

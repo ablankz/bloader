@@ -75,7 +75,7 @@ func (d StoreImportData) Validate() (ValidStoreImportData, error) {
 
 // Run runs the StoreImport runner
 func (r ValidStoreImport) Run(ctx context.Context, str Store, store *sync.Map) error {
-	if err := str.Import(ctx, r.Data, func(ctx context.Context, data ValidStoreImportData, val any) error {
+	if err := str.Import(ctx, r.Data, func(ctx context.Context, data ValidStoreImportData, val any, valBytes []byte) error {
 		store.Store(data.Key, val)
 		return nil
 	}); err != nil {

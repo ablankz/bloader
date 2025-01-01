@@ -10,32 +10,41 @@ import (
 	"github.com/ablankz/bloader/internal/container"
 	"github.com/ablankz/bloader/internal/encrypt"
 	"github.com/ablankz/bloader/internal/logger"
+	"github.com/ablankz/bloader/internal/master"
 	"github.com/ablankz/bloader/internal/runner"
 	"github.com/ablankz/bloader/internal/slave/slcontainer"
 	"github.com/ablankz/bloader/internal/utils"
-	common "github.com/ablankz/common-proto/lib/go"
+	common "github.com/ablankz/go-cmproto"
 	"google.golang.org/grpc"
 )
 
+// commandTermData represents the command term data
+type commandTermData struct {
+	Success bool
+}
+
 // Server represents the server for the worker node
 type Server struct {
-	mu         *sync.RWMutex
-	encryptCtr encrypt.EncrypterContainer
-	env        string
-	log        logger.Logger
-	slCtrMap   map[string]*slcontainer.SlaveContainer
-	reqConMap  *slcontainer.RequestConnectionMapper
+	mu          *sync.RWMutex
+	encryptCtr  encrypt.EncrypterContainer
+	env         string
+	log         logger.Logger
+	slaveConCtr *master.ConnectionContainer
+	slCtrMap    map[string]*slcontainer.SlaveContainer
+	reqConMap   *slcontainer.RequestConnectionMapper
+	cmdTermMap  map[string]chan commandTermData
 }
 
 // NewServer creates a new server for the worker node
-func NewServer(ctr *container.Container) *Server {
+func NewServer(ctr *container.Container, slaveConCtr *master.ConnectionContainer) *Server {
 	return &Server{
-		mu:         &sync.RWMutex{},
-		encryptCtr: ctr.EncypterContainer,
-		env:        ctr.Config.Env,
-		log:        ctr.Logger,
-		slCtrMap:   make(map[string]*slcontainer.SlaveContainer),
-		reqConMap:  slcontainer.NewRequestConnectionMapper(),
+		mu:          &sync.RWMutex{},
+		encryptCtr:  ctr.EncypterContainer,
+		env:         ctr.Config.Env,
+		log:         ctr.Logger,
+		slaveConCtr: slaveConCtr,
+		slCtrMap:    make(map[string]*slcontainer.SlaveContainer),
+		reqConMap:   slcontainer.NewRequestConnectionMapper(),
 	}
 }
 
@@ -112,12 +121,17 @@ func (s *Server) SlaveCommand(ctx context.Context, req *pb.SlaveCommandRequest) 
 	for k, v := range fMap {
 		threadOnlyStrMap.Store(k, v)
 	}
+	slaveValues, err := common.FromFlexMap(req.SlaveValues)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert slave values: %v", err)
+	}
 
 	cmdMapData := slcontainer.CommandMapData{
 		LoaderID:         req.LoaderId,
 		OutputRoot:       req.OutputRoot,
 		StrMap:           &strMap,
 		ThreadOnlyStrMap: &threadOnlyStrMap,
+		SlaveValues:      slaveValues,
 	}
 	slCtr.AddCommandMap(uid, cmdMapData)
 
@@ -128,9 +142,8 @@ func (s *Server) SlaveCommand(ctx context.Context, req *pb.SlaveCommandRequest) 
 
 // CallExec handles the exec request from the master node
 func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingServer[pb.CallExecResponse]) error {
-	s.mu.RLock()
+	s.mu.Lock()
 	slCtr, ok := s.slCtrMap[req.ConnectionId]
-	s.mu.RUnlock()
 	if !ok {
 		return ErrInvalidConnectionID
 	}
@@ -138,6 +151,22 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 	if !ok {
 		return ErrCommandNotFound
 	}
+	s.cmdTermMap[req.CommandId] = make(chan commandTermData)
+	s.mu.Unlock()
+	var err error
+	defer func() {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		if err != nil {
+			s.cmdTermMap[req.CommandId] <- commandTermData{
+				Success: false,
+			}
+			return
+		}
+		s.cmdTermMap[req.CommandId] <- commandTermData{
+			Success: true,
+		}
+	}()
 	tmplFactor := &SlaveTmplFactor{
 		loader:                        slCtr.Loader,
 		connectionID:                  req.ConnectionId,
@@ -177,22 +206,23 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 				if err := st.Send(res); err != nil {
 					s.log.Error(stream.Context(), "failed to send a response",
 						logger.Value("Error", err))
-					return
 				}
 			}
 		}
 	}(stream)
 
 	exec := runner.BaseExecutor{
-		Logger:       s.log,
-		EncryptCtr:   s.encryptCtr,
-		TmplFactor:   tmplFactor,
-		TargetFactor: targetFactor,
-		AuthFactor:   authFactor,
-		Store:        store,
-		OutputFactor: outputFactor,
+		Logger:                s.log,
+		Env:                   s.env,
+		SlaveConnectContainer: s.slaveConCtr,
+		EncryptCtr:            s.encryptCtr,
+		TmplFactor:            tmplFactor,
+		TargetFactor:          targetFactor,
+		AuthFactor:            authFactor,
+		Store:                 store,
+		OutputFactor:          outputFactor,
 	}
-	if err := exec.Execute(
+	if err = exec.Execute(
 		stream.Context(),
 		data.LoaderID,
 		data.StrMap,
@@ -200,6 +230,7 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 		data.OutputRoot,
 		0,
 		0,
+		data.SlaveValues,
 	); err != nil {
 		return fmt.Errorf("failed to execute: %v", err)
 	}
@@ -294,7 +325,9 @@ func (s *Server) SendStoreData(ctx context.Context, req *pb.SendStoreDataRequest
 		return nil, ErrRequestNotFound
 	}
 
-	slCtr.Store.AddData(req.BucketId, req.StoreKey, req.Data)
+	for _, data := range req.StoreData {
+		slCtr.Store.AddData(data.BucketId, data.StoreKey, data.Data)
+	}
 	slCtr.ReceiveChanelRequestContainer.Cast(req.RequestId)
 	s.reqConMap.DeleteRequest(req.RequestId)
 	return &pb.SendStoreDataResponse{}, nil
@@ -337,4 +370,29 @@ func (s *Server) SendTarget(ctx context.Context, req *pb.SendTargetRequest) (*pb
 	s.reqConMap.DeleteRequest(req.RequestId)
 
 	return &pb.SendTargetResponse{}, nil
+}
+
+// ReceiveLoadTermChannel handles the load term channel request from the master node
+func (s *Server) ReceiveLoadTermChannel(ctx context.Context, req *pb.ReceiveLoadTermChannelRequest) (*pb.ReceiveLoadTermChannelResponse, error) {
+	s.mu.RLock()
+	cmdTermChan, ok := s.cmdTermMap[req.CommandId]
+	s.mu.RUnlock()
+	if !ok {
+		return nil, ErrCommandNotFound
+	}
+	defer func() {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		close(s.cmdTermMap[req.CommandId])
+		delete(s.cmdTermMap, req.CommandId)
+	}()
+
+	select {
+	case data := <-cmdTermChan:
+		return &pb.ReceiveLoadTermChannelResponse{
+			Success: data.Success,
+		}, nil
+	case <-ctx.Done():
+		return nil, fmt.Errorf("context done")
+	}
 }

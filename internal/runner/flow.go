@@ -6,8 +6,13 @@ import (
 	"sync"
 	"sync/atomic"
 
+	pb "buf.build/gen/go/cresplanex/bloader/protocolbuffers/go/cresplanex/bloader/v1"
+	common "github.com/ablankz/go-cmproto"
+
 	"github.com/ablankz/bloader/internal/encrypt"
 	"github.com/ablankz/bloader/internal/logger"
+	"github.com/ablankz/bloader/internal/master"
+	"github.com/ablankz/bloader/internal/output"
 )
 
 // Flow represents the flow runner
@@ -77,19 +82,22 @@ const (
 	FlowStepFlowTypeFile FlowStepFlowType = "file"
 	// FlowStepFlowTypeFlow represents the flow flow step flow type
 	FlowStepFlowTypeFlow FlowStepFlowType = "flow"
+	// FlowStepFlowTypeSlaveCmd represents the slave command flow step flow type
+	FlowStepFlowTypeSlaveCmd FlowStepFlowType = "slaveCmd"
 )
 
 // FlowStepFlow represents a flow step flow
 type FlowStepFlow struct {
-	ID               *string             `yaml:"id"`
-	Type             *string             `yaml:"type"`
-	File             *string             `yaml:"file"`
-	Mkdir            bool                `yaml:"mkdir"`
-	Count            *int                `yaml:"count"`
-	Values           []FlowStepFlowValue `yaml:"values"`
-	ThreadOnlyValues []FlowStepFlowValue `yaml:"thread_only_values"`
-	Flows            []FlowStepFlow      `yaml:"flows"`
-	Concurrency      *int                `yaml:"concurrency"`
+	ID               *string                `yaml:"id"`
+	Type             *string                `yaml:"type"`
+	File             *string                `yaml:"file"`
+	Mkdir            bool                   `yaml:"mkdir"`
+	Count            *int                   `yaml:"count"`
+	Values           []FlowStepFlowValue    `yaml:"values"`
+	ThreadOnlyValues []FlowStepFlowValue    `yaml:"thread_only_values"`
+	Flows            []FlowStepFlow         `yaml:"flows"`
+	Concurrency      *int                   `yaml:"concurrency"`
+	Executors        []FlowStepFlowExecutor `yaml:"executors"`
 }
 
 // ValidFlowStepFlow represents a valid flow step flow
@@ -103,6 +111,81 @@ type ValidFlowStepFlow struct {
 	ThreadOnlyValues []ValidFlowStepFlowValue
 	Flows            []ValidFlowStepFlow
 	Concurrency      int
+	Executors        []ValidFlowStepFlowExecutor
+}
+
+// FlowStepFlowExecutorOutput represents a flow step flow executor output
+type FlowStepFlowExecutorOutput struct {
+	Enabled  bool    `yaml:"enabled"`
+	RootPath *string `yaml:"root_path"`
+}
+
+// ValidFlowStepFlowExecutorOutput represents a valid flow step flow executor output
+type ValidFlowStepFlowExecutorOutput struct {
+	Enabled  bool
+	RootPath string
+}
+
+// Validate validates a flow step flow executor output
+func (r FlowStepFlowExecutorOutput) Validate() (ValidFlowStepFlowExecutorOutput, error) {
+	if !r.Enabled {
+		return ValidFlowStepFlowExecutorOutput{}, nil
+	}
+	var validFlowStepFlowExecutorOutput ValidFlowStepFlowExecutorOutput
+	validFlowStepFlowExecutorOutput.Enabled = r.Enabled
+	if r.RootPath == nil {
+		return ValidFlowStepFlowExecutorOutput{}, fmt.Errorf("root_path is required")
+	}
+	validFlowStepFlowExecutorOutput.RootPath = *r.RootPath
+	return validFlowStepFlowExecutorOutput, nil
+}
+
+// FlowStepFlowExecutor represents a flow step flow executor
+type FlowStepFlowExecutor struct {
+	SlaveID                    *string                    `yaml:"slave_id"`
+	Output                     FlowStepFlowExecutorOutput `yaml:"output"`
+	InheritValues              bool                       `yaml:"inherit_values"`
+	AdditionalValues           []FlowStepFlowValue        `yaml:"additional_values"`
+	AdditionalThreadOnlyValues []FlowStepFlowValue        `yaml:"additional_thread_only_values"`
+}
+
+// ValidFlowStepFlowExecutor represents a valid flow step flow executor
+type ValidFlowStepFlowExecutor struct {
+	SlaveID                    string
+	Output                     ValidFlowStepFlowExecutorOutput
+	InheritValues              bool
+	AdditionalValues           []ValidFlowStepFlowValue
+	AdditionalThreadOnlyValues []ValidFlowStepFlowValue
+}
+
+// Validate validates a flow step flow executor
+func (r FlowStepFlowExecutor) Validate() (ValidFlowStepFlowExecutor, error) {
+	var validFlowStepFlowExecutor ValidFlowStepFlowExecutor
+	if r.SlaveID == nil {
+		return ValidFlowStepFlowExecutor{}, fmt.Errorf("slave_id is required")
+	}
+	validFlowStepFlowExecutor.SlaveID = *r.SlaveID
+	validOutput, err := r.Output.Validate()
+	if err != nil {
+		return ValidFlowStepFlowExecutor{}, fmt.Errorf("failed to validate output: %v", err)
+	}
+	validFlowStepFlowExecutor.Output = validOutput
+	validFlowStepFlowExecutor.InheritValues = r.InheritValues
+	for i, value := range r.AdditionalValues {
+		valValue, err := value.Validate()
+		if err != nil {
+			return ValidFlowStepFlowExecutor{}, fmt.Errorf("failed to validate additional value[%d]: %v", i, err)
+		}
+		validFlowStepFlowExecutor.AdditionalValues = append(validFlowStepFlowExecutor.AdditionalValues, valValue)
+	}
+	for i, value := range r.AdditionalThreadOnlyValues {
+		valValue, err := value.Validate()
+		if err != nil {
+			return ValidFlowStepFlowExecutor{}, fmt.Errorf("failed to validate additional thread only value[%d]: %v", i, err)
+		}
+		validFlowStepFlowExecutor.AdditionalThreadOnlyValues = append(validFlowStepFlowExecutor.AdditionalThreadOnlyValues, valValue)
+	}
+	return validFlowStepFlowExecutor, nil
 }
 
 // FlowStepFlowValue represents a flow step flow value
@@ -166,6 +249,19 @@ func (f FlowStepFlow) Validate(valid *ValidFlowStepFlow) error {
 			}
 			valid.Count = *f.Count
 		}
+	case FlowStepFlowTypeSlaveCmd:
+		valid.Type = FlowStepFlowType(*f.Type)
+		if f.File == nil {
+			return fmt.Errorf("file is required")
+		}
+		valid.File = *f.File
+		for i, e := range f.Executors {
+			validExecutor, err := e.Validate()
+			if err != nil {
+				return fmt.Errorf("failed to validate executor[%d]: %v", i, err)
+			}
+			valid.Executors = append(valid.Executors, validExecutor)
+		}
 	case FlowStepFlowTypeFlow:
 		valid.Type = FlowStepFlowType(*f.Type)
 		if f.Concurrency == nil {
@@ -201,16 +297,20 @@ type flowExecutor struct {
 	flowType        FlowStepFlowType
 	filename        string
 	rootDir         string
+	rootStr         *sync.Map
 	threadOnlyStore *sync.Map
 	concurrency     int
 	flows           []ValidFlowStepFlow
+	executors       []ValidFlowStepFlowExecutor
 	loopCount       int
 }
 
 // Run runs a flow step flow
 func (f ValidFlow) Run(
 	ctx context.Context,
+	env string,
 	log logger.Logger,
+	slaveConCtr *master.ConnectionContainer,
 	encryptCtr encrypt.EncrypterContainer,
 	tmplFactor TmplFactor,
 	store Store,
@@ -220,10 +320,13 @@ func (f ValidFlow) Run(
 	str *sync.Map,
 	outputRoot string,
 	callCount int,
+	slaveValues map[string]any,
 ) error {
 	return run(
 		ctx,
+		env,
 		log,
+		slaveConCtr,
 		encryptCtr,
 		tmplFactor,
 		store,
@@ -235,12 +338,15 @@ func (f ValidFlow) Run(
 		callCount,
 		f.Step.Flows,
 		f.Step.Concurrency,
+		slaveValues,
 	)
 }
 
 func run(
 	ctx context.Context,
+	env string,
 	log logger.Logger,
+	slaveConCtr *master.ConnectionContainer,
 	encryptCtr encrypt.EncrypterContainer,
 	tmplFactor TmplFactor,
 	store Store,
@@ -252,6 +358,7 @@ func run(
 	callCount int,
 	flows []ValidFlowStepFlow,
 	concurrency int,
+	slaveValues map[string]any,
 ) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -268,8 +375,10 @@ func run(
 
 	var count int
 	for _, flow := range flows {
+		rootStr := &sync.Map{}
 		for _, v := range flow.Values {
 			str.Store(v.Key, v.Value)
+			rootStr.Store(v.Key, v.Value)
 		}
 		threadOnlyStore := &sync.Map{}
 		for _, v := range flow.ThreadOnlyValues {
@@ -288,9 +397,11 @@ func run(
 					flowType:        flow.Type,
 					filename:        flow.File,
 					rootDir:         rootDir,
+					rootStr:         rootStr,
 					threadOnlyStore: threadOnlyStore,
 					concurrency:     flow.Concurrency,
 					flows:           flow.Flows,
+					executors:       flow.Executors,
 					loopCount:       j,
 				}
 				count++
@@ -307,9 +418,11 @@ func run(
 				flowType:        flow.Type,
 				filename:        flow.File,
 				rootDir:         rootDir,
+				rootStr:         rootStr,
 				threadOnlyStore: threadOnlyStore,
 				concurrency:     flow.Concurrency,
 				flows:           flow.Flows,
+				executors:       flow.Executors,
 				loopCount:       0,
 			}
 			count++
@@ -330,13 +443,15 @@ func run(
 			switch executor.flowType {
 			case FlowStepFlowTypeFile:
 				baseExecutor := BaseExecutor{
-					EncryptCtr:   encryptCtr,
-					Logger:       log,
-					TmplFactor:   tmplFactor,
-					Store:        store,
-					AuthFactor:   authFactor,
-					OutputFactor: outFactor,
-					TargetFactor: targetFactor,
+					Env:                   env,
+					EncryptCtr:            encryptCtr,
+					Logger:                log,
+					SlaveConnectContainer: slaveConCtr,
+					TmplFactor:            tmplFactor,
+					Store:                 store,
+					AuthFactor:            authFactor,
+					OutputFactor:          outFactor,
+					TargetFactor:          targetFactor,
 				}
 				err := baseExecutor.Execute(
 					ctx,
@@ -346,16 +461,36 @@ func run(
 					executor.rootDir,
 					executor.loopCount,
 					callCount+1,
+					slaveValues,
 				)
 				if err != nil {
 					log.Error(ctx, fmt.Sprintf("failed to execute flow[%d]", i),
 						logger.Value("error", err), logger.Value("on", "Flow"))
 					return fmt.Errorf("failed to execute flow: %v", err)
 				}
+			case FlowStepFlowTypeSlaveCmd:
+				err := slaveCmdRun(
+					ctx,
+					log,
+					slaveConCtr,
+					outFactor,
+					str,
+					executor.rootDir,
+					flows[i],
+				)
+				if err != nil {
+					log.Error(ctx, fmt.Sprintf("failed to execute flow[%d]", i),
+						logger.Value("error", err), logger.Value("on", "Flow"))
+					return fmt.Errorf("failed to execute flow: %v", err)
+				}
+				log.Debug(ctx, "flow finished",
+					logger.Value("on", "Flow"))
 			case FlowStepFlowTypeFlow:
 				err := run(
 					ctx,
+					env,
 					log,
+					slaveConCtr,
 					encryptCtr,
 					tmplFactor,
 					store,
@@ -367,6 +502,7 @@ func run(
 					callCount+1,
 					executor.flows,
 					executor.concurrency,
+					slaveValues,
 				)
 				if err != nil {
 					log.Error(ctx, fmt.Sprintf("failed to execute flow[%d]", i),
@@ -392,13 +528,15 @@ func run(
 				switch preExecutor.flowType {
 				case FlowStepFlowTypeFile:
 					baseExecutor := BaseExecutor{
-						Logger:       log,
-						EncryptCtr:   encryptCtr,
-						TmplFactor:   tmplFactor,
-						Store:        store,
-						AuthFactor:   authFactor,
-						OutputFactor: outFactor,
-						TargetFactor: targetFactor,
+						Env:                   env,
+						Logger:                log,
+						SlaveConnectContainer: slaveConCtr,
+						EncryptCtr:            encryptCtr,
+						TmplFactor:            tmplFactor,
+						Store:                 store,
+						AuthFactor:            authFactor,
+						OutputFactor:          outFactor,
+						TargetFactor:          targetFactor,
 					}
 					err := baseExecutor.Execute(
 						ctx,
@@ -408,6 +546,24 @@ func run(
 						preExecutor.rootDir,
 						preExecutor.loopCount,
 						callCount+1,
+						slaveValues,
+					)
+					if err != nil {
+						atomicErr.Store(err)
+						log.Error(ctx, fmt.Sprintf("failed to execute flow[%d]", i),
+							logger.Value("error", err), logger.Value("on", "Flow"))
+						cancel()
+						return
+					}
+				case FlowStepFlowTypeSlaveCmd:
+					err := slaveCmdRun(
+						ctx,
+						log,
+						slaveConCtr,
+						outFactor,
+						str,
+						preExecutor.rootDir,
+						flows[i],
 					)
 					if err != nil {
 						atomicErr.Store(err)
@@ -419,7 +575,9 @@ func run(
 				case FlowStepFlowTypeFlow:
 					err := run(
 						ctx,
+						env,
 						log,
+						slaveConCtr,
 						encryptCtr,
 						tmplFactor,
 						store,
@@ -431,6 +589,7 @@ func run(
 						callCount+1,
 						preExecutor.flows,
 						preExecutor.concurrency,
+						slaveValues,
 					)
 					if err != nil {
 						atomicErr.Store(err)
@@ -458,6 +617,246 @@ func run(
 		}
 
 		return nil
+	}
+
+	return nil
+}
+
+func slaveCmdRun(
+	ctx context.Context,
+	log logger.Logger,
+	slaveConCtr *master.ConnectionContainer,
+	outFactor OutputFactor,
+	str *sync.Map,
+	outputRoot string,
+	f ValidFlowStepFlow,
+) error {
+	globalStr := make(map[string]any)
+	threadOnlyStr := make(map[string]any)
+	str.Range(func(key, value any) bool {
+		globalStr[key.(string)] = value
+		return true
+	})
+	f.ThreadOnlyValues = append(f.ThreadOnlyValues, f.Values...)
+	for _, v := range f.ThreadOnlyValues {
+		threadOnlyStr[v.Key] = v.Value
+	}
+	slaveExecutors := make([]slaveExecutor, len(f.Executors))
+	for i, exec := range f.Executors {
+		slaveID := exec.SlaveID
+		mapData, ok := slaveConCtr.Find(slaveID)
+		if !ok {
+			log.Error(ctx, fmt.Sprintf("failed to find slave: %s", slaveID),
+				logger.Value("on", "Flow"))
+			return fmt.Errorf("failed to find slave: %s", slaveID)
+		}
+		if exec.InheritValues {
+			str.Range(func(key, value any) bool {
+				globalStr[key.(string)] = value
+				return true
+			})
+		}
+		for _, v := range exec.AdditionalValues {
+			globalStr[v.Key] = v.Value
+		}
+		for _, v := range exec.AdditionalThreadOnlyValues {
+			threadOnlyStr[v.Key] = v.Value
+		}
+		defaultStr, err := common.NewFlexMap(globalStr)
+		if err != nil {
+			log.Error(ctx, "failed to create default store",
+				logger.Value("error", err), logger.Value("on", "Flow"))
+			return fmt.Errorf("failed to create default store: %v", err)
+		}
+		defaultThreadOnlyStr, err := common.NewFlexMap(threadOnlyStr)
+		if err != nil {
+			log.Error(ctx, "failed to create default thread only store",
+				logger.Value("error", err), logger.Value("on", "Flow"))
+			return fmt.Errorf("failed to create default thread only store: %v", err)
+		}
+		oRoot := outputRoot
+		if exec.Output.Enabled {
+			oRoot = oRoot + "/" + exec.Output.RootPath
+		}
+		slaveValuesMap := map[string]any{
+			"SlaveID": slaveID,
+			"Index":   i,
+		}
+		slaveValues, err := common.NewFlexMap(slaveValuesMap)
+		if err != nil {
+			log.Error(ctx, "failed to create",
+				logger.Value("error", err), logger.Value("on", "Flow"))
+			return fmt.Errorf("failed to create slave values: %v", err)
+		}
+		res, err := mapData.Cli.SlaveCommand(ctx, &pb.SlaveCommandRequest{
+			ConnectionId:           mapData.ConnectionID,
+			LoaderId:               f.File,
+			DefaultStore:           defaultStr,
+			DefaultThreadOnlyStore: defaultThreadOnlyStr,
+			OutputRoot:             oRoot,
+			SlaveValues:            slaveValues,
+		})
+		if err != nil {
+			log.Error(ctx, "failed to execute",
+				logger.Value("error", err), logger.Value("on", "Flow"))
+			return fmt.Errorf("failed to execute slave command: %v", err)
+		}
+		slaveExecutors[i] = slaveExecutor{
+			slaveID:       slaveID,
+			cmdID:         res.CommandId,
+			mapData:       mapData,
+			outputEnabled: exec.Output.Enabled,
+			outFactor:     outFactor,
+		}
+	}
+
+	atomicErr := atomic.Value{}
+	var wg sync.WaitGroup
+	for i, executor := range slaveExecutors {
+		wg.Add(1)
+
+		go func(preExecutor slaveExecutor) {
+			defer wg.Done()
+
+			err := preExecutor.exec(ctx, log)
+			if err != nil {
+				atomicErr.Store(err)
+				log.Error(ctx, fmt.Sprintf("failed to execute flow[%d]", i),
+					logger.Value("error", err), logger.Value("on", "Flow"))
+				return
+			}
+		}(executor)
+	}
+
+	wg.Wait()
+
+	if err := atomicErr.Load(); err != nil {
+		log.Error(ctx, "failed to find error",
+			logger.Value("error", err.(error)), logger.Value("on", "Flow"))
+		return err.(error)
+	}
+
+	return nil
+}
+
+type slaveExecutor struct {
+	slaveID       string
+	cmdID         string
+	mapData       *master.ConnectionMapData
+	outputEnabled bool
+	outFactor     OutputFactor
+}
+
+// exec executes a slave command
+func (e slaveExecutor) exec(
+	ctx context.Context,
+	log logger.Logger,
+) error {
+	stream, err := e.mapData.Cli.CallExec(ctx, &pb.CallExecRequest{
+		ConnectionId: e.mapData.ConnectionID,
+		CommandId:    e.cmdID,
+	})
+	if err != nil {
+		log.Error(ctx, "failed to call exec",
+			logger.Value("error", err), logger.Value("on", "Flow"))
+		return fmt.Errorf("failed to call exec: %v", err)
+	}
+
+	go func() {
+		first := true
+		var httpDataWriter output.HTTPDataWrite
+		var closer output.Close
+		defer func() {
+			if closer != nil {
+				if err := closer(); err != nil {
+					log.Error(ctx, "failed to close",
+						logger.Value("error", err), logger.Value("on", "Flow"))
+				}
+			}
+		}()
+		for {
+			res, err := stream.Recv()
+			if err != nil {
+				log.Error(ctx, "failed to receive exec",
+					logger.Value("error", err), logger.Value("on", "Flow"))
+				if err := stream.CloseSend(); err != nil {
+					log.Error(ctx, "failed to close send",
+						logger.Value("error", err), logger.Value("on", "Flow"))
+				}
+				return
+			}
+			if !e.outputEnabled {
+				continue
+			}
+			output, err := e.outFactor.Factorize(ctx, res.OutputId)
+			if err != nil {
+				log.Error(ctx, "failed to factorize output",
+					logger.Value("error", err), logger.Value("on", "Flow"))
+				if err := stream.CloseSend(); err != nil {
+					log.Error(ctx, "failed to close send",
+						logger.Value("error", err), logger.Value("on", "Flow"))
+				}
+				return
+			}
+			switch res.OutputType {
+			case pb.CallExecOutputType_CALL_EXEC_OUTPUT_TYPE_HTTP:
+				httpOut := res.GetOutputHttp()
+				if first {
+					if httpDataWriter, closer, err = output.HTTPDataWriteFactory(
+						ctx,
+						log,
+						true,
+						res.OutputId,
+						httpOut.Data,
+					); err != nil {
+						log.Error(ctx, "failed to create http data writer",
+							logger.Value("error", err), logger.Value("on", "Flow"))
+						if err := stream.CloseSend(); err != nil {
+							log.Error(ctx, "failed to close send",
+								logger.Value("error", err), logger.Value("on", "Flow"))
+						}
+						return
+					}
+					first = false
+					continue
+				}
+				if err := httpDataWriter(
+					ctx,
+					log,
+					httpOut.Data,
+				); err != nil {
+					log.Error(ctx, "failed to write http data",
+						logger.Value("error", err), logger.Value("on", "Flow"))
+					if err := stream.CloseSend(); err != nil {
+						log.Error(ctx, "failed to close send",
+							logger.Value("error", err), logger.Value("on", "Flow"))
+					}
+					return
+				}
+			default:
+				log.Error(ctx, "invalid output type",
+					logger.Value("on", "Flow"))
+				if err := stream.CloseSend(); err != nil {
+					log.Error(ctx, "failed to close send",
+						logger.Value("error", err), logger.Value("on", "Flow"))
+				}
+				return
+			}
+		}
+	}()
+	termRes, err := e.mapData.Cli.ReceiveLoadTermChannel(ctx, &pb.ReceiveLoadTermChannelRequest{
+		ConnectionId: e.mapData.ConnectionID,
+		CommandId:    e.cmdID,
+	})
+	if err != nil {
+		log.Error(ctx, "failed to receive term channel",
+			logger.Value("error", err), logger.Value("on", "Flow"))
+		return fmt.Errorf("failed to receive term channel: %v", err)
+	}
+	if !termRes.Success {
+		log.Error(ctx, "failed to receive term channel",
+			logger.Value("on", "Flow"))
+		return fmt.Errorf("failed to receive term channel: %s", e.slaveID)
 	}
 
 	return nil

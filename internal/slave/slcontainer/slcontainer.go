@@ -30,6 +30,7 @@ type CommandMapData struct {
 	OutputRoot       string
 	StrMap           *sync.Map
 	ThreadOnlyStrMap *sync.Map
+	SlaveValues      map[string]any
 }
 
 // AddCommandMap adds a command map to the slave container

@@ -75,4 +75,9 @@ func (s *SlaveAuthenticatorFactor) Factorize(
 	return a, nil
 }
 
+// IsDefault returns if the authenticator is the default authenticator
+func (s *SlaveAuthenticatorFactor) IsDefault(authID string) bool {
+	return s.auth.DefaultAuthenticator == authID
+}
+
 var _ runner.AuthenticatorFactor = &SlaveAuthenticatorFactor{}

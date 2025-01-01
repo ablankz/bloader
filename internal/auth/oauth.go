@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"time"
 
+	pb "buf.build/gen/go/cresplanex/bloader/protocolbuffers/go/cresplanex/bloader/v1"
+
 	"github.com/ablankz/bloader/internal/config"
 	"github.com/ablankz/bloader/internal/store"
 	"github.com/ablankz/bloader/internal/utils"
@@ -98,6 +100,7 @@ func NewOAuthAuthenticator(str store.Store, redirectPort int, conf config.ValidA
 	return authenticator, nil
 }
 
+// OAuthToken is the OAuth token
 type OAuthToken struct {
 	AccessToken  string    `json:"access_token"`
 	RefreshToken string    `json:"refresh_token"`
@@ -105,10 +108,25 @@ type OAuthToken struct {
 	Expiry       time.Time `json:"expiry"`
 }
 
+// SetOnRequest sets the authentication information on the request
 func (t *OAuthToken) SetOnRequest(ctx context.Context, r *http.Request) {
 	r.Header.Set("Authorization", t.TokenType+" "+t.AccessToken)
 }
 
+// GetAuthValue returns the authentication value
+func (t *OAuthToken) GetAuthValue() *pb.Auth {
+	return &pb.Auth{
+		Type: pb.AuthType_AUTH_TYPE_OAUTH2,
+		Auth: &pb.Auth_Oauth2{
+			Oauth2: &pb.AuthOAuth2{
+				AccessToken: t.AccessToken,
+				TokenType:   t.TokenType,
+			},
+		},
+	}
+}
+
+// isExpired checks if the token is expired
 func (t *OAuthToken) isExpired() bool {
 	return t.Expiry.Before(time.Now())
 }
@@ -234,6 +252,19 @@ func credentialGet(str store.Store, credentialConf config.ValidAuthCredentialCon
 // SetOnRequest sets the authentication information on the request
 func (a *OAuthAuthenticator) SetOnRequest(ctx context.Context, r *http.Request) {
 	a.authToken.SetOnRequest(ctx, r)
+}
+
+// GetAuthValue returns the authentication value
+func (a *OAuthAuthenticator) GetAuthValue() *pb.Auth {
+	return &pb.Auth{
+		Type: pb.AuthType_AUTH_TYPE_OAUTH2,
+		Auth: &pb.Auth_Oauth2{
+			Oauth2: &pb.AuthOAuth2{
+				AccessToken: a.authToken.AccessToken,
+				TokenType:   a.authToken.TokenType,
+			},
+		},
+	}
 }
 
 // IsExpired checks if the authentication information is expired

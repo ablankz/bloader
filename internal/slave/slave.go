@@ -10,6 +10,7 @@ import (
 
 	"github.com/ablankz/bloader/internal/container"
 	"github.com/ablankz/bloader/internal/logger"
+	"github.com/ablankz/bloader/internal/master"
 )
 
 func SlaveRun(ctr *container.Container) error {
@@ -39,7 +40,10 @@ func SlaveRun(ctr *container.Container) error {
 
 	grpcServer := grpc.NewServer(grpcServerOptions...)
 
-	rpc.RegisterBloaderSlaveServiceServer(grpcServer, NewServer(ctr))
+	slCtr := master.NewConnectionContainer()
+	defer slCtr.AllDisconnect(ctr.Ctx)
+
+	rpc.RegisterBloaderSlaveServiceServer(grpcServer, NewServer(ctr, slCtr))
 	lister, err := net.Listen("tcp", fmt.Sprintf(":%d", ctr.Config.SlaveSetting.Port))
 	if err != nil {
 		return fmt.Errorf("failed to listen: %v", err)

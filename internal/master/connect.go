@@ -4,13 +4,16 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"sync"
 
 	rpc "buf.build/gen/go/cresplanex/bloader/grpc/go/cresplanex/bloader/v1/bloaderv1grpc"
 	pb "buf.build/gen/go/cresplanex/bloader/protocolbuffers/go/cresplanex/bloader/v1"
 	"github.com/ablankz/bloader/internal/encrypt"
+	"github.com/ablankz/bloader/internal/logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -18,9 +21,11 @@ import (
 
 // ConnectionMapData is a struct that holds the connection information.
 type ConnectionMapData struct {
-	connectionID string
+	ConnectionID string
 	conn         *grpc.ClientConn
-	cli          rpc.BloaderSlaveServiceClient
+	Cli          rpc.BloaderSlaveServiceClient
+	ReqChan      <-chan *pb.ReceiveChanelConnectResponse
+	termChan     chan<- struct{}
 }
 
 // ConnectionContainer is a struct that holds the connection information.
@@ -29,26 +34,42 @@ type ConnectionContainer struct {
 	conMap map[string]*ConnectionMapData // Key: slaveID
 }
 
-// NewConnectMap creates a new ConnectMap.
-func NewConnectMap() *ConnectionContainer {
+// NewConnectionContainer creates a new ConnectMap.
+func NewConnectionContainer() *ConnectionContainer {
 	return &ConnectionContainer{
 		mu:     &sync.RWMutex{},
 		conMap: make(map[string]*ConnectionMapData),
 	}
 }
 
+// Find returns the connection information.
+func (c *ConnectionContainer) Find(slaveID string) (*ConnectionMapData, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	conn, ok := c.conMap[slaveID]
+	if !ok {
+		return nil, false
+	}
+
+	return conn, true
+}
+
 // Connect adds a connection to the map.
 func (c *ConnectionContainer) Connect(
 	ctx context.Context,
+	log logger.Logger,
 	env string,
 	encryptCtr encrypt.EncrypterContainer,
-	slaveID string,
 	conInfo SlaveConnect,
 ) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	for _, slave := range conInfo.Slaves {
+		if _, ok := c.conMap[slave.ID]; ok {
+			return fmt.Errorf("connection already exists: %s", slave.ID)
+		}
 		grpcDialOptions := []grpc.DialOption{}
 		if slave.Certificate.Enabled {
 			b, err := os.ReadFile(slave.Certificate.CACert)
@@ -97,10 +118,63 @@ func (c *ConnectionContainer) Connect(
 			return fmt.Errorf("failed to connect to slave: %v", err)
 		}
 
+		receiveStream, err := cli.ReceiveChanelConnect(
+			ctx,
+			&pb.ReceiveChanelConnectRequest{
+				ConnectionId: res.ConnectionId,
+			},
+		)
+		if err != nil {
+			return fmt.Errorf("failed to receive channel connect: %v", err)
+		}
+
+		reqChan := make(chan *pb.ReceiveChanelConnectResponse)
+		termChan := make(chan struct{})
+
+		go func() {
+			defer close(reqChan)
+
+			for {
+				res, err := receiveStream.Recv()
+				if errors.Is(err, io.EOF) {
+					log.Info(ctx, "receiveChan EOF")
+					return
+				}
+				if err != nil {
+					log.Error(ctx, "failed to receive channel connect: %v",
+						logger.Value("error", err), logger.Value("slaveID", slave.ID))
+					if err := receiveStream.CloseSend(); err != nil {
+						log.Error(ctx, "failed to close receiveChan: %v", logger.Value("error", err))
+					}
+					return
+				}
+				select {
+				case <-ctx.Done():
+					log.Info(ctx, "context done")
+					if err := receiveStream.CloseSend(); err != nil {
+						log.Error(ctx, "failed to close receiveChan: %v", logger.Value("error", err))
+					}
+					return
+				case <-receiveStream.Context().Done():
+					log.Info(ctx, "receiveChan context done")
+					return
+				case <-termChan:
+					log.Info(ctx, "termChan")
+					if err := receiveStream.CloseSend(); err != nil {
+						log.Error(ctx, "failed to close receiveChan: %v", logger.Value("error", err))
+					}
+					return
+				case reqChan <- res:
+				}
+			}
+		}()
+
 		c.conMap[slave.ID] = &ConnectionMapData{
-			connectionID: res.ConnectionId,
+			ConnectionID: res.ConnectionId,
 			conn:         conn,
-			cli:          cli,
+			Cli:          cli,
+			ReqChan:      reqChan,
+			termChan:     termChan,
 		}
 	}
 
@@ -108,7 +182,7 @@ func (c *ConnectionContainer) Connect(
 }
 
 // Disconnect removes a connection from the map.
-func (c *ConnectionContainer) Disconnect(slaveID string) error {
+func (c *ConnectionContainer) Disconnect(ctx context.Context, slaveID string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -116,12 +190,12 @@ func (c *ConnectionContainer) Disconnect(slaveID string) error {
 	if !ok {
 		return fmt.Errorf("connection not found: %s", slaveID)
 	}
-
+	close(conn.termChan)
 	disReq := &pb.DisconnectRequest{
-		ConnectionId: conn.connectionID,
+		ConnectionId: conn.ConnectionID,
 	}
 
-	_, err := conn.cli.Disconnect(context.Background(), disReq)
+	_, err := conn.Cli.Disconnect(context.Background(), disReq)
 	if err != nil {
 		return fmt.Errorf("failed to disconnect from slave: %v", err)
 	}
@@ -129,6 +203,20 @@ func (c *ConnectionContainer) Disconnect(slaveID string) error {
 		return fmt.Errorf("failed to close connection: %v", err)
 	}
 	delete(c.conMap, slaveID)
+
+	return nil
+}
+
+// AllDisconnect removes all connections from the map.
+func (c *ConnectionContainer) AllDisconnect(ctx context.Context) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	for slaveID := range c.conMap {
+		if err := c.Disconnect(ctx, slaveID); err != nil {
+			return fmt.Errorf("failed to disconnect from slave: %v", err)
+		}
+	}
 
 	return nil
 }

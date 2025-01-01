@@ -1,6 +1,8 @@
 package target
 
 import (
+	pb "buf.build/gen/go/cresplanex/bloader/protocolbuffers/go/cresplanex/bloader/v1"
+
 	"github.com/ablankz/bloader/internal/config"
 )
 
@@ -10,6 +12,23 @@ type Target struct {
 	Type config.TargetType
 	// URL of the target
 	URL string
+}
+
+// GetTarget returns the target
+func (t Target) GetTarget() *pb.Target {
+	switch t.Type {
+	case config.TargetTypeHTTP:
+		return &pb.Target{
+			Type: pb.TargetType_TARGET_TYPE_HTTP,
+			Target: &pb.Target_Http{
+				Http: &pb.TargetHTTPData{
+					Url: t.URL,
+				},
+			},
+		}
+	}
+
+	return nil
 }
 
 // TargetContainer is a map of targets

@@ -13,17 +13,20 @@ import (
 
 	"github.com/ablankz/bloader/internal/encrypt"
 	"github.com/ablankz/bloader/internal/logger"
+	"github.com/ablankz/bloader/internal/master"
 )
 
 // BaseExecutor represents the base executor
 type BaseExecutor struct {
-	EncryptCtr   encrypt.EncrypterContainer
-	Logger       logger.Logger
-	TmplFactor   TmplFactor
-	Store        Store
-	AuthFactor   AuthenticatorFactor
-	OutputFactor OutputFactor
-	TargetFactor TargetFactor
+	Env                   string
+	EncryptCtr            encrypt.EncrypterContainer
+	Logger                logger.Logger
+	SlaveConnectContainer *master.ConnectionContainer
+	TmplFactor            TmplFactor
+	Store                 Store
+	AuthFactor            AuthenticatorFactor
+	OutputFactor          OutputFactor
+	TargetFactor          TargetFactor
 }
 
 // Execute executes the base executor
@@ -35,6 +38,7 @@ func (e BaseExecutor) Execute(
 	outputRoot string,
 	index int,
 	callCount int,
+	slaveValues map[string]any,
 ) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -62,6 +66,7 @@ func (e BaseExecutor) Execute(
 	})
 
 	data := map[string]any{
+		"SlaveValues":  slaveValues,
 		"Values":       replacedValuesData,
 		"ThreadValues": replaceThreadValuesData,
 		"Dynamic": map[string]any{
@@ -94,7 +99,7 @@ func (e BaseExecutor) Execute(
 		e.Store.Import(
 			ctx,
 			validRunner.StoreImport.Data,
-			func(ctx context.Context, data ValidStoreImportData, val any) error {
+			func(ctx context.Context, data ValidStoreImportData, val any, valBytes []byte) error {
 				if data.ThreadOnly {
 					threadOnlyStr.Store(data.Key, val)
 					replaceThreadValuesData[data.Key] = val
@@ -107,6 +112,7 @@ func (e BaseExecutor) Execute(
 		)
 
 		data = map[string]any{
+			"SlaveValues":  slaveValues,
 			"Values":       replacedValuesData,
 			"ThreadValues": replaceThreadValuesData,
 			"Dynamic": map[string]any{
@@ -238,6 +244,49 @@ func (e BaseExecutor) Execute(
 			return fmt.Errorf("failed to execute mass exec: %v", err)
 		}
 		e.Logger.Info(ctx, "executed mass exec")
+	case RunnerKindSlaveConnect:
+		var slaveConnect SlaveConnect
+		decoder := yaml.NewDecoder(&rawData)
+		if err := decoder.Decode(&slaveConnect); err != nil {
+			return fmt.Errorf("failed to decode yaml: %v", err)
+		}
+		var validSlaveConnect master.SlaveConnect
+		if validSlaveConnect, err = slaveConnect.Validate(); err != nil {
+			return fmt.Errorf("failed to validate slave connect: %v", err)
+		}
+		if err := e.SlaveConnectContainer.Connect(
+			ctx,
+			e.Logger,
+			e.Env,
+			e.EncryptCtr,
+			validSlaveConnect,
+		); err != nil {
+			if err := wait(ctx, e.Logger, validRunner, RunnerSleepValueAfterFailedExec); err != nil {
+				return fmt.Errorf("failed to wait: %v", err)
+			}
+			return fmt.Errorf("failed to connect to slave: %v", err)
+		}
+		for _, slave := range validSlaveConnect.Slaves {
+			mapData, ok := e.SlaveConnectContainer.Find(slave.ID)
+			if !ok {
+				return fmt.Errorf("failed to find slave: %s", slave.ID)
+			}
+			slHandler := NewSlaveRequestHandler(mapData.ReqChan, mapData.Cli)
+			go func(slaveHandler *SlaveRequestHandler) {
+				if err := slaveHandler.HandleResponse(
+					ctx,
+					e.Logger,
+					e.TmplFactor,
+					e.AuthFactor,
+					e.TargetFactor,
+					e.Store,
+				); err != nil {
+					e.Logger.Error(ctx, "failed to handle response: %v",
+						logger.Value("error", err))
+				}
+			}(slHandler)
+		}
+		e.Logger.Info(ctx, "connected to slave node")
 	case RunnerKindFlow:
 		var flow Flow
 		decoder := yaml.NewDecoder(&rawData)
@@ -250,7 +299,9 @@ func (e BaseExecutor) Execute(
 		}
 		if err := validFlow.Run(
 			ctx,
+			e.Env,
 			e.Logger,
+			e.SlaveConnectContainer,
 			e.EncryptCtr,
 			e.TmplFactor,
 			e.Store,
@@ -260,6 +311,7 @@ func (e BaseExecutor) Execute(
 			str,
 			outputRoot,
 			callCount,
+			slaveValues,
 		); err != nil {
 			if err := wait(ctx, e.Logger, validRunner, RunnerSleepValueAfterFailedExec); err != nil {
 				return fmt.Errorf("failed to wait: %v", err)

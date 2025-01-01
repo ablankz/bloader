@@ -5,6 +5,8 @@ import (
 	"context"
 	"net/http"
 
+	pb "buf.build/gen/go/cresplanex/bloader/protocolbuffers/go/cresplanex/bloader/v1"
+
 	"github.com/ablankz/bloader/internal/config"
 	"github.com/ablankz/bloader/internal/store"
 )
@@ -13,6 +15,8 @@ import (
 type SetAuthor interface {
 	// SetOnRequest sets the authentication information on the request
 	SetOnRequest(ctx context.Context, r *http.Request)
+	// GetAuthValue returns the authentication value
+	GetAuthValue() *pb.Auth
 }
 
 // Authenticator is an interface for authenticating

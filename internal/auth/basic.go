@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	pb "buf.build/gen/go/cresplanex/bloader/protocolbuffers/go/cresplanex/bloader/v1"
+
 	"github.com/ablankz/bloader/internal/config"
 	"github.com/ablankz/bloader/internal/store"
 )
@@ -30,6 +32,19 @@ func (a *BasicAuthenticator) Authenticate(ctx context.Context, str store.Store) 
 // SetOnRequest sets the authentication information on the request
 func (a *BasicAuthenticator) SetOnRequest(ctx context.Context, r *http.Request) {
 	r.SetBasicAuth(a.Username, a.Password)
+}
+
+// GetAuthValue returns the authentication value
+func (a *BasicAuthenticator) GetAuthValue() *pb.Auth {
+	return &pb.Auth{
+		Type: pb.AuthType_AUTH_TYPE_BASIC,
+		Auth: &pb.Auth_Basic{
+			Basic: &pb.AuthBasic{
+				Username: a.Username,
+				Password: a.Password,
+			},
+		},
+	}
 }
 
 // IsExpired checks if the authentication information is expired

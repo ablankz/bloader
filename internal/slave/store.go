@@ -145,7 +145,7 @@ func (s *SlaveStore) Import(ctx context.Context, data []runner.ValidStoreImportD
 			return fmt.Errorf("failed to get data: %s", d.StoreKey)
 		}
 		if cb != nil {
-			if err := cb(ctx, d, val); err != nil {
+			if err := cb(ctx, d, val, nil); err != nil {
 				return fmt.Errorf("failed to import data: %v", err)
 			}
 		}

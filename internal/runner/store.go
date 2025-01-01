@@ -16,7 +16,8 @@ type StoreCallback func(ctx context.Context, data ValidStoreValueData, valBytes 
 type StoreWithExtractorCallback func(ctx context.Context, data ValidExecRequestStoreData, valBytes []byte) error
 
 // ImportCallback represents the import callback
-type ImportCallback func(ctx context.Context, data ValidStoreImportData, val any) error
+// there are the case valBytes is nil
+type ImportCallback func(ctx context.Context, data ValidStoreImportData, val any, valBytes []byte) error
 
 // Store represents the store
 type Store interface {
@@ -129,7 +130,7 @@ func (l LocalStore) Import(ctx context.Context, data []ValidStoreImportData, cb 
 			return fmt.Errorf("failed to unmarshal value: %v", err)
 		}
 		if cb != nil {
-			if err := cb(ctx, d, val); err != nil {
+			if err := cb(ctx, d, val, valBytes); err != nil {
 				return fmt.Errorf("failed to import data: %v", err)
 			}
 		}

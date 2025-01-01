@@ -40,9 +40,9 @@ func (o SlaveOutput) HTTPDataWriteFactory(
 		return nil, nil, fmt.Errorf("context canceled")
 	case o.outputChan <- &pb.CallExecResponse{
 		OutputId:   o.OutputID,
-		OutputType: pb.CallExecOutputType_CALL_EXEC_OUTPUT_TYPE_STRING_ARRAY,
-		Output: &pb.CallExecResponse_StringArray{
-			StringArray: &pb.CallExecOutputStringArray{
+		OutputType: pb.CallExecOutputType_CALL_EXEC_OUTPUT_TYPE_HTTP,
+		Output: &pb.CallExecResponse_OutputHttp{
+			OutputHttp: &pb.CallExecOutputHTTP{
 				Data: header,
 			},
 		},
@@ -62,9 +62,9 @@ func (o SlaveOutput) HTTPDataWriteFactory(
 				return fmt.Errorf("context canceled")
 			case o.outputChan <- &pb.CallExecResponse{
 				OutputId:   o.OutputID,
-				OutputType: pb.CallExecOutputType_CALL_EXEC_OUTPUT_TYPE_STRING_ARRAY,
-				Output: &pb.CallExecResponse_StringArray{
-					StringArray: &pb.CallExecOutputStringArray{
+				OutputType: pb.CallExecOutputType_CALL_EXEC_OUTPUT_TYPE_HTTP,
+				Output: &pb.CallExecResponse_OutputHttp{
+					OutputHttp: &pb.CallExecOutputHTTP{
 						Data: data,
 					},
 				},

@@ -11,6 +11,8 @@ import (
 type AuthenticatorFactor interface {
 	// Factorize returns the factorized authenticator
 	Factorize(ctx context.Context, authID string, isDefault bool) (auth.SetAuthor, error)
+	// IsDefault returns if the authenticator is the default authenticator
+	IsDefault(authID string) bool
 }
 
 // LocalAuthenticatorFactor represents the local authenticator factor
@@ -40,4 +42,9 @@ func (l LocalAuthenticatorFactor) Factorize(
 	}
 
 	return *authenticator, nil
+}
+
+// IsDefault returns if the authenticator is the default authenticator
+func (l LocalAuthenticatorFactor) IsDefault(authID string) bool {
+	return l.authCtr.DefaultAuthenticator == authID
 }

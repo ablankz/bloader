@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ablankz/bloader/internal/container"
+	"github.com/ablankz/bloader/internal/master"
 	"github.com/ablankz/bloader/internal/output"
 	"github.com/ablankz/bloader/internal/prompt"
 )
@@ -24,6 +25,7 @@ func Run(ctr *container.Container, filename string, data map[string]any) error {
 
 	globalStore := sync.Map{}
 	threadOnlyStore := sync.Map{}
+	slaveValues := make(map[string]any)
 	outputCtr := output.NewOutputContainer(ctr.Config.Env, ctr.Config.Outputs)
 	ctx := ctr.Ctx
 
@@ -33,14 +35,19 @@ func Run(ctr *container.Container, filename string, data map[string]any) error {
 		globalStore.Store(k, v)
 	}
 
+	slCtr := master.NewConnectionContainer()
+	defer slCtr.AllDisconnect(ctx)
+
 	baseExecutor := BaseExecutor{
-		Logger:       ctr.Logger,
-		EncryptCtr:   ctr.EncypterContainer,
-		TmplFactor:   NewLocalTmplFactor(ctr.Config.Loader.BasePath),
-		Store:        NewLocalStore(ctr.EncypterContainer, ctr.Store),
-		AuthFactor:   NewLocalAuthenticatorFactor(ctr.AuthenticatorContainer),
-		OutputFactor: NewLocalOutputFactor(outputCtr),
-		TargetFactor: NewLocalTargetFactor(ctr.TargetContainer),
+		Logger:                ctr.Logger,
+		Env:                   ctr.Config.Env,
+		EncryptCtr:            ctr.EncypterContainer,
+		SlaveConnectContainer: slCtr,
+		TmplFactor:            NewLocalTmplFactor(ctr.Config.Loader.BasePath),
+		Store:                 NewLocalStore(ctr.EncypterContainer, ctr.Store),
+		AuthFactor:            NewLocalAuthenticatorFactor(ctr.AuthenticatorContainer),
+		OutputFactor:          NewLocalOutputFactor(outputCtr),
+		TargetFactor:          NewLocalTargetFactor(ctr.TargetContainer),
 	}
 
 	if err := baseExecutor.Execute(
@@ -51,6 +58,7 @@ func Run(ctr *container.Container, filename string, data map[string]any) error {
 		outputRoot,
 		0,
 		0,
+		slaveValues,
 	); err != nil {
 		return fmt.Errorf("failed to execute the load test: %w", err)
 	}

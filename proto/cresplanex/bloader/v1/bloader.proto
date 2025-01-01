@@ -27,6 +27,8 @@ service BloaderSlaveService {
     rpc SendStoreOk(SendStoreOkRequest) returns (SendStoreOkResponse);
 
     rpc SendTarget(SendTargetRequest) returns (SendTargetResponse);
+
+    rpc ReceiveLoadTermChannel(ReceiveLoadTermChannelRequest) returns (ReceiveLoadTermChannelResponse);
 }
 
 message ConnectRequest {
@@ -50,6 +52,7 @@ message SlaveCommandRequest {
     cresplanex.flex.v1.FlexMap default_store = 3;
     cresplanex.flex.v1.FlexMap default_thread_only_store = 4;
     string output_root = 5;
+    cresplanex.flex.v1.FlexMap slave_values = 6;
 }
 
 message SlaveCommandResponse {
@@ -65,16 +68,16 @@ message CallExecResponse {
     string output_id = 1;
     CallExecOutputType output_type = 2;
     oneof output {
-        CallExecOutputStringArray string_array = 3;
+        CallExecOutputHTTP output_http = 3;
     }
 }
 
 enum CallExecOutputType {
     CALL_EXEC_OUTPUT_TYPE_UNSPECIFIED = 0;
-    CALL_EXEC_OUTPUT_TYPE_STRING_ARRAY = 1;
+    CALL_EXEC_OUTPUT_TYPE_HTTP = 1;
 }
 
-message CallExecOutputStringArray {
+message CallExecOutputHTTP {
     repeated string data = 1;
 }
 
@@ -91,7 +94,6 @@ message ReceiveChanelConnectResponse {
         ReceiveChanelConnectStore store = 5;
         ReceiveChanelConnectStoreResourceRequest store_resource_request = 6;
         ReceiveChanelConnectTargetResourceRequest target_resource_request = 7;
-        ReceiveChanelConnectTerminateCommand terminate_load = 8;
     }
 }
 
@@ -102,7 +104,6 @@ enum RequestType {
     REQUEST_TYPE_STORE = 3;
     REQUEST_TYPE_REQUEST_RESOURCE_STORE = 4;
     REQUEST_TYPE_REQUEST_RESOURCE_TARGET = 5;
-    REQUEST_TYPE_TERMINATE_LOAD = 6;
 }
 
 message ReceiveChanelConnectLoaderResourceRequest {
@@ -126,16 +127,10 @@ message ReceiveChanelConnectTargetResourceRequest {
     string target_id = 1;
 }
 
-message ReceiveChanelConnectTerminateCommand {
-    string command_id = 1;
-    bool success = 2;
-}
-
 message SendLoaderRequest {
     string request_id = 1;
     string loader_id = 2;
     bytes content = 3;       
-    bool is_last_chunk = 4;  
 }
 
 message SendLoaderResponse {
@@ -153,9 +148,7 @@ message SendAuthResponse {
 
 message SendStoreDataRequest {
     string request_id = 1;
-    string bucket_id = 2;
-    string store_key = 3;
-    bytes data = 4;
+    repeated StoreExportData store_data = 2;
 }
 
 message SendStoreDataResponse {
@@ -175,4 +168,13 @@ message SendTargetRequest {
 }
 
 message SendTargetResponse {
+}
+
+message ReceiveLoadTermChannelRequest {
+    string connection_id = 1;
+    string command_id = 2;
+}
+
+message ReceiveLoadTermChannelResponse {
+    bool success = 1;
 }

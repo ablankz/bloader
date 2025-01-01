@@ -11,6 +11,12 @@ message StoreData {
     Encryption encryption = 4;
 }
 
+message StoreExportData {
+    string bucket_id = 1;
+    string store_key = 2;
+    bytes data = 3;
+}
+
 message StoreImportRequest {
     string bucket_id = 1;
     string store_key = 2;

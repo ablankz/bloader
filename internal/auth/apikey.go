@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	pb "buf.build/gen/go/cresplanex/bloader/protocolbuffers/go/cresplanex/bloader/v1"
+
 	"github.com/ablankz/bloader/internal/config"
 	"github.com/ablankz/bloader/internal/store"
 )
@@ -30,6 +32,19 @@ func (a *APIKeyAuthenticator) Authenticate(ctx context.Context, str store.Store)
 // SetOnRequest sets the authentication information on the request
 func (a *APIKeyAuthenticator) SetOnRequest(ctx context.Context, r *http.Request) {
 	r.Header.Set(a.HeaderName, a.APIKey)
+}
+
+// GetAuthValue returns the authentication value
+func (a *APIKeyAuthenticator) GetAuthValue() *pb.Auth {
+	return &pb.Auth{
+		Type: pb.AuthType_AUTH_TYPE_API_KEY,
+		Auth: &pb.Auth_ApiKey{
+			ApiKey: &pb.AuthApiKey{
+				ApiKey:     a.APIKey,
+				HeaderName: a.HeaderName,
+			},
+		},
+	}
 }
 
 // IsExpired checks if the authentication information is expired
