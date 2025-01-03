@@ -272,9 +272,11 @@ func (s *Server) SendLoader(stream grpc.ClientStreamingServer[pb.SendLoaderReque
 		chunk, err := stream.Recv()
 		if err == io.EOF {
 			mustBuild = true
+			fmt.Println("EOF")
 		} else if err != nil {
 			return fmt.Errorf("failed to receive a chunk: %v", err)
 		}
+		fmt.Println("chunk", chunk)
 		conId, ok := s.reqConMap.GetConnectionID(chunk.RequestId)
 		if !ok {
 			return ErrRequestNotFound
