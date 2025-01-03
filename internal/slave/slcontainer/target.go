@@ -50,7 +50,10 @@ func (t *Target) Remove(id string) {
 
 // AddFromProto adds a new target from the proto to the container
 func (t Target) AddFromProto(id string, pbT *pb.Target) error {
-	switch (*pbT).Type {
+	fmt.Println("AddFromProto", id, pbT)
+	fmt.Println(pbT.Type == pb.TargetType_TARGET_TYPE_HTTP)
+	fmt.Println(pbT.Type, pb.TargetType_TARGET_TYPE_HTTP)
+	switch pbT.Type {
 	case pb.TargetType_TARGET_TYPE_HTTP:
 		t.Add(id, target.Target{
 			Type: config.TargetTypeHTTP,
