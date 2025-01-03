@@ -141,11 +141,11 @@ func (c *ConnectionContainer) Connect(
 
 			for {
 				res, err := receiveStream.Recv()
-				fmt.Println("res", res)
 				if errors.Is(err, io.EOF) {
 					log.Info(ctx, "receiveChan EOF")
 					return
 				}
+				fmt.Println("res", res)
 				if err != nil {
 					log.Error(ctx, "failed to receive channel connect: %v",
 						logger.Value("error", err), logger.Value("slaveID", slave.ID))

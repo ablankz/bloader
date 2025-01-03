@@ -252,10 +252,12 @@ func (s *Server) ReceiveChanelConnect(req *pb.ReceiveChanelConnectRequest, strea
 	for {
 		select {
 		case res := <-slCtr.ReceiveChanelRequestContainer.ReqChan:
+			fmt.Println("res", res)
 			if err := stream.Send(res); err != nil {
 				return fmt.Errorf("failed to send a response: %v", err)
 			}
 		case <-stream.Context().Done():
+			fmt.Println("context done")
 			return nil
 		}
 	}
