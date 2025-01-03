@@ -5,19 +5,18 @@ data:
     key: "usersLists"
     value:
     {{- range $sIndex, $sElement := until .Values.SlaveCount }}
-    {{- range $tIndex, $tElement := until $.Values.ThreadPerSlaveCount }}
-    {{- range $index, $element := until $.Values.RequestPerSlaveCount }}
-    {{- $randOn3 := randInt 0 3 }}
-    {{- $randOn4to6 := randInt 4 7 }}
-    {{- $rand2On4to6 := randInt 4 7 }}
-    {{- $randOn6to8 := randInt 6 9 }}
-      - id: {{ add $index 1 }}
-        uuid: {{ uuidv4 }}
-        name: {{ randAlpha $randOn4to6 | title }} {{ randAlpha $rand2On4to6 | title }}
-        email: {{ randAlpha $randOn6to8 | lower }}@{{ index $mailDomainList $randOn3 }}
+      - list_per_slave:
+      {{- range $tIndex, $tElement := until $.Values.ThreadPerSlaveCount }}
+        - list_per_thread:
+        {{- range $index, $element := until $.Values.RequestPerSlaveCount }}
+        {{- $randOn3 := randInt 0 3 }}
+        {{- $randOn4to6 := randInt 4 7 }}
+        {{- $rand2On4to6 := randInt 4 7 }}
+        {{- $randOn6to8 := randInt 6 9 }}
+          - id: {{ add $index 1 }}
+            uuid: {{ uuidv4 }}
+            name: {{ randAlpha $randOn4to6 | title }} {{ randAlpha $rand2On4to6 | title }}
+            email: {{ randAlpha $randOn6to8 | lower }}@{{ index $mailDomainList $randOn3 }}
+        {{- end }}
+      {{- end }}
     {{- end }}
-    {{- end }}
-    {{- end }}
-    # encrypt:
-    #   enabled: true
-    #   encrypt_id: encryptDynamicCBC
