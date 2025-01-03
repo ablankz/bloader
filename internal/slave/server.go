@@ -201,6 +201,8 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 		for {
 			select {
 			case <-stream.Context().Done():
+				s.log.Warn(st.Context(), "stream context done",
+					logger.Value("ConnectionID", req.ConnectionId), logger.Value("Error", stream.Context().Err()))
 				return
 			case res := <-outputChan:
 				if err := st.Send(res); err != nil {
@@ -256,9 +258,8 @@ func (s *Server) ReceiveChanelConnect(req *pb.ReceiveChanelConnectRequest, strea
 			if err := stream.Send(res); err != nil {
 				return fmt.Errorf("failed to send a response: %v", err)
 			}
-			// case <-stream.Context().Done():
-			// 	fmt.Println("context done")
-			// 	return nil
+		case <-stream.Context().Done():
+			return fmt.Errorf("context done: %v", stream.Context().Err())
 		}
 	}
 }
