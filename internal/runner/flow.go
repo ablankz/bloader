@@ -1021,6 +1021,7 @@ func (e slaveExecutor) exec(
 			}
 		}
 	}()
+	fmt.Println("connection id", e.mapData.ConnectionID, "command id", e.cmdID)
 	termRes, err := e.mapData.Cli.ReceiveLoadTermChannel(ctx, &pb.ReceiveLoadTermChannelRequest{
 		ConnectionId: e.mapData.ConnectionID,
 		CommandId:    e.cmdID,
