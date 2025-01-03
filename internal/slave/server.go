@@ -199,14 +199,10 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 
 	go func(st grpc.ServerStreamingServer[pb.CallExecResponse]) {
 		for {
-			select {
-			case <-stream.Context().Done():
-				return
-			case res := <-outputChan:
-				if err := st.Send(res); err != nil {
-					s.log.Error(stream.Context(), "failed to send a response",
-						logger.Value("Error", err))
-				}
+			res := <-outputChan
+			if err := st.Send(res); err != nil {
+				s.log.Error(stream.Context(), "failed to send a response",
+					logger.Value("Error", err))
 			}
 		}
 	}(stream)
@@ -248,13 +244,9 @@ func (s *Server) ReceiveChanelConnect(req *pb.ReceiveChanelConnectRequest, strea
 	}
 
 	for {
-		select {
-		case res := <-slCtr.ReceiveChanelRequestContainer.ReqChan:
-			if err := stream.Send(res); err != nil {
-				return fmt.Errorf("failed to send a response: %v", err)
-			}
-		case <-stream.Context().Done():
-			return nil
+		res := <-slCtr.ReceiveChanelRequestContainer.ReqChan
+		if err := stream.Send(res); err != nil {
+			return fmt.Errorf("failed to send a response: %v", err)
 		}
 	}
 }
