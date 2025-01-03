@@ -269,7 +269,7 @@ func (e BaseExecutor) Execute(
 		}); err != nil {
 			return err
 		}
-		fmt.Println("Running mass exec", rawData.String())
+		fmt.Println("Running mass exec", validMassExec)
 		if err := validMassExec.Run(
 			ctx,
 			e.Logger,
