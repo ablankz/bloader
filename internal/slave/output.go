@@ -35,6 +35,8 @@ func (o SlaveOutput) HTTPDataWriteFactory(
 	header []string,
 ) (output.HTTPDataWrite, output.Close, error) {
 
+	fmt.Println("HTTPDataWriteFactory", uniqueName)
+
 	select {
 	case <-ctx.Done():
 		return nil, nil, fmt.Errorf("context canceled")

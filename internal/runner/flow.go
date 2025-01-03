@@ -3,6 +3,7 @@ package runner
 import (
 	"context"
 	"fmt"
+	"io"
 	"sync"
 	"sync/atomic"
 
@@ -953,6 +954,10 @@ func (e slaveExecutor) exec(
 		}()
 		for {
 			res, err := stream.Recv()
+			fmt.Println("out res", res)
+			if err == io.EOF {
+				break
+			}
 			if err != nil {
 				log.Error(ctx, "failed to receive exec",
 					logger.Value("error", err), logger.Value("on", "Flow"))

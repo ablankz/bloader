@@ -206,6 +206,7 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 					logger.Value("ConnectionID", req.ConnectionId), logger.Value("Error", stream.Context().Err()))
 				return
 			case res := <-outputChan:
+				fmt.Println("out res", res)
 				if err := st.Send(res); err != nil {
 					s.log.Error(stream.Context(), "failed to send a response",
 						logger.Value("Error", err))
@@ -254,7 +255,6 @@ func (s *Server) ReceiveChanelConnect(req *pb.ReceiveChanelConnectRequest, strea
 	for {
 		select {
 		case res := <-slCtr.ReceiveChanelRequestContainer.ReqChan:
-			fmt.Println("res", res)
 			if err := stream.Send(res); err != nil {
 				return fmt.Errorf("failed to send a response: %v", err)
 			}
@@ -285,7 +285,6 @@ func (s *Server) SendLoader(stream grpc.ClientStreamingServer[pb.SendLoaderReque
 		if !ok {
 			return ErrRequestNotFound
 		}
-		fmt.Println("isLastChunk", chunk.IsLastChunk)
 		if chunk.IsLastChunk {
 			// Stream is done
 			slCtr.Loader.WriteString(chunk.LoaderId, string(chunk.Content))
@@ -388,7 +387,6 @@ func (s *Server) ReceiveLoadTermChannel(ctx context.Context, req *pb.ReceiveLoad
 	cmdTermChan, ok := s.cmdTermMap[req.CommandId]
 	s.mu.RUnlock()
 	if !ok {
-		fmt.Println("commandId", req.CommandId, "cmdTermMap", s.cmdTermMap)
 		return nil, ErrCommandNotFound
 	}
 	defer func() {
