@@ -134,6 +134,8 @@ func (s *Server) SlaveCommand(ctx context.Context, req *pb.SlaveCommandRequest) 
 		SlaveValues:      slaveValues,
 	}
 	slCtr.AddCommandMap(uid, cmdMapData)
+	fmt.Println("uid", uid)
+	fmt.Println("cmdMapData", cmdMapData)
 
 	return &pb.SlaveCommandResponse{
 		CommandId: uid,
@@ -147,6 +149,7 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 	if !ok {
 		return ErrInvalidConnectionID
 	}
+	fmt.Println("req.CommandId", req.CommandId, "CommandMap", slCtr.CommandMap)
 	data, ok := slCtr.GetCommandMap(req.CommandId)
 	if !ok {
 		return ErrCommandNotFound
