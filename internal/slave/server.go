@@ -259,6 +259,8 @@ func (s *Server) ReceiveChanelConnect(req *pb.ReceiveChanelConnectRequest, strea
 				return fmt.Errorf("failed to send a response: %v", err)
 			}
 		case <-stream.Context().Done():
+			s.log.Warn(stream.Context(), "stream context done",
+				logger.Value("ConnectionID", req.ConnectionId), logger.Value("Error", stream.Context().Err()))
 			return fmt.Errorf("context done: %v", stream.Context().Err())
 		}
 	}
