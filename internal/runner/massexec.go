@@ -364,6 +364,8 @@ func (r ValidMassExec) runHTTP(
 ) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+
+	fmt.Println("Run HTTP MassExec")
 	concurrentCount := len(r.Requests)
 
 	threadExecutors := make([]*MassiveExecThreadExecutor, concurrentCount)
