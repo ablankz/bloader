@@ -83,6 +83,9 @@ func (a Auth) Find(id string) (auth.SetAuthor, bool) {
 	defer a.mu.RUnlock()
 
 	auth, ok := a.Container[id]
+	if !ok {
+		return nil, false
+	}
 	return *auth, ok
 }
 
