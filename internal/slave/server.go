@@ -152,6 +152,7 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 	fmt.Println("req.CommandId", req.CommandId, "CommandMap", slCtr.CommandMap)
 	data, ok := slCtr.GetCommandMap(req.CommandId)
 	if !ok {
+		fmt.Println("data", data)
 		return ErrCommandNotFound
 	}
 	s.cmdTermMap[req.CommandId] = make(chan commandTermData)
@@ -388,6 +389,7 @@ func (s *Server) ReceiveLoadTermChannel(ctx context.Context, req *pb.ReceiveLoad
 	cmdTermChan, ok := s.cmdTermMap[req.CommandId]
 	s.mu.RUnlock()
 	if !ok {
+		fmt.Println("cmdTermChan", cmdTermChan)
 		return nil, ErrCommandNotFound
 	}
 	defer func() {
