@@ -268,15 +268,12 @@ func (s *Server) ReceiveChanelConnect(req *pb.ReceiveChanelConnectRequest, strea
 // SendLoader handles the loader request from the master node
 func (s *Server) SendLoader(stream grpc.ClientStreamingServer[pb.SendLoaderRequest, pb.SendLoaderResponse]) error {
 	for {
-		var mustBuild bool
 		chunk, err := stream.Recv()
 		if err == io.EOF {
-			mustBuild = true
-			fmt.Println("EOF")
+			return nil
 		} else if err != nil {
 			return fmt.Errorf("failed to receive a chunk: %v", err)
 		}
-		fmt.Println("chunk", chunk)
 		conId, ok := s.reqConMap.GetConnectionID(chunk.RequestId)
 		if !ok {
 			return ErrRequestNotFound
@@ -287,7 +284,7 @@ func (s *Server) SendLoader(stream grpc.ClientStreamingServer[pb.SendLoaderReque
 		if !ok {
 			return ErrRequestNotFound
 		}
-		if mustBuild {
+		if chunk.IsLastChunk {
 			// Stream is done
 			slCtr.Loader.Build(chunk.LoaderId)
 			slCtr.ReceiveChanelRequestContainer.Cast(chunk.RequestId)

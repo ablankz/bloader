@@ -90,9 +90,10 @@ func (rh *SlaveRequestHandler) HandleResponse(
 						end = len(buffer)
 					}
 					if err := stream.Send(&pb.SendLoaderRequest{
-						RequestId: res.RequestId,
-						LoaderId:  loaderResourceReq.LoaderId,
-						Content:   buffer[i:end],
+						RequestId:   res.RequestId,
+						LoaderId:    loaderResourceReq.LoaderId,
+						Content:     buffer[i:end],
+						IsLastChunk: end == len(buffer),
 					}); err != nil {
 						return fmt.Errorf("failed to send loader request: %v", err)
 					}

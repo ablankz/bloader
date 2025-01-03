@@ -8,6 +8,8 @@ buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-00000000000000-6e6e06e64a7d.2
 buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-00000000000000-6e6e06e64a7d.2/go.mod h1:C/pMo2F9eztL492V+kb/FxUTMYi2RYi07KEBgqwmvGo=
 buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-00000000000000-b8f4d28f83f4.2 h1:Fp61ffMSdzEQYzjwAO9k7qHJNqUvHri/myUTzl5FnjA=
 buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-00000000000000-b8f4d28f83f4.2/go.mod h1:38qcJuKQUuu9gzQkV5ADVqHhzXJOtTAwACLKXzIIu/0=
+buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-00000000000000-ef31e0e54450.2 h1:M0qlXw6d8ZHWJ5KHxOU8TOp7fQlxVYbrgLk3B1C4xYk=
+buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-00000000000000-ef31e0e54450.2/go.mod h1:fo9i7MH+gKQZJfJr92QAlC3KwOGAMiSDk95ahFmp5TQ=
 buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-37642256e861.1 h1:7KbMEU4INmeKNQL/ehP6vlOrGGx5JuHR0LKakJwm9yE=
 buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-37642256e861.1/go.mod h1:x2gnF7n34LaDM3kHd/tMRYJiA7LQ1/xulyv6RxhpBlY=
 buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-5fdf22a74ea2.1 h1:439pXs2Pwf4Li3tTjPiqHUllgIY76nQ6xk9i959LQ/g=
@@ -16,6 +18,8 @@ buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-6e
 buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-6e6e06e64a7d.1/go.mod h1:x2gnF7n34LaDM3kHd/tMRYJiA7LQ1/xulyv6RxhpBlY=
 buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-b8f4d28f83f4.1 h1:l5BtNfN+F44ck1A7naDtQAlHXj3bKYcGWUmx+z2wG1U=
 buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-b8f4d28f83f4.1/go.mod h1:x2gnF7n34LaDM3kHd/tMRYJiA7LQ1/xulyv6RxhpBlY=
+buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-ef31e0e54450.1 h1:GdLcPyNEIW4BmxZXLErD0uaknoymJX7NXwXau3stxsk=
+buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-ef31e0e54450.1/go.mod h1:x2gnF7n34LaDM3kHd/tMRYJiA7LQ1/xulyv6RxhpBlY=
 buf.build/gen/go/cresplanex/types/protocolbuffers/go v1.36.1-20241229081036-5cfa13fd79a9.1 h1:nRGA3DRTa7583zldY1+Dg65Gz4Aq4DoG/2TiRRbL/dk=
 buf.build/gen/go/cresplanex/types/protocolbuffers/go v1.36.1-20241229081036-5cfa13fd79a9.1/go.mod h1:W/xoqpHTMDJdqK5PcZoj7hIiLxR6Pn436AqB2UME/QI=
 dario.cat/mergo v1.0.1 h1:Ra4+bf83h2ztPIQYNP99R6m+Y7KfnARDfID+a+vLl4s=

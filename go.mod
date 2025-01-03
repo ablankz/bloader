@@ -3,8 +3,8 @@ module github.com/ablankz/bloader
 go 1.23.3
 
 require (
-	buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-00000000000000-b8f4d28f83f4.2
-	buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-b8f4d28f83f4.1
+	buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-00000000000000-ef31e0e54450.2
+	buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-ef31e0e54450.1
 	github.com/BurntSushi/toml v1.4.0
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/ablankz/go-cmproto v1.0.3

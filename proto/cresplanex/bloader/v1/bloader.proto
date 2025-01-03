@@ -130,7 +130,8 @@ message ReceiveChanelConnectTargetResourceRequest {
 message SendLoaderRequest {
     string request_id = 1;
     string loader_id = 2;
-    bytes content = 3;       
+    bytes content = 3;      
+    bool is_last_chunk = 4; 
 }
 
 message SendLoaderResponse {
