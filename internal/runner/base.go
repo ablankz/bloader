@@ -253,6 +253,7 @@ func (e BaseExecutor) Execute(
 			return fmt.Errorf("failed to decode yaml: %v", err)
 		}
 		var validMassExec ValidMassExec
+		fmt.Println("Validating mass exec")
 		if err := validate(ctx, eventCaster, func() error {
 			if validMassExec, err = massExec.Validate(
 				ctx,
@@ -267,8 +268,10 @@ func (e BaseExecutor) Execute(
 			}
 			return nil
 		}); err != nil {
+			fmt.Println("Failed to validate mass exec", err)
 			return err
 		}
+		fmt.Println("Running mass exec")
 		if err := validMassExec.Run(
 			ctx,
 			e.Logger,
