@@ -17,7 +17,7 @@ type SlaveTmplFactor struct {
 
 // TmplFactorize is a function that factorizes the template
 func (s *SlaveTmplFactor) TmplFactorize(ctx context.Context, path string) (string, error) {
-	l, ok := s.loader.GetLoader(s.connectionID)
+	l, ok := s.loader.GetLoader(path)
 	if ok {
 		return l, nil
 	}
@@ -39,7 +39,7 @@ func (s *SlaveTmplFactor) TmplFactorize(ctx context.Context, path string) (strin
 	case <-term:
 	}
 
-	l, ok = s.loader.GetLoader(s.connectionID)
+	l, ok = s.loader.GetLoader(path)
 	if ok {
 		return l, nil
 	}
