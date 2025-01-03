@@ -40,10 +40,15 @@ func (l *Loader) Build(loaderID string) {
 
 	fmt.Println("Building loader", loaderID)
 
+	fmt.Println("LoaderBuilderMap", l.LoaderBuilderMap)
+
 	if _, ok := l.LoaderBuilderMap[loaderID]; ok {
+		fmt.Println("Built loader", loaderID)
 		l.LoaderMap[loaderID] = l.LoaderBuilderMap[loaderID].String()
 		delete(l.LoaderBuilderMap, loaderID)
 	}
+
+	fmt.Println("LoaderMap", l.LoaderMap)
 }
 
 // GetLoader returns the loader from the container
