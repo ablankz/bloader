@@ -67,8 +67,9 @@ message CallExecRequest {
 message CallExecResponse {
     string output_id = 1;
     CallExecOutputType output_type = 2;
+    string output_root = 3;
     oneof output {
-        CallExecOutputHTTP output_http = 3;
+        CallExecOutputHTTP output_http = 4;
     }
 }
 

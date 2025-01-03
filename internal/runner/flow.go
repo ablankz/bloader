@@ -988,7 +988,7 @@ func (e slaveExecutor) exec(
 						ctx,
 						log,
 						true,
-						res.OutputId,
+						res.OutputRoot,
 						httpOut.Data,
 					); err != nil {
 						log.Error(ctx, "failed to create http data writer",
