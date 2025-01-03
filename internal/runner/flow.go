@@ -840,7 +840,6 @@ func slaveCmdRun(
 		}
 		defaultStr, err := common.NewFlexMap(globalStr)
 		if err != nil {
-			fmt.Println("err", err)
 			log.Error(ctx, "failed to create default store",
 				logger.Value("error", err), logger.Value("on", "Flow"))
 			return fmt.Errorf("failed to create default store: %v", err)
@@ -878,7 +877,6 @@ func slaveCmdRun(
 				logger.Value("error", err), logger.Value("on", "Flow"))
 			return fmt.Errorf("failed to execute slave command: %v", err)
 		}
-		fmt.Println("res", res)
 		slaveExecutors[i] = slaveExecutor{
 			slaveID:       slaveID,
 			cmdID:         res.CommandId,
@@ -954,7 +952,6 @@ func (e slaveExecutor) exec(
 		}()
 		for {
 			res, err := stream.Recv()
-			fmt.Println("out res", res)
 			if err == io.EOF {
 				break
 			}
@@ -1026,7 +1023,6 @@ func (e slaveExecutor) exec(
 			}
 		}
 	}()
-	fmt.Println("connection id", e.mapData.ConnectionID, "command id", e.cmdID)
 	termRes, err := e.mapData.Cli.ReceiveLoadTermChannel(ctx, &pb.ReceiveLoadTermChannelRequest{
 		ConnectionId: e.mapData.ConnectionID,
 		CommandId:    e.cmdID,

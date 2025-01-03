@@ -82,8 +82,6 @@ func (e BaseExecutor) Execute(
 		},
 	}
 
-	fmt.Println("Data", data)
-
 	var yamlBuf *bytes.Buffer = new(bytes.Buffer)
 	if err := tmpl.Execute(yamlBuf, data); err != nil {
 		return fmt.Errorf("failed to execute yaml: %v", err)
@@ -271,7 +269,6 @@ func (e BaseExecutor) Execute(
 		}); err != nil {
 			return err
 		}
-		fmt.Println("Running mass exec", validMassExec)
 		if err := validMassExec.Run(
 			ctx,
 			e.Logger,
@@ -283,10 +280,8 @@ func (e BaseExecutor) Execute(
 			if err := wait(ctx, e.Logger, validRunner, RunnerSleepValueAfterFailedExec); err != nil {
 				return fmt.Errorf("failed to wait: %v", err)
 			}
-			fmt.Println("Failed to execute mass exec")
 			return fmt.Errorf("failed to execute mass exec: %v", err)
 		}
-		fmt.Println("Executed mass exec")
 		e.Logger.Info(ctx, "executed mass exec")
 	case RunnerKindSlaveConnect:
 		var slaveConnect SlaveConnect

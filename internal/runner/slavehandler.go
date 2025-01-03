@@ -66,7 +66,6 @@ func (rh *SlaveRequestHandler) HandleResponse(
 				return fmt.Errorf("unknown term type: %v", termType)
 			}
 		case res := <-rh.resChan:
-			fmt.Println("Received response", res)
 			log.Debug(ctx, "Received response: %v",
 				logger.Value("response", res))
 			if res == nil {

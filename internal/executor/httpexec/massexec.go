@@ -96,7 +96,7 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 						select {
 						case <-ctx.Done():
 							log.Info(ctx, "request processing is interrupted due to context termination",
-								logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
+								logger.Value("on", "RequestContent.QueryExecute"))
 							return
 						case q.ResChan <- ResponseContent{
 							Success:        false,

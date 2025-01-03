@@ -172,7 +172,6 @@ func (c *ConnectionContainer) Connect(
 					receiveTermChan <- ReceiveTermTypeReceiveTermTypeEOF
 					return
 				}
-				fmt.Println("res", res)
 				if err != nil {
 					log.Error(ctx, "failed to receive channel connect: %v",
 						logger.Value("error", err), logger.Value("slaveID", slave.ID))

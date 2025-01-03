@@ -148,7 +148,6 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 	if !ok {
 		return ErrInvalidConnectionID
 	}
-	fmt.Println("req.CommandId", req.CommandId, "CommandMap", slCtr.CommandMap)
 	data, ok := slCtr.GetCommandMap(req.CommandId)
 	if !ok {
 		return ErrCommandNotFound
@@ -206,7 +205,6 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 					logger.Value("ConnectionID", req.ConnectionId), logger.Value("Error", stream.Context().Err()))
 				return
 			case res := <-outputChan:
-				fmt.Println("out res", res)
 				if err := st.Send(res); err != nil {
 					s.log.Error(stream.Context(), "failed to send a response",
 						logger.Value("Error", err))
