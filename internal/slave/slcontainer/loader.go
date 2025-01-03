@@ -38,6 +38,8 @@ func (l *Loader) Build(loaderID string) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
+	fmt.Println("Building loader", loaderID)
+
 	if _, ok := l.LoaderBuilderMap[loaderID]; ok {
 		l.LoaderMap[loaderID] = l.LoaderBuilderMap[loaderID].String()
 		delete(l.LoaderBuilderMap, loaderID)
@@ -48,8 +50,6 @@ func (l *Loader) Build(loaderID string) {
 func (l *Loader) GetLoader(loaderID string) (string, bool) {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
-
-	fmt.Println("loaderID", loaderID, l.LoaderMap)
 
 	if loader, ok := l.LoaderMap[loaderID]; ok {
 		return loader, true

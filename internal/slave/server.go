@@ -285,6 +285,7 @@ func (s *Server) SendLoader(stream grpc.ClientStreamingServer[pb.SendLoaderReque
 		if !ok {
 			return ErrRequestNotFound
 		}
+		fmt.Println("isLastChunk", chunk.IsLastChunk)
 		if chunk.IsLastChunk {
 			// Stream is done
 			slCtr.Loader.Build(chunk.LoaderId)
