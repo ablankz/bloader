@@ -8,7 +8,8 @@ auth:
   enabled: true
   auth_id: authForWeb
 requests:
-{{- range slice .Values.usersLists 0 .Values.ThreadCount }}
+{{- with index .Values.usersLists .SlaveValues.Index }}
+{{- range slice . 0 .Values.ThreadPerSlaveCount }}
   - target_id: "apiServer"
     endpoint: "/user-profiles"
     method: POST
@@ -19,7 +20,7 @@ requests:
     path_variables: {}
     body_type: json
 {{- if hasKey $.Dynamic "RequestLoopCount" }}
-{{- with index .usersList $.Dynamic.RequestLoopCount }}
+{{- with index . $.Dynamic.RequestLoopCount }}
     body:
       userId: "{{ .uuid }}"
       name: "{{ .name }}"
@@ -38,4 +39,6 @@ requests:
           op: ne
           value: 200
     response_type: json
+{{- end }}
+{{- end }}
 {{- end }}

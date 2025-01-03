@@ -10,7 +10,7 @@ step:
       values:
         - key: "ThreadPerSlaveCount"
           value: 50
-        - key: "RequestCount"
+        - key: "RequestPerSlaveCount"
           value: 3000
         - key: "SlaveCount"
           value: 2
@@ -63,20 +63,21 @@ step:
         - id: "request"
           type: slaveCmd
           mkdir: true
-          values:
-            - key: "ThreadCount"
-              value: 100
           thread_only_values:
             - key: "Interval"
               value: "100ms"
             - key: "BreakTime"
               value: "5m"
           executors: # SlaveValues: index, slaveID
-            - slave_id: "sl1"
+            {{- if .Values.slaveLists }}
+            {{- range slice .Values.slaveLists 0 .Values.SlaveCount }}
+            - slave_id: "{{ .id }}"
               output:
                 enabled: true
-                root_path: "scl"
+                root_path: "{{ .id }}"
               inherit_values: true
               additional_values: []
               additional_thread_only_values: []
+            {{- end }}
+            {{- end }}
           file: "sc/sc1/main.yaml"

@@ -3,13 +3,15 @@ data:
   - bucket_id: "bucketForSlave"
     key: "slaveList"
     value:
-      - uuid: {{ uuidv4 }}
+      - id: "slave1"
+        uuid: {{ uuidv4 }}
         address: "172.28.231.57"
         port: 50051
         # encrypt:
         #   enabled: true
         #   encrypt_id: encryptDynamicCBC
-      - uuid: {{ uuidv4 }}
+      - id: "slave2"
+        uuid: {{ uuidv4 }}
         address: "172.28.231.58"
         port: 50051
         # encrypt:

@@ -4,9 +4,9 @@ data:
   - bucket_id: "bucketForApp"
     key: "usersLists"
     value:
-    {{- range $tIndex, $tElement := until .Values.ThreadCount }}
-    - usersList:
-    {{- range $index, $element := until $.Values.RequestCount }}
+    {{- range $sIndex, $sElement := until .Values.SlaveCount }}
+    {{- range $tIndex, $tElement := until .Values.ThreadPerSlaveCount }}
+    {{- range $index, $element := until $.Values.RequestPerSlaveCount }}
     {{- $randOn3 := randInt 0 3 }}
     {{- $randOn4to6 := randInt 4 7 }}
     {{- $rand2On4to6 := randInt 4 7 }}
@@ -15,6 +15,7 @@ data:
         uuid: {{ uuidv4 }}
         name: {{ randAlpha $randOn4to6 | title }} {{ randAlpha $rand2On4to6 | title }}
         email: {{ randAlpha $randOn6to8 | lower }}@{{ index $mailDomainList $randOn3 }}
+    {{- end }}
     {{- end }}
     {{- end }}
     # encrypt:
