@@ -82,6 +82,8 @@ func (e BaseExecutor) Execute(
 		},
 	}
 
+	fmt.Println("Data", data)
+
 	var yamlBuf *bytes.Buffer = new(bytes.Buffer)
 	if err := tmpl.Execute(yamlBuf, data); err != nil {
 		return fmt.Errorf("failed to execute yaml: %v", err)
