@@ -288,6 +288,7 @@ func (s *Server) SendLoader(stream grpc.ClientStreamingServer[pb.SendLoaderReque
 		fmt.Println("isLastChunk", chunk.IsLastChunk)
 		if chunk.IsLastChunk {
 			// Stream is done
+			slCtr.Loader.WriteString(chunk.LoaderId, string(chunk.Content))
 			slCtr.Loader.Build(chunk.LoaderId)
 			slCtr.ReceiveChanelRequestContainer.Cast(chunk.RequestId)
 			s.reqConMap.DeleteRequest(chunk.RequestId)
