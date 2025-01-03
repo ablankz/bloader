@@ -2,23 +2,23 @@ kind: SlaveConnect
 store_import:
   enabled: true
   data:
-    - key: "slaveList"
+    - key: "slaveLists"
       bucket_id: "bucketForSlave"
-      thread_only: true
+      thread_only: false
       store_key: "slaveList"
-      encrypt:
-        enabled: true
-        encrypt_id: encryptDynamicCBC
+      # encrypt:
+      #   enabled: true
+      #   encrypt_id: encryptDynamicCBC
 slaves:
 {{- if .Values.slaveLists }}
 {{- range slice .Values.slaveLists 0 .Values.SlaveCount }}
-  - id: "{{ .uuid }}"
-    uri: "ipv4:{{ .address }}:{{ .port }}" # support schema https://github.com/grpc/grpc/blob/master/doc/naming.md
+  - id: "{{ .id }}"
+    uri: "dns:{{ .address }}:{{ .port }}" # support schema https://github.com/grpc/grpc/blob/master/doc/naming.md
     certificate:
       enabled: true
       ca_cert: "certs/ca.crt"
       server_name_override: "localhost"
-      insecure_skip_verify: false
+      insecure_skip_verify: true
     encrypt:
     {{- range .encrypts }}
       enabled: "{{ .enabled }}"

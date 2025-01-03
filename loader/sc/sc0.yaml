@@ -16,18 +16,18 @@ step:
           value: 2
       concurrency: -1
       flows:
-        - id: "usersStore"
-          type: file
-          mkdir: false
-          file: "sc/sc0/store.yaml"
-          values: []
-          thread_only_values: []
-        - id: "slaveStore"
-          type: file
-          mkdir: false
-          file: "sc/slave/store.yaml"
-          values: []
-          thread_only_values: []
+        # - id: "usersStore"
+        #   type: file
+        #   mkdir: false
+        #   file: "sc/sc0/store.yaml"
+        #   values: []
+        #   thread_only_values: []
+        # - id: "slaveStore"
+        #   type: file
+        #   mkdir: false
+        #   file: "sc/slave/store.yaml"
+        #   values: []
+        #   thread_only_values: []
     - id: "import"
       type: flow
       mkdir: false

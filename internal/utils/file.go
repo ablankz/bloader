@@ -9,12 +9,22 @@ import (
 // CreateFileWithDir creates a file with the directory
 func CreateFileWithDir(filePath string) (*os.File, error) {
 	dir := filepath.Dir(filePath)
-	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("failed to create directory: %w", err)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+			return nil, fmt.Errorf("failed to create directory: %w", err)
+		}
 	}
-	f, err := os.Create(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create file: %w", err)
+	var f *os.File
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		f, err = os.Create(filePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create file: %w", err)
+		}
+	} else {
+		f, err = os.Open(filePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open file: %w", err)
+		}
 	}
 	return f, nil
 }

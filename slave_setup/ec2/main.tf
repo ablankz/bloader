@@ -66,6 +66,10 @@ EOF_TLS_KEY
   # Cleanup
   rm -f /tmp/slave.csr
 
+  export HOME=/home/ec2-user
+
+  go env
+
   go run main.go slave run --config bloader/slave_config.yaml
 fi
 EOF

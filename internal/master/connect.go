@@ -67,6 +67,7 @@ func (c *ConnectionContainer) Connect(
 	defer c.mu.Unlock()
 
 	for _, slave := range conInfo.Slaves {
+		fmt.Println("slave", slave)
 		if _, ok := c.conMap[slave.ID]; ok {
 			return fmt.Errorf("connection already exists: %s", slave.ID)
 		}
@@ -118,6 +119,8 @@ func (c *ConnectionContainer) Connect(
 			return fmt.Errorf("failed to connect to slave: %v", err)
 		}
 
+		fmt.Println("connected!")
+
 		receiveStream, err := cli.ReceiveChanelConnect(
 			ctx,
 			&pb.ReceiveChanelConnectRequest{
@@ -128,6 +131,8 @@ func (c *ConnectionContainer) Connect(
 			return fmt.Errorf("failed to receive channel connect: %v", err)
 		}
 
+		fmt.Println("receiveStream OK")
+
 		reqChan := make(chan *pb.ReceiveChanelConnectResponse)
 		termChan := make(chan struct{})
 
@@ -136,6 +141,7 @@ func (c *ConnectionContainer) Connect(
 
 			for {
 				res, err := receiveStream.Recv()
+				fmt.Println("res", res)
 				if errors.Is(err, io.EOF) {
 					log.Info(ctx, "receiveChan EOF")
 					return
@@ -185,6 +191,8 @@ func (c *ConnectionContainer) Connect(
 func (c *ConnectionContainer) Disconnect(ctx context.Context, slaveID string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	fmt.Println("slaveID DISCONNECT", slaveID)
 
 	conn, ok := c.conMap[slaveID]
 	if !ok {

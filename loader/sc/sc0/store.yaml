@@ -5,7 +5,7 @@ data:
     key: "usersLists"
     value:
     {{- range $sIndex, $sElement := until .Values.SlaveCount }}
-    {{- range $tIndex, $tElement := until .Values.ThreadPerSlaveCount }}
+    {{- range $tIndex, $tElement := until $.Values.ThreadPerSlaveCount }}
     {{- range $index, $element := until $.Values.RequestPerSlaveCount }}
     {{- $randOn3 := randInt 0 3 }}
     {{- $randOn4to6 := randInt 4 7 }}

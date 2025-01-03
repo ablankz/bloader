@@ -161,6 +161,14 @@ func (e BaseExecutor) Execute(
 			return fmt.Errorf("failed to execute store value: %v", err)
 		}
 		e.Logger.Info(ctx, "executed store value")
+		e.Store.Import(ctx, []ValidStoreImportData{
+			{
+				BucketID: validStoreValue.Data[0].BucketID,
+				StoreKey: validStoreValue.Data[0].Key,
+			},
+		}, func(ctx context.Context, data ValidStoreImportData, val any, valBytes []byte) error {
+			return nil
+		})
 	case RunnerKindMemoryValue:
 		var memoryStoreValue MemoryValue
 		decoder := yaml.NewDecoder(&rawData)
@@ -250,10 +258,12 @@ func (e BaseExecutor) Execute(
 		if err := decoder.Decode(&slaveConnect); err != nil {
 			return fmt.Errorf("failed to decode yaml: %v", err)
 		}
+		fmt.Println("slave connect", slaveConnect)
 		var validSlaveConnect master.SlaveConnect
 		if validSlaveConnect, err = slaveConnect.Validate(); err != nil {
 			return fmt.Errorf("failed to validate slave connect: %v", err)
 		}
+		fmt.Println("connecting to slave", validSlaveConnect)
 		if err := e.SlaveConnectContainer.Connect(
 			ctx,
 			e.Logger,

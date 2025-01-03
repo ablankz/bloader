@@ -17,16 +17,16 @@ encrypts:
     key: "must override"
 logging:
   output:
-    - type: "stdout"
+    # - type: "stdout"
+    #   format: "text"
+    #   level: "warn"
+    #   # If enabled_env is not set, it will be enabled all environments.
+    #   enabled_env:
+    #     - "production"
+    - type: "file"
+      filename: "logs/app.log"
       format: "text"
       level: "warn"
-      # If enabled_env is not set, it will be enabled all environments.
-      enabled_env:
-        - "local"
-    # - type: "file"
-    #   filename: "logs/app.log"
-    #   format: "text"
-    #   level: "debug"
     # - type: "tcp"
     #   address: "127.0.0.1:5000"
     #   format: "json"
