@@ -11,8 +11,8 @@ import (
 
 	"github.com/ablankz/bloader/internal/encrypt"
 	"github.com/ablankz/bloader/internal/logger"
-	"github.com/ablankz/bloader/internal/master"
 	"github.com/ablankz/bloader/internal/output"
+	"github.com/ablankz/bloader/internal/utils"
 )
 
 // Flow represents the flow runner
@@ -65,7 +65,7 @@ func (r FlowStep) Validate() (ValidFlowStep, error) {
 		}
 		idSet[*flow.ID] = struct{}{}
 		validFlowStepFlow.ID = *flow.ID
-		err := flow.Validate(&validFlowStepFlow)
+		err := flow.Validate(&validFlowStepFlow, idSet)
 		if err != nil {
 			return ValidFlowStep{}, fmt.Errorf("failed to validate flow[%d]: %v", i, err)
 		}
@@ -86,23 +86,51 @@ const (
 	FlowStepFlowTypeSlaveCmd FlowStepFlowType = "slaveCmd"
 )
 
+// FlowStepFlowDependsOn represents the flow step flow depends on
+type FlowStepFlowDependsOn struct {
+	Flow  *string `yaml:"flow"`
+	Event *string `yaml:"event"`
+}
+
+// ValidFlowStepFlowDependsOn represents a valid flow step flow depends on
+type ValidFlowStepFlowDependsOn struct {
+	Flow  string
+	Event RunnerEvent
+}
+
+// Validate validates a flow step flow depends on
+func (r FlowStepFlowDependsOn) Validate() (ValidFlowStepFlowDependsOn, error) {
+	var validFlowStepFlowDependsOn ValidFlowStepFlowDependsOn
+	if r.Flow == nil {
+		return ValidFlowStepFlowDependsOn{}, fmt.Errorf("flow is required")
+	}
+	validFlowStepFlowDependsOn.Flow = *r.Flow
+	if r.Event == nil {
+		return ValidFlowStepFlowDependsOn{}, fmt.Errorf("event is required")
+	}
+	validFlowStepFlowDependsOn.Event = RunnerEvent(*r.Event)
+	return validFlowStepFlowDependsOn, nil
+}
+
 // FlowStepFlow represents a flow step flow
 type FlowStepFlow struct {
-	ID               *string                `yaml:"id"`
-	Type             *string                `yaml:"type"`
-	File             *string                `yaml:"file"`
-	Mkdir            bool                   `yaml:"mkdir"`
-	Count            *int                   `yaml:"count"`
-	Values           []FlowStepFlowValue    `yaml:"values"`
-	ThreadOnlyValues []FlowStepFlowValue    `yaml:"thread_only_values"`
-	Flows            []FlowStepFlow         `yaml:"flows"`
-	Concurrency      *int                   `yaml:"concurrency"`
-	Executors        []FlowStepFlowExecutor `yaml:"executors"`
+	ID               *string                 `yaml:"id"`
+	DependsOn        []FlowStepFlowDependsOn `yaml:"depends_on"`
+	Type             *string                 `yaml:"type"`
+	File             *string                 `yaml:"file"`
+	Mkdir            bool                    `yaml:"mkdir"`
+	Count            *int                    `yaml:"count"`
+	Values           []FlowStepFlowValue     `yaml:"values"`
+	ThreadOnlyValues []FlowStepFlowValue     `yaml:"thread_only_values"`
+	Flows            []FlowStepFlow          `yaml:"flows"`
+	Concurrency      *int                    `yaml:"concurrency"`
+	Executors        []FlowStepFlowExecutor  `yaml:"executors"`
 }
 
 // ValidFlowStepFlow represents a valid flow step flow
 type ValidFlowStepFlow struct {
 	ID               string
+	DependsOn        []ValidFlowStepFlowDependsOn
 	Type             FlowStepFlowType
 	File             string
 	Mkdir            bool
@@ -112,6 +140,7 @@ type ValidFlowStepFlow struct {
 	Flows            []ValidFlowStepFlow
 	Concurrency      int
 	Executors        []ValidFlowStepFlowExecutor
+	waitFunc         func(ctx context.Context) error
 }
 
 // FlowStepFlowExecutorOutput represents a flow step flow executor output
@@ -215,8 +244,15 @@ func (r FlowStepFlowValue) Validate() (ValidFlowStepFlowValue, error) {
 }
 
 // Validate validates a flow step flow
-func (f FlowStepFlow) Validate(valid *ValidFlowStepFlow) error {
+func (f FlowStepFlow) Validate(valid *ValidFlowStepFlow, idSet map[string]struct{}) error {
 	valid.Mkdir = f.Mkdir
+	for i, dep := range f.DependsOn {
+		validDep, err := dep.Validate()
+		if err != nil {
+			return fmt.Errorf("failed to validate depends_on[%d]: %v", i, err)
+		}
+		valid.DependsOn = append(valid.DependsOn, validDep)
+	}
 	for i, value := range f.Values {
 		valValue, err := value.Validate()
 		if err != nil {
@@ -269,18 +305,17 @@ func (f FlowStepFlow) Validate(valid *ValidFlowStepFlow) error {
 		} else {
 			valid.Concurrency = *f.Concurrency
 		}
-		subIdSet := make(map[string]struct{})
 		for i, f := range f.Flows {
 			var subValid ValidFlowStepFlow
 			if f.ID == nil {
 				return fmt.Errorf("id is required")
 			}
-			if _, ok := subIdSet[*f.ID]; ok {
+			if _, ok := idSet[*f.ID]; ok {
 				return fmt.Errorf("id %s is duplicated", *f.ID)
 			}
-			subIdSet[*f.ID] = struct{}{}
+			idSet[*f.ID] = struct{}{}
 			subValid.ID = *f.ID
-			err := f.Validate(&subValid)
+			err := f.Validate(&subValid, idSet)
 			if err != nil {
 				return fmt.Errorf("failed to validate flow[%d]: %v", i, err)
 			}
@@ -303,14 +338,92 @@ type flowExecutor struct {
 	flows           []ValidFlowStepFlow
 	executors       []ValidFlowStepFlowExecutor
 	loopCount       int
+	waitFunc        func(ctx context.Context) error
+	castFunc        func(ctx context.Context) error
+	eventCaster     *utils.Broadcaster[RunnerEvent]
+}
+
+type closer func() error
+
+func createBroadCastMap(
+	flows []ValidFlowStepFlow,
+	broadCastMap map[string]*utils.Broadcaster[RunnerEvent],
+) ([]closer, error) {
+	closeFuncs := make([]closer, 0)
+	for _, flow := range flows {
+		if _, ok := broadCastMap[flow.ID]; ok {
+			return nil, fmt.Errorf("id %s is duplicated", flow.ID)
+		}
+		broadCastMap[flow.ID] = utils.NewBroadcaster[RunnerEvent]()
+		if len(flow.Flows) > 0 {
+			cl, err := createBroadCastMap(flow.Flows, broadCastMap)
+			if err != nil {
+				return nil, err
+			}
+			closeFuncs = append(closeFuncs, cl...)
+		}
+	}
+	return closeFuncs, nil
+}
+
+func attachWaitChan(
+	flows []ValidFlowStepFlow,
+	broadCastMap map[string]*utils.Broadcaster[RunnerEvent],
+) error {
+	for i, flow := range flows {
+		if len(flow.Flows) > 0 {
+			if err := attachWaitChan(flow.Flows, broadCastMap); err != nil {
+				return err
+			}
+		}
+		flowEventMap := make(map[string][]RunnerEvent)
+		for _, dep := range flow.DependsOn {
+			if _, ok := flowEventMap[dep.Flow]; !ok {
+				flowEventMap[dep.Flow] = make([]RunnerEvent, 0)
+			}
+			flowEventMap[dep.Flow] = append(flowEventMap[dep.Flow], dep.Event)
+		}
+		flowWaitFuncMap := make(map[string]func(ctx context.Context) error)
+		for k, v := range flowEventMap {
+			caster, ok := broadCastMap[k]
+			if !ok {
+				return fmt.Errorf("failed to find depends_on %s", k)
+			}
+			waitChan := caster.Subscribe()
+			flowWaitFuncMap[k] = func(ctx context.Context) error {
+				mustEvents := v
+				for len(mustEvents) > 0 {
+					select {
+					case event := <-waitChan:
+						mustEvents = utils.RemoveElement(mustEvents, event)
+					case <-ctx.Done():
+						return ctx.Err()
+					}
+				}
+				return nil
+			}
+		}
+		flow.waitFunc = func(ctx context.Context) error {
+			for k, f := range flowWaitFuncMap {
+				if err := f(ctx); err != nil {
+					return fmt.Errorf("failed to wait for %s: %v", k, err)
+				}
+			}
+			return nil
+		}
+
+		flows[i] = flow
+	}
+
+	return nil
 }
 
 // Run runs a flow step flow
-func (f ValidFlow) Run(
+func (f *ValidFlow) Run(
 	ctx context.Context,
 	env string,
 	log logger.Logger,
-	slaveConCtr *master.ConnectionContainer,
+	slaveConCtr *ConnectionContainer,
 	encryptCtr encrypt.EncrypterContainer,
 	tmplFactor TmplFactor,
 	store Store,
@@ -322,6 +435,22 @@ func (f ValidFlow) Run(
 	callCount int,
 	slaveValues map[string]any,
 ) error {
+	broadCastMap := make(map[string]*utils.Broadcaster[RunnerEvent])
+	cl, err := createBroadCastMap(f.Step.Flows, broadCastMap)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		for _, c := range cl {
+			if err := c(); err != nil {
+				log.Error(ctx, "failed to close",
+					logger.Value("error", err), logger.Value("on", "Flow"))
+			}
+		}
+	}()
+	if err := attachWaitChan(f.Step.Flows, broadCastMap); err != nil {
+		return err
+	}
 	return run(
 		ctx,
 		env,
@@ -339,6 +468,7 @@ func (f ValidFlow) Run(
 		f.Step.Flows,
 		f.Step.Concurrency,
 		slaveValues,
+		broadCastMap,
 	)
 }
 
@@ -346,7 +476,7 @@ func run(
 	ctx context.Context,
 	env string,
 	log logger.Logger,
-	slaveConCtr *master.ConnectionContainer,
+	slaveConCtr *ConnectionContainer,
 	encryptCtr encrypt.EncrypterContainer,
 	tmplFactor TmplFactor,
 	store Store,
@@ -359,6 +489,7 @@ func run(
 	flows []ValidFlowStepFlow,
 	concurrency int,
 	slaveValues map[string]any,
+	broadCastMap map[string]*utils.Broadcaster[RunnerEvent],
 ) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -375,6 +506,14 @@ func run(
 
 	var count int
 	for _, flow := range flows {
+		caster, ok := broadCastMap[flow.ID]
+		if !ok {
+			return fmt.Errorf("failed to find depends_on %s", flow.ID)
+		}
+		castFunc := func(ctx context.Context) error {
+			caster.Broadcast(RunnerEventTerminated)
+			return nil
+		}
 		rootStr := &sync.Map{}
 		for _, v := range flow.Values {
 			str.Store(v.Key, v.Value)
@@ -403,6 +542,9 @@ func run(
 					flows:           flow.Flows,
 					executors:       flow.Executors,
 					loopCount:       j,
+					waitFunc:        flow.waitFunc,
+					castFunc:        castFunc,
+					eventCaster:     caster,
 				}
 				count++
 			}
@@ -424,6 +566,9 @@ func run(
 				flows:           flow.Flows,
 				executors:       flow.Executors,
 				loopCount:       0,
+				waitFunc:        flow.waitFunc,
+				castFunc:        castFunc,
+				eventCaster:     caster,
 			}
 			count++
 		}
@@ -440,6 +585,11 @@ func run(
 
 	if sequential {
 		for i, executor := range executors {
+			if err := executor.waitFunc(ctx); err != nil {
+				log.Error(ctx, fmt.Sprintf("failed to wait[%d]", i),
+					logger.Value("error", err), logger.Value("on", "Flow"))
+				return fmt.Errorf("failed to wait: %v", err)
+			}
 			switch executor.flowType {
 			case FlowStepFlowTypeFile:
 				baseExecutor := BaseExecutor{
@@ -462,6 +612,7 @@ func run(
 					executor.loopCount,
 					callCount+1,
 					slaveValues,
+					NewDefaultEventCasterWithBroadcaster(executor.eventCaster),
 				)
 				if err != nil {
 					log.Error(ctx, fmt.Sprintf("failed to execute flow[%d]", i),
@@ -503,6 +654,7 @@ func run(
 					executor.flows,
 					executor.concurrency,
 					slaveValues,
+					broadCastMap,
 				)
 				if err != nil {
 					log.Error(ctx, fmt.Sprintf("failed to execute flow[%d]", i),
@@ -512,16 +664,37 @@ func run(
 				log.Debug(ctx, "flow finished",
 					logger.Value("on", "Flow"))
 			}
+
+			if err := executor.castFunc(ctx); err != nil {
+				log.Error(ctx, fmt.Sprintf("failed to cast[%d]", i),
+					logger.Value("error", err), logger.Value("on", "Flow"))
+				return fmt.Errorf("failed to cast: %v", err)
+			}
 		}
 	} else {
 		atomicErr := atomic.Value{}
 		var wg sync.WaitGroup
 		sem := make(chan struct{}, concurrency)
 		for i, executor := range executors {
+			if err := executor.waitFunc(ctx); err != nil {
+				log.Error(ctx, fmt.Sprintf("failed to wait[%d]", i),
+					logger.Value("error", err), logger.Value("on", "Flow"))
+				return fmt.Errorf("failed to wait: %v", err)
+			}
+
 			wg.Add(1)
 
 			go func(preExecutor flowExecutor) {
 				defer wg.Done()
+
+				defer func() {
+					if err := preExecutor.castFunc(ctx); err != nil {
+						log.Error(ctx, fmt.Sprintf("failed to cast[%d]", i),
+							logger.Value("error", err), logger.Value("on", "Flow"))
+						atomicErr.Store(err)
+						cancel()
+					}
+				}()
 
 				sem <- struct{}{}
 
@@ -547,6 +720,7 @@ func run(
 						preExecutor.loopCount,
 						callCount+1,
 						slaveValues,
+						NewDefaultEventCasterWithBroadcaster(preExecutor.eventCaster),
 					)
 					if err != nil {
 						atomicErr.Store(err)
@@ -590,6 +764,7 @@ func run(
 						preExecutor.flows,
 						preExecutor.concurrency,
 						slaveValues,
+						broadCastMap,
 					)
 					if err != nil {
 						atomicErr.Store(err)
@@ -625,7 +800,7 @@ func run(
 func slaveCmdRun(
 	ctx context.Context,
 	log logger.Logger,
-	slaveConCtr *master.ConnectionContainer,
+	slaveConCtr *ConnectionContainer,
 	outFactor OutputFactor,
 	str *sync.Map,
 	outputRoot string,
@@ -664,6 +839,7 @@ func slaveCmdRun(
 		}
 		defaultStr, err := common.NewFlexMap(globalStr)
 		if err != nil {
+			fmt.Println("err", err)
 			log.Error(ctx, "failed to create default store",
 				logger.Value("error", err), logger.Value("on", "Flow"))
 			return fmt.Errorf("failed to create default store: %v", err)
@@ -701,6 +877,7 @@ func slaveCmdRun(
 				logger.Value("error", err), logger.Value("on", "Flow"))
 			return fmt.Errorf("failed to execute slave command: %v", err)
 		}
+		fmt.Println("res", res)
 		slaveExecutors[i] = slaveExecutor{
 			slaveID:       slaveID,
 			cmdID:         res.CommandId,
@@ -742,7 +919,7 @@ func slaveCmdRun(
 type slaveExecutor struct {
 	slaveID       string
 	cmdID         string
-	mapData       *master.ConnectionMapData
+	mapData       *ConnectionMapData
 	outputEnabled bool
 	outFactor     OutputFactor
 }

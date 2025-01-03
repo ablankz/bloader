@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/ablankz/bloader/internal/container"
-	"github.com/ablankz/bloader/internal/master"
 	"github.com/ablankz/bloader/internal/output"
 	"github.com/ablankz/bloader/internal/prompt"
 )
 
 func Run(ctr *container.Container, filename string, data map[string]any) error {
+
 	var err error
 	if filename == "" {
 		filename, err = prompt.PromptText(
@@ -35,8 +35,10 @@ func Run(ctr *container.Container, filename string, data map[string]any) error {
 		globalStore.Store(k, v)
 	}
 
-	slCtr := master.NewConnectionContainer()
+	slCtr := NewConnectionContainer()
 	defer slCtr.AllDisconnect(ctx)
+
+	eventCaster := NewDefaultEventCaster()
 
 	baseExecutor := BaseExecutor{
 		Logger:                ctr.Logger,
@@ -59,6 +61,7 @@ func Run(ctr *container.Container, filename string, data map[string]any) error {
 		0,
 		0,
 		slaveValues,
+		eventCaster,
 	); err != nil {
 		return fmt.Errorf("failed to execute the load test: %w", err)
 	}

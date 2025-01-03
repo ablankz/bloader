@@ -7,7 +7,7 @@ require (
 	buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-b8f4d28f83f4.1
 	github.com/BurntSushi/toml v1.4.0
 	github.com/Masterminds/sprig/v3 v3.3.0
-	github.com/ablankz/go-cmproto v1.0.0
+	github.com/ablankz/go-cmproto v1.0.3
 	github.com/boltdb/bolt v1.3.1
 	github.com/fatih/color v1.14.1
 	github.com/google/uuid v1.6.0

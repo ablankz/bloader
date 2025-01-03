@@ -1,16 +1,5 @@
 kind: SlaveConnect
-store_import:
-  enabled: true
-  data:
-    - key: "slaveLists"
-      bucket_id: "bucketForSlave"
-      thread_only: false
-      store_key: "slaveList"
-      # encrypt:
-      #   enabled: true
-      #   encrypt_id: encryptDynamicCBC
 slaves:
-{{- if .Values.slaveLists }}
 {{- range slice .Values.slaveLists 0 .Values.SlaveCount }}
   - id: "{{ .id }}"
     uri: "dns:{{ .address }}:{{ .port }}" # support schema https://github.com/grpc/grpc/blob/master/doc/naming.md
@@ -24,6 +13,5 @@ slaves:
       enabled: "{{ .enabled }}"
       encrypt_id: "{{ .encrypt_id }}"
     {{- end }}
-{{- end }}
 {{- end }}
 

@@ -30,6 +30,12 @@ github.com/Masterminds/sprig/v3 v3.3.0 h1:mQh0Yrg1XPo6vjYXgtf5OtijNAKJRNcTdOOGZe
 github.com/Masterminds/sprig/v3 v3.3.0/go.mod h1:Zy1iXRYNqNLUolqCpL4uhk6SHUMAOSCzdgBfDb35Lz0=
 github.com/ablankz/go-cmproto v1.0.0 h1:1O9Fv48YFt/X/JASj9bgr/dw9l7eJOYZh28X/kgXpJ8=
 github.com/ablankz/go-cmproto v1.0.0/go.mod h1:znDmJYTlY/lUlQDMJb3LvZ+Vn/A97dXuRb0gu5N453I=
+github.com/ablankz/go-cmproto v1.0.1 h1:r17A5aQ4EIohEIkO/YRSfGU41waoNfBPtuTtcpGVMkk=
+github.com/ablankz/go-cmproto v1.0.1/go.mod h1:A454MJmBFuAyFk5RSY537f1Cxyivlas7EIbF371u5go=
+github.com/ablankz/go-cmproto v1.0.2 h1:F2dZCEBvZCpEVp2EEaonIJwUB/ZwJMoLiTnVu/vtYYw=
+github.com/ablankz/go-cmproto v1.0.2/go.mod h1:A454MJmBFuAyFk5RSY537f1Cxyivlas7EIbF371u5go=
+github.com/ablankz/go-cmproto v1.0.3 h1:rO9W3o08ypSFisAMk0VM9R014tY5suyV4ASEGqkUaCI=
+github.com/ablankz/go-cmproto v1.0.3/go.mod h1:A454MJmBFuAyFk5RSY537f1Cxyivlas7EIbF371u5go=
 github.com/boltdb/bolt v1.3.1 h1:JQmyP4ZBrce+ZQu0dY660FMfatumYDLun9hBCUVIkF4=
 github.com/boltdb/bolt v1.3.1/go.mod h1:clJnj/oiGkjum5o1McbSZDSLxVThjynRyGBgiAx27Ps=
 github.com/chzyer/logex v1.1.10 h1:Swpa1K6QvQznwJRcfTfQJmTE72DqScAa40E+fbHEXEE=

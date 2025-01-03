@@ -28,3 +28,21 @@ func wait(
 
 	return nil
 }
+
+func validate(
+	ctx context.Context,
+	eventCaster EventCaster,
+	validateFunc func() error,
+) error {
+	if err := eventCaster.CastEvent(ctx, RunnerEventValidating); err != nil {
+		return fmt.Errorf("failed to cast event: %v", err)
+	}
+	if err := validateFunc(); err != nil {
+		return err
+	}
+	if err := eventCaster.CastEvent(ctx, RunnerEventValidated); err != nil {
+		return fmt.Errorf("failed to cast event: %v", err)
+	}
+
+	return nil
+}

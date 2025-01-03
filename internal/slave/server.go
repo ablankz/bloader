@@ -10,7 +10,6 @@ import (
 	"github.com/ablankz/bloader/internal/container"
 	"github.com/ablankz/bloader/internal/encrypt"
 	"github.com/ablankz/bloader/internal/logger"
-	"github.com/ablankz/bloader/internal/master"
 	"github.com/ablankz/bloader/internal/runner"
 	"github.com/ablankz/bloader/internal/slave/slcontainer"
 	"github.com/ablankz/bloader/internal/utils"
@@ -29,14 +28,14 @@ type Server struct {
 	encryptCtr  encrypt.EncrypterContainer
 	env         string
 	log         logger.Logger
-	slaveConCtr *master.ConnectionContainer
+	slaveConCtr *runner.ConnectionContainer
 	slCtrMap    map[string]*slcontainer.SlaveContainer
 	reqConMap   *slcontainer.RequestConnectionMapper
 	cmdTermMap  map[string]chan commandTermData
 }
 
 // NewServer creates a new server for the worker node
-func NewServer(ctr *container.Container, slaveConCtr *master.ConnectionContainer) *Server {
+func NewServer(ctr *container.Container, slaveConCtr *runner.ConnectionContainer) *Server {
 	return &Server{
 		mu:          &sync.RWMutex{},
 		encryptCtr:  ctr.EncypterContainer,
@@ -45,6 +44,7 @@ func NewServer(ctr *container.Container, slaveConCtr *master.ConnectionContainer
 		slaveConCtr: slaveConCtr,
 		slCtrMap:    make(map[string]*slcontainer.SlaveContainer),
 		reqConMap:   slcontainer.NewRequestConnectionMapper(),
+		cmdTermMap:  make(map[string]chan commandTermData),
 	}
 }
 
@@ -233,6 +233,7 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 		0,
 		0,
 		data.SlaveValues,
+		runner.NewDefaultEventCaster(),
 	); err != nil {
 		return fmt.Errorf("failed to execute: %v", err)
 	}
@@ -248,8 +249,6 @@ func (s *Server) ReceiveChanelConnect(req *pb.ReceiveChanelConnectRequest, strea
 	if !ok {
 		return ErrInvalidConnectionID
 	}
-
-	fmt.Println("receiveStream OK")
 
 	for {
 		select {

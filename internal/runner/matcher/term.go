@@ -35,6 +35,11 @@ const (
 	TerminateTypeByStatusCode TerminateType = "statusCode"
 )
 
+// String returns the string representation of the terminate type
+func (t TerminateType) String() string {
+	return string(t)
+}
+
 // TerminateTypeAndParams represents the terminate type and params
 type TerminateTypeAndParams struct {
 	Type   TerminateType

@@ -10,7 +10,7 @@ import (
 
 	"github.com/ablankz/bloader/internal/container"
 	"github.com/ablankz/bloader/internal/logger"
-	"github.com/ablankz/bloader/internal/master"
+	"github.com/ablankz/bloader/internal/runner"
 )
 
 func SlaveRun(ctr *container.Container) error {
@@ -40,7 +40,7 @@ func SlaveRun(ctr *container.Container) error {
 
 	grpcServer := grpc.NewServer(grpcServerOptions...)
 
-	slCtr := master.NewConnectionContainer()
+	slCtr := runner.NewConnectionContainer()
 	defer slCtr.AllDisconnect(ctr.Ctx)
 
 	rpc.RegisterBloaderSlaveServiceServer(grpcServer, NewServer(ctr, slCtr))

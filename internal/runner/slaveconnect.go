@@ -2,8 +2,13 @@ package runner
 
 import (
 	"fmt"
+)
 
-	"github.com/ablankz/bloader/internal/master"
+const (
+	// SlaveConnectRunnerEventConnecting represents the connecting event
+	SlaveConnectRunnerEventConnecting RunnerEvent = "slaveConnect:connecting"
+	// SlaveConnectRunnerEventConnected represents the connected event
+	SlaveConnectRunnerEventConnected RunnerEvent = "slaveConnect:connected"
 )
 
 // SlaveConnect represents the SlaveConnect runner
@@ -12,16 +17,16 @@ type SlaveConnect struct {
 }
 
 // Validate validates the SlaveConnect
-func (r SlaveConnect) Validate() (master.SlaveConnect, error) {
-	var validSlaves []master.SlaveConnectData
+func (r SlaveConnect) Validate() (ValidSlaveConnect, error) {
+	var validSlaves []ValidSlaveConnectData
 	for i, d := range r.Slaves {
 		valid, err := d.Validate()
 		if err != nil {
-			return master.SlaveConnect{}, fmt.Errorf("failed to validate data at index %d: %v", i, err)
+			return ValidSlaveConnect{}, fmt.Errorf("failed to validate data at index %d: %v", i, err)
 		}
 		validSlaves = append(validSlaves, valid)
 	}
-	return master.SlaveConnect{
+	return ValidSlaveConnect{
 		Slaves: validSlaves,
 	}, nil
 }
@@ -35,26 +40,26 @@ type SlaveConnectData struct {
 }
 
 // Validate validates the SlaveConnectData
-func (d SlaveConnectData) Validate() (master.SlaveConnectData, error) {
-	var valid master.SlaveConnectData
+func (d SlaveConnectData) Validate() (ValidSlaveConnectData, error) {
+	var valid ValidSlaveConnectData
 	if d.ID == nil {
-		return master.SlaveConnectData{}, fmt.Errorf("id is required")
+		return ValidSlaveConnectData{}, fmt.Errorf("id is required")
 	}
 	valid.ID = *d.ID
 	if d.URI == nil {
-		return master.SlaveConnectData{}, fmt.Errorf("uri is required")
+		return ValidSlaveConnectData{}, fmt.Errorf("uri is required")
 	}
 	valid.URI = *d.URI
 	validCertificate, err := d.Certificate.Validate()
 	if err != nil {
-		return master.SlaveConnectData{}, fmt.Errorf("failed to validate certificate: %v", err)
+		return ValidSlaveConnectData{}, fmt.Errorf("failed to validate certificate: %v", err)
 	}
 	valid.Certificate = validCertificate
 	validEncrypt, err := d.Encrypt.Validate()
 	if err != nil {
-		return master.SlaveConnectData{}, fmt.Errorf("failed to validate encrypt: %v", err)
+		return ValidSlaveConnectData{}, fmt.Errorf("failed to validate encrypt: %v", err)
 	}
-	valid.Encrypt = master.CredentialEncryptConfig(validEncrypt)
+	valid.Encrypt = ValidCredentialEncryptConfig(validEncrypt)
 	return valid, nil
 }
 
@@ -67,17 +72,38 @@ type SlaveConnectCertificate struct {
 }
 
 // Validate validates the SlaveConnectCertificate
-func (c SlaveConnectCertificate) Validate() (master.SlaveConnectCertificate, error) {
+func (c SlaveConnectCertificate) Validate() (ValidSlaveConnectCertificate, error) {
 	if !c.Enabled {
-		return master.SlaveConnectCertificate{}, nil
+		return ValidSlaveConnectCertificate{}, nil
 	}
 	if c.CACert == nil {
-		return master.SlaveConnectCertificate{}, fmt.Errorf("ca_cert is required")
+		return ValidSlaveConnectCertificate{}, fmt.Errorf("ca_cert is required")
 	}
-	return master.SlaveConnectCertificate{
+	return ValidSlaveConnectCertificate{
 		Enabled:            c.Enabled,
 		CACert:             *c.CACert,
 		ServerNameOverride: c.ServerNameOverride,
 		InsecureSkipVerify: c.InsecureSkipVerify,
 	}, nil
+}
+
+// ValidSlaveConnect represents the valid ValidSlaveConnect runner
+type ValidSlaveConnect struct {
+	Slaves []ValidSlaveConnectData
+}
+
+// ValidSlaveConnectData represents the valid data for the ValidSlaveConnect
+type ValidSlaveConnectData struct {
+	ID          string
+	URI         string
+	Certificate ValidSlaveConnectCertificate
+	Encrypt     ValidCredentialEncryptConfig
+}
+
+// ValidSlaveConnectCertificate represents the valid certificate for the Slave
+type ValidSlaveConnectCertificate struct {
+	Enabled            bool
+	CACert             string
+	ServerNameOverride string
+	InsecureSkipVerify bool
 }

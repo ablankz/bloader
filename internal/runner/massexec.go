@@ -563,7 +563,7 @@ func (e *MassiveExecThreadExecutor) Execute(
 	log.Info(ctx, "Execute End For Break",
 		logger.Value("ExecuteID", e.ID))
 	if e.successBreak.Match(termType.termType, termType.param) {
-		fmt.Println("Execute End For Success Break", e.ID)
+		fmt.Println("Execute End For Success Break", termType.termType.String())
 		log.Info(ctx, "Execute End For Success Break", logger.Value("ExecuteID", e.ID))
 		return nil
 	}

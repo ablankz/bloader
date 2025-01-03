@@ -18,6 +18,8 @@ type SlaveRequestHandler struct {
 	cli rpc.BloaderSlaveServiceClient
 	// chunkSize is an integer.
 	chunkSize int
+	// receiveTermChan is a channel for receiving term.
+	receiveTermChan <-chan ReceiveTermType
 }
 
 const defaultChunkSize = 1024
@@ -26,11 +28,13 @@ const defaultChunkSize = 1024
 func NewSlaveRequestHandler(
 	resChan <-chan *pb.ReceiveChanelConnectResponse,
 	cli rpc.BloaderSlaveServiceClient,
+	termChan <-chan ReceiveTermType,
 ) *SlaveRequestHandler {
 	return &SlaveRequestHandler{
-		resChan:   resChan,
-		cli:       cli,
-		chunkSize: defaultChunkSize,
+		resChan:         resChan,
+		cli:             cli,
+		chunkSize:       defaultChunkSize,
+		receiveTermChan: termChan,
 	}
 }
 
@@ -43,13 +47,31 @@ func (rh *SlaveRequestHandler) HandleResponse(
 	targetFactor TargetFactor,
 	store Store,
 ) error {
+
 	for {
 		select {
-		case <-ctx.Done():
-			return nil
+		case termType := <-rh.receiveTermChan:
+			switch termType {
+			case ReceiveTermTypeReceiveTermTypeEOF:
+				return nil
+			case ReceiveTermTypeReceiveTermTypeResponseReceiveError:
+				return fmt.Errorf("response receive error")
+			case ReceiveTermTypeReceiveTermTypeContextDone:
+				return nil
+			case ReceiveTermTypeReceiveTermTypeStreamContextDone:
+				return nil
+			case ReceiveTermTypeReceiveTermTypeDisconnected:
+				return nil
+			default:
+				return fmt.Errorf("unknown term type: %v", termType)
+			}
 		case res := <-rh.resChan:
+			fmt.Println("Received response", res)
 			log.Debug(ctx, "Received response: %v",
 				logger.Value("response", res))
+			if res == nil {
+				return fmt.Errorf("response is nil")
+			}
 			switch res.RequestType {
 			case pb.RequestType_REQUEST_TYPE_REQUEST_RESOURCE_LOADER:
 				loaderResourceReq := res.GetLoaderResourceRequest()

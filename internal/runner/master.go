@@ -1,4 +1,4 @@
-package master
+package runner
 
 import (
 	"context"
@@ -14,18 +14,37 @@ import (
 	pb "buf.build/gen/go/cresplanex/bloader/protocolbuffers/go/cresplanex/bloader/v1"
 	"github.com/ablankz/bloader/internal/encrypt"
 	"github.com/ablankz/bloader/internal/logger"
+	"github.com/ablankz/bloader/internal/master"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// ReceiveTermType represents the valid ReceiveTermType runner
+type ReceiveTermType string
+
+// ReceiveTermType constants
+const (
+	// ReceiveTermTypeEOF represents the EOF
+	ReceiveTermTypeReceiveTermTypeEOF ReceiveTermType = "EOF"
+	// ReceiveTermTypeResponseReceiveError represents the ResponseReceiveError
+	ReceiveTermTypeReceiveTermTypeResponseReceiveError ReceiveTermType = "ResponseReceiveError"
+	// ReceiveTermTypeContextDone represents the ContextDone
+	ReceiveTermTypeReceiveTermTypeContextDone ReceiveTermType = "ContextDone"
+	// ReceiveTermTypeStreamContextDone represents the StreamContextDone
+	ReceiveTermTypeReceiveTermTypeStreamContextDone ReceiveTermType = "StreamContextDone"
+	// ReceiveTermTypeDisconnected represents the Disconnected
+	ReceiveTermTypeReceiveTermTypeDisconnected ReceiveTermType = "Disconnected"
+)
+
 // ConnectionMapData is a struct that holds the connection information.
 type ConnectionMapData struct {
-	ConnectionID string
-	conn         *grpc.ClientConn
-	Cli          rpc.BloaderSlaveServiceClient
-	ReqChan      <-chan *pb.ReceiveChanelConnectResponse
-	termChan     chan<- struct{}
+	ConnectionID    string
+	conn            *grpc.ClientConn
+	Cli             rpc.BloaderSlaveServiceClient
+	ReqChan         <-chan *pb.ReceiveChanelConnectResponse
+	termChan        chan<- struct{}
+	ReceiveTermChan <-chan ReceiveTermType
 }
 
 // ConnectionContainer is a struct that holds the connection information.
@@ -61,13 +80,22 @@ func (c *ConnectionContainer) Connect(
 	log logger.Logger,
 	env string,
 	encryptCtr encrypt.EncrypterContainer,
-	conInfo SlaveConnect,
+	conInfo ValidSlaveConnect,
+	eventCaster EventCaster,
 ) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	if err := eventCaster.CastEvent(ctx, SlaveConnectRunnerEventConnecting); err != nil {
+		return fmt.Errorf("failed to cast event: %v", err)
+	}
+	defer func() {
+		if err := eventCaster.CastEvent(ctx, SlaveConnectRunnerEventConnected); err != nil {
+			log.Error(ctx, "failed to cast event: %v", logger.Value("error", err))
+		}
+	}()
+
 	for _, slave := range conInfo.Slaves {
-		fmt.Println("slave", slave)
 		if _, ok := c.conMap[slave.ID]; ok {
 			return fmt.Errorf("connection already exists: %s", slave.ID)
 		}
@@ -98,8 +126,8 @@ func (c *ConnectionContainer) Connect(
 			}
 			grpcDialOptions = append(
 				grpcDialOptions,
-				grpc.WithUnaryInterceptor(UnaryClientEncryptInterceptor(encrypter)),
-				grpc.WithStreamInterceptor(StreamClientInterceptor(encrypter)),
+				grpc.WithUnaryInterceptor(master.UnaryClientEncryptInterceptor(encrypter)),
+				grpc.WithStreamInterceptor(master.StreamClientInterceptor(encrypter)),
 			)
 		}
 
@@ -119,8 +147,6 @@ func (c *ConnectionContainer) Connect(
 			return fmt.Errorf("failed to connect to slave: %v", err)
 		}
 
-		fmt.Println("connected!")
-
 		receiveStream, err := cli.ReceiveChanelConnect(
 			ctx,
 			&pb.ReceiveChanelConnectRequest{
@@ -131,18 +157,19 @@ func (c *ConnectionContainer) Connect(
 			return fmt.Errorf("failed to receive channel connect: %v", err)
 		}
 
-		fmt.Println("receiveStream OK")
-
 		reqChan := make(chan *pb.ReceiveChanelConnectResponse)
+		receiveTermChan := make(chan ReceiveTermType)
 		termChan := make(chan struct{})
 
 		go func() {
 			defer close(reqChan)
+			defer close(receiveTermChan)
 
 			for {
 				res, err := receiveStream.Recv()
 				if errors.Is(err, io.EOF) {
 					log.Info(ctx, "receiveChan EOF")
+					receiveTermChan <- ReceiveTermTypeReceiveTermTypeEOF
 					return
 				}
 				fmt.Println("res", res)
@@ -152,6 +179,7 @@ func (c *ConnectionContainer) Connect(
 					if err := receiveStream.CloseSend(); err != nil {
 						log.Error(ctx, "failed to close receiveChan: %v", logger.Value("error", err))
 					}
+					receiveTermChan <- ReceiveTermTypeReceiveTermTypeResponseReceiveError
 					return
 				}
 				select {
@@ -160,15 +188,18 @@ func (c *ConnectionContainer) Connect(
 					if err := receiveStream.CloseSend(); err != nil {
 						log.Error(ctx, "failed to close receiveChan: %v", logger.Value("error", err))
 					}
+					receiveTermChan <- ReceiveTermTypeReceiveTermTypeContextDone
 					return
 				case <-receiveStream.Context().Done():
 					log.Info(ctx, "receiveChan context done")
+					receiveTermChan <- ReceiveTermTypeReceiveTermTypeStreamContextDone
 					return
 				case <-termChan:
 					log.Info(ctx, "termChan")
 					if err := receiveStream.CloseSend(); err != nil {
 						log.Error(ctx, "failed to close receiveChan: %v", logger.Value("error", err))
 					}
+					receiveTermChan <- ReceiveTermTypeReceiveTermTypeDisconnected
 					return
 				case reqChan <- res:
 				}
@@ -176,24 +207,20 @@ func (c *ConnectionContainer) Connect(
 		}()
 
 		c.conMap[slave.ID] = &ConnectionMapData{
-			ConnectionID: res.ConnectionId,
-			conn:         conn,
-			Cli:          cli,
-			ReqChan:      reqChan,
-			termChan:     termChan,
+			ConnectionID:    res.ConnectionId,
+			conn:            conn,
+			Cli:             cli,
+			ReqChan:         reqChan,
+			termChan:        termChan,
+			ReceiveTermChan: receiveTermChan,
 		}
 	}
 
 	return nil
 }
 
-// Disconnect removes a connection from the map.
-func (c *ConnectionContainer) Disconnect(ctx context.Context, slaveID string) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	fmt.Println("slaveID DISCONNECT", slaveID)
-
+// disconnect removes a connection from the map.
+func (c *ConnectionContainer) disconnect(slaveID string) error {
 	conn, ok := c.conMap[slaveID]
 	if !ok {
 		return fmt.Errorf("connection not found: %s", slaveID)
@@ -221,7 +248,7 @@ func (c *ConnectionContainer) AllDisconnect(ctx context.Context) error {
 	defer c.mu.Unlock()
 
 	for slaveID := range c.conMap {
-		if err := c.Disconnect(ctx, slaveID); err != nil {
+		if err := c.disconnect(slaveID); err != nil {
 			return fmt.Errorf("failed to disconnect from slave: %v", err)
 		}
 	}

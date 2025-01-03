@@ -9,11 +9,11 @@ step:
       mkdir: false
       values:
         - key: "ThreadPerSlaveCount"
-          value: 50
+          value: 1
         - key: "RequestPerSlaveCount"
-          value: 3000
+          value: 1
         - key: "SlaveCount"
-          value: 2
+          value: 1
       concurrency: -1
       flows:
         # - id: "usersStore"
@@ -22,10 +22,10 @@ step:
         #   file: "sc/sc0/store.yaml"
         #   values: []
         #   thread_only_values: []
-        - id: "slaveStore"
+        - id: "slaveStoreInMemory"
           type: file
           mkdir: false
-          file: "sc/slave/store.yaml"
+          file: "sc/slave/memory.yaml"
           values: []
           thread_only_values: []
     - id: "import"
@@ -33,12 +33,6 @@ step:
       mkdir: false
       concurrency: -1
       flows:
-        - id: "slaveConnect"
-          type: file
-          mkdir: false
-          file: "sc/slave/connect.yaml"
-          values: []
-          thread_only_values: []
         - id: "storeImport"
           type: file
           file: "sc/sc0/store_import.yaml"
@@ -46,38 +40,8 @@ step:
           values: []
           thread_only_values: []
     - id: "main"
-      type: flow
+      type: file
       mkdir: false
-      concurrency: -1
-      flows:
-        - id: "metrics"
-          type: file
-          mkdir: true
-          file: "sc/metrics/main.yaml"
-          values:
-            - key: "MetricsInterval"
-              value: "5s"
-            - key: "MetricsBreakTime"
-              value: "10m"
-          thread_only_values: []
-        - id: "request"
-          type: slaveCmd
-          mkdir: true
-          thread_only_values:
-            - key: "Interval"
-              value: "100ms"
-            - key: "BreakTime"
-              value: "5m"
-          executors: # SlaveValues: index, slaveID
-            {{- if .Values.slaveLists }}
-            {{- range slice .Values.slaveLists 0 .Values.SlaveCount }}
-            - slave_id: "{{ .id }}"
-              output:
-                enabled: true
-                root_path: "{{ .id }}"
-              inherit_values: true
-              additional_values: []
-              additional_thread_only_values: []
-            {{- end }}
-            {{- end }}
-          file: "sc/sc1/main.yaml"
+      file: "sc/sc0/sc0.yaml"
+      values: []
+      thread_only_values: []

@@ -83,3 +83,14 @@ func AllContains[T comparable](slices1 []T, slices2 []T) bool {
 	}
 	return true
 }
+
+// RemoveElement removes an element from a slice
+func RemoveElement[T comparable](slice []T, elem T) []T {
+	var result []T
+	for _, e := range slice {
+		if e != elem {
+			result = append(result, e)
+		}
+	}
+	return result
+}
