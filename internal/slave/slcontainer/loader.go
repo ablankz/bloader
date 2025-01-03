@@ -1,6 +1,7 @@
 package slcontainer
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 )
@@ -47,6 +48,8 @@ func (l *Loader) Build(loaderID string) {
 func (l *Loader) GetLoader(loaderID string) (string, bool) {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
+
+	fmt.Println("loaderID", loaderID, l.LoaderMap)
 
 	if loader, ok := l.LoaderMap[loaderID]; ok {
 		return loader, true
