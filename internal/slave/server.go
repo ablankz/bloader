@@ -134,8 +134,7 @@ func (s *Server) SlaveCommand(ctx context.Context, req *pb.SlaveCommandRequest) 
 		SlaveValues:      slaveValues,
 	}
 	slCtr.AddCommandMap(uid, cmdMapData)
-	fmt.Println("uid", uid)
-	fmt.Println("cmdMapData", cmdMapData)
+	s.cmdTermMap[uid] = make(chan commandTermData)
 
 	return &pb.SlaveCommandResponse{
 		CommandId: uid,
@@ -154,7 +153,6 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 	if !ok {
 		return ErrCommandNotFound
 	}
-	s.cmdTermMap[req.CommandId] = make(chan commandTermData)
 	s.mu.Unlock()
 	var err error
 	defer func() {
