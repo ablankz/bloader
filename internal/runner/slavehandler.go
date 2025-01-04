@@ -132,10 +132,12 @@ func (rh *SlaveRequestHandler) HandleResponse(
 					validStore[i] = ValidStoreImportData{
 						BucketID: storeReq.BucketId,
 						StoreKey: storeReq.StoreKey,
-						Encrypt: ValidCredentialEncryptConfig{
+					}
+					if storeReq.Encryption != nil {
+						validStore[i].Encrypt = ValidCredentialEncryptConfig{
 							Enabled:   storeReq.Encryption.Enabled,
 							EncryptID: storeReq.Encryption.EncryptId,
-						},
+						}
 					}
 				}
 				strData := make([]*pb.StoreExportData, 0, len(storeResourceReq.StoreImportRequest))

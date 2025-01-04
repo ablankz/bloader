@@ -120,7 +120,9 @@ func (s *SlaveStore) Import(ctx context.Context, data []runner.ValidStoreImportD
 		}
 	}
 
-	term := s.receiveChanelRequestContainer.SendStoreResourceRequests(
+	fmt.Println("shortageData", shortageData)
+
+	term, err := s.receiveChanelRequestContainer.SendStoreResourceRequests(
 		ctx,
 		s.connectionID,
 		s.mapper,
@@ -128,8 +130,8 @@ func (s *SlaveStore) Import(ctx context.Context, data []runner.ValidStoreImportD
 			Requests: shortageData,
 		},
 	)
-	if term == nil {
-		return fmt.Errorf("failed to send store resource request")
+	if err != nil {
+		return fmt.Errorf("failed to send store resource request: %v", err)
 	}
 
 	select {
@@ -143,6 +145,7 @@ func (s *SlaveStore) Import(ctx context.Context, data []runner.ValidStoreImportD
 		if !ok {
 			return fmt.Errorf("failed to get data: %s", d.StoreKey)
 		}
+		fmt.Println("store key", d.StoreKey, "val", val)
 		if cb != nil {
 			if err := cb(ctx, d, val, nil); err != nil {
 				return fmt.Errorf("failed to import data: %v", err)

@@ -197,7 +197,7 @@ func (r *ReceiveChanelRequestContainer) SendStoreResourceRequests(
 	connectionID string,
 	mapper *RequestConnectionMapper,
 	req StoreResourceRequest,
-) <-chan struct{} {
+) (<-chan struct{}, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -224,13 +224,13 @@ func (r *ReceiveChanelRequestContainer) SendStoreResourceRequests(
 
 	select {
 	case <-ctx.Done():
-		return nil
+		return nil, fmt.Errorf("context canceled")
 	case r.ReqChan <- pbReq: // nothing
 	}
 
 	mapper.RegisterRequestConnection(requestID, connectionID)
 
-	return r.termCaster.RegisterRequest(requestID)
+	return r.termCaster.RegisterRequest(requestID), nil
 }
 
 // SendTargetResourceRequests sets the target requests channel
