@@ -114,6 +114,9 @@ func (l LocalStore) Import(ctx context.Context, data []ValidStoreImportData, cb 
 		if err != nil {
 			return fmt.Errorf("failed to get object: %v", err)
 		}
+		if len(valBytes) == 0 {
+			return fmt.Errorf("object not found: %s in bucket: %s", d.StoreKey, d.BucketID)
+		}
 		if d.Encrypt.Enabled {
 			encrypter, ok := l.encCtr[d.Encrypt.EncryptID]
 			if !ok {

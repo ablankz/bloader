@@ -242,6 +242,9 @@ func credentialGet(str store.Store, credentialConf config.ValidAuthCredentialCon
 	if err != nil {
 		return nil, fmt.Errorf("failed to get token from store: %w", err)
 	}
+	if len(authTokenBytes) == 0 {
+		return &OAuthToken{}, nil
+	}
 	authToken := &OAuthToken{}
 	if err := json.Unmarshal(authTokenBytes, authToken); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal token: %w", err)

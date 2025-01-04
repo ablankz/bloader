@@ -141,7 +141,7 @@ func (rh *SlaveRequestHandler) HandleResponse(
 					}
 				}
 				strData := make([]*pb.StoreExportData, 0, len(storeResourceReq.StoreImportRequest))
-				store.Import(
+				if err := store.Import(
 					ctx,
 					validStore,
 					func(ctx context.Context, data ValidStoreImportData, val any, valBytes []byte) error {
@@ -159,7 +159,9 @@ func (rh *SlaveRequestHandler) HandleResponse(
 						})
 						return nil
 					},
-				)
+				); err != nil {
+					return fmt.Errorf("failed to import store data: %v", err)
+				}
 				_, err := rh.cli.SendStoreData(ctx, &pb.SendStoreDataRequest{
 					RequestId: res.RequestId,
 					StoreData: strData,

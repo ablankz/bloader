@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
@@ -58,7 +57,6 @@ It sends requests to the specified server and measures the response time.`,
 
 		go func() {
 			<-signalChan
-			fmt.Println("\nSignal received: cleaning up...")
 			cancel()
 		}()
 

@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -32,7 +31,6 @@ A worker node is a node that is responsible for running the tasks assigned by th
 
 		go func() {
 			<-signalChan
-			fmt.Println("\nSignal received: cleaning up...")
 			cancel()
 		}()
 
