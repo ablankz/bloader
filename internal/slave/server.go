@@ -128,6 +128,9 @@ func (s *Server) SlaveCommand(ctx context.Context, req *pb.SlaveCommandRequest) 
 
 // SlaveCommandDefaultStore handles the command default store request from the master node
 func (s *Server) SlaveCommandDefaultStore(stream grpc.ClientStreamingServer[pb.SlaveCommandDefaultStoreRequest, pb.SlaveCommandDefaultStoreResponse]) error {
+	fmt.Println("SlaveCommandDefaultStore")
+	defer fmt.Println("SlaveCommandDefaultStore done")
+
 	var strBuffer bytes.Buffer
 	var threadOnlyStrBuffer bytes.Buffer
 	var slaveValuesBuffer bytes.Buffer
@@ -207,6 +210,9 @@ func (s *Server) SlaveCommandDefaultStore(stream grpc.ClientStreamingServer[pb.S
 
 // CallExec handles the exec request from the master node
 func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingServer[pb.CallExecResponse]) error {
+	fmt.Println("CallExec")
+	defer fmt.Println("CallExec done")
+
 	s.mu.Lock()
 	slCtr, ok := s.slCtrMap[req.ConnectionId]
 	if !ok {
@@ -325,6 +331,9 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 
 // ReceiveChanelConnect handles the channel connection request from the master node
 func (s *Server) ReceiveChanelConnect(req *pb.ReceiveChanelConnectRequest, stream grpc.ServerStreamingServer[pb.ReceiveChanelConnectResponse]) error {
+	fmt.Println("ReceiveChanelConnect")
+	defer fmt.Println("ReceiveChanelConnect done")
+
 	s.mu.RLock()
 	slCtr, ok := s.slCtrMap[req.ConnectionId]
 	s.mu.RUnlock()
