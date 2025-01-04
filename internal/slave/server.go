@@ -402,6 +402,7 @@ func (s *Server) SendAuth(ctx context.Context, req *pb.SendAuthRequest) (*pb.Sen
 
 // SendStoreData handles the store data request from the master node
 func (s *Server) SendStoreData(ctx context.Context, req *pb.SendStoreDataRequest) (*pb.SendStoreDataResponse, error) {
+	fmt.Println("SendStoreData")
 	conID, ok := s.reqConMap.GetConnectionID(req.RequestId)
 	if !ok {
 		return nil, ErrRequestNotFound

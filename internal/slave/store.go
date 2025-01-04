@@ -140,6 +140,8 @@ func (s *SlaveStore) Import(ctx context.Context, data []runner.ValidStoreImportD
 	case <-term:
 	}
 
+	fmt.Println("termOK")
+
 	for _, d := range data {
 		val, ok := s.store.GetData(d.BucketID, d.StoreKey)
 		if !ok {
