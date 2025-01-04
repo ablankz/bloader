@@ -62,19 +62,13 @@ func (s *Server) Connect(ctx context.Context, req *pb.ConnectRequest) (*pb.Conne
 	s.slCtrMap[uid] = slcontainer.NewSlaveContainer()
 	response.ConnectionId = uid
 
-	fmt.Println("Connect", uid)
-
 	return response, nil
 }
 
 // Disconnect handles the disconnection request from the master node
 func (s *Server) Disconnect(ctx context.Context, req *pb.DisconnectRequest) (*pb.DisconnectResponse, error) {
-	fmt.Println("Try to Disconnect", req.ConnectionId)
-
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
-	fmt.Println("Disconnect", req.ConnectionId)
 
 	delete(s.slCtrMap, req.ConnectionId)
 	s.reqConMap.DeleteRequestConnection(req.ConnectionId)
@@ -218,10 +212,7 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 	s.mu.Unlock()
 	var err error
 	defer func() {
-		fmt.Println("CallExec", req.CommandId)
 		s.mu.Lock()
-		defer fmt.Println("CallExec Done", req.CommandId)
-		fmt.Println("CallExec Lock", req.CommandId)
 		defer s.mu.Unlock()
 		cmdTerm, ok := s.cmdTermMap[req.CommandId]
 		if !ok {
@@ -273,6 +264,8 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 	}
 
 	go func(st grpc.ServerStreamingServer[pb.CallExecResponse]) {
+		fmt.Println("streaming")
+		defer fmt.Println("streaming done")
 		for {
 			select {
 			case <-stream.Context().Done():
@@ -287,6 +280,9 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 			}
 		}
 	}(stream)
+
+	fmt.Println("executing")
+	defer fmt.Println("executing done")
 
 	exec := runner.BaseExecutor{
 		Logger:                s.log,
@@ -324,6 +320,9 @@ func (s *Server) ReceiveChanelConnect(req *pb.ReceiveChanelConnectRequest, strea
 	if !ok {
 		return ErrInvalidConnectionID
 	}
+
+	fmt.Println("receive streaming")
+	defer fmt.Println("receive streaming done")
 
 	for {
 		select {
@@ -462,10 +461,7 @@ func (s *Server) ReceiveLoadTermChannel(ctx context.Context, req *pb.ReceiveLoad
 		return nil, ErrCommandNotFound
 	}
 	defer func() {
-		fmt.Println("ReceiveLoadTermChannel", req.CommandId)
-		defer fmt.Println("ReceiveLoadTermChannel Done", req.CommandId)
 		s.mu.Lock()
-		fmt.Println("ReceiveLoadTermChannel Lock", req.CommandId)
 		defer s.mu.Unlock()
 		delete(s.cmdTermMap, req.CommandId)
 	}()
