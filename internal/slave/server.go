@@ -69,6 +69,8 @@ func (s *Server) Connect(ctx context.Context, req *pb.ConnectRequest) (*pb.Conne
 
 // Disconnect handles the disconnection request from the master node
 func (s *Server) Disconnect(ctx context.Context, req *pb.DisconnectRequest) (*pb.DisconnectResponse, error) {
+	fmt.Println("Try to Disconnect", req.ConnectionId)
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
