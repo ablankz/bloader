@@ -266,13 +266,18 @@ func (c *ConnectionContainer) disconnect(slaveID string) error {
 
 // AllDisconnect removes all connections from the map.
 func (c *ConnectionContainer) AllDisconnect(ctx context.Context) error {
+	fmt.Println("AllDisconnect")
 	c.mu.Lock()
+	fmt.Println("AllDisconnect Lock")
 	defer c.mu.Unlock()
+	defer fmt.Println("AllDisconnect Unlock")
 
 	for slaveID := range c.conMap {
+		fmt.Println("AllDisconnect slaveID", slaveID)
 		if err := c.disconnect(slaveID); err != nil {
 			return fmt.Errorf("failed to disconnect from slave: %v", err)
 		}
+		fmt.Println("AllDisconnected slaveID", slaveID, "done")
 	}
 
 	return nil
