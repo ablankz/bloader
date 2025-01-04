@@ -2,8 +2,6 @@ buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-00000000000000-1166d5c55014.2
 buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-00000000000000-1166d5c55014.2/go.mod h1:1xvcZATfTbppomBRdPN3d7wgOR56eC/VhwUXwcK5kfc=
 buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-1166d5c55014.1 h1:mT4UECYzl8hGZSYdy94ofRFxSHyV3+ZKOD0X6+xO/FE=
 buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-1166d5c55014.1/go.mod h1:gyq/+6VX/BGNTQr+gfwFiQiRO7Hl7iNpf3WC/Gs2BfI=
-buf.build/gen/go/cresplanex/types/protocolbuffers/go v1.36.1-20241229081036-5cfa13fd79a9.1 h1:nRGA3DRTa7583zldY1+Dg65Gz4Aq4DoG/2TiRRbL/dk=
-buf.build/gen/go/cresplanex/types/protocolbuffers/go v1.36.1-20241229081036-5cfa13fd79a9.1/go.mod h1:W/xoqpHTMDJdqK5PcZoj7hIiLxR6Pn436AqB2UME/QI=
 dario.cat/mergo v1.0.1 h1:Ra4+bf83h2ztPIQYNP99R6m+Y7KfnARDfID+a+vLl4s=
 dario.cat/mergo v1.0.1/go.mod h1:uNxQE+84aUszobStD9th8a29P2fMDhsBdgRYvZOxGmk=
 github.com/BurntSushi/toml v1.4.0 h1:kuoIxZQy2WRRk1pttg9asf+WVv6tWQuBNVmK8+nqPr0=
@@ -14,8 +12,6 @@ github.com/Masterminds/semver/v3 v3.3.0 h1:B8LGeaivUe71a5qox1ICM/JLl0NqZSW5CHyL+
 github.com/Masterminds/semver/v3 v3.3.0/go.mod h1:4V+yj/TJE1HU9XfppCwVMZq3I84lprf4nC11bSS5beM=
 github.com/Masterminds/sprig/v3 v3.3.0 h1:mQh0Yrg1XPo6vjYXgtf5OtijNAKJRNcTdOOGZe3tPhs=
 github.com/Masterminds/sprig/v3 v3.3.0/go.mod h1:Zy1iXRYNqNLUolqCpL4uhk6SHUMAOSCzdgBfDb35Lz0=
-github.com/ablankz/go-cmproto v1.0.3 h1:rO9W3o08ypSFisAMk0VM9R014tY5suyV4ASEGqkUaCI=
-github.com/ablankz/go-cmproto v1.0.3/go.mod h1:A454MJmBFuAyFk5RSY537f1Cxyivlas7EIbF371u5go=
 github.com/boltdb/bolt v1.3.1 h1:JQmyP4ZBrce+ZQu0dY660FMfatumYDLun9hBCUVIkF4=
 github.com/boltdb/bolt v1.3.1/go.mod h1:clJnj/oiGkjum5o1McbSZDSLxVThjynRyGBgiAx27Ps=
 github.com/chzyer/logex v1.1.10 h1:Swpa1K6QvQznwJRcfTfQJmTE72DqScAa40E+fbHEXEE=

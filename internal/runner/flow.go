@@ -14,8 +14,6 @@ import (
 	"github.com/ablankz/bloader/internal/logger"
 	"github.com/ablankz/bloader/internal/output"
 	"github.com/ablankz/bloader/internal/utils"
-	common "github.com/ablankz/go-cmproto"
-	"google.golang.org/protobuf/proto"
 )
 
 // Flow represents the flow runner
@@ -865,13 +863,7 @@ func slaveCmdRun(
 				logger.Value("error", err), logger.Value("on", "Flow"))
 			return fmt.Errorf("failed to execute slave command default store: %v", err)
 		}
-		flexGlobalStr, err := common.NewFlex(globalStr)
-		if err != nil {
-			log.Error(ctx, "failed to create",
-				logger.Value("error", err), logger.Value("on", "Flow"))
-			return fmt.Errorf("failed to create flex global store: %v", err)
-		}
-		defaultStrBytes, err := proto.Marshal(flexGlobalStr)
+		defaultStrBytes, err := json.Marshal(globalStr)
 		if err != nil {
 			log.Error(ctx, "failed to marshal",
 				logger.Value("error", err), logger.Value("on", "Flow"))
