@@ -52,6 +52,8 @@ func NewServer(ctr *container.Container, slaveConCtr *runner.ConnectionContainer
 // Connect handles the connection request from the master node
 func (s *Server) Connect(ctx context.Context, req *pb.ConnectRequest) (*pb.ConnectResponse, error) {
 	s.mu.Lock()
+	fmt.Println("Connect Lock")
+	defer fmt.Println("Connect Unlock")
 	defer s.mu.Unlock()
 
 	response := &pb.ConnectResponse{}
@@ -68,6 +70,8 @@ func (s *Server) Connect(ctx context.Context, req *pb.ConnectRequest) (*pb.Conne
 // Disconnect handles the disconnection request from the master node
 func (s *Server) Disconnect(ctx context.Context, req *pb.DisconnectRequest) (*pb.DisconnectResponse, error) {
 	s.mu.Lock()
+	fmt.Println("Disconnect Lock")
+	defer fmt.Println("Disconnect Unlock")
 	defer s.mu.Unlock()
 
 	delete(s.slCtrMap, req.ConnectionId)
@@ -78,8 +82,10 @@ func (s *Server) Disconnect(ctx context.Context, req *pb.DisconnectRequest) (*pb
 // SlaveCommand handles the command request from the master node
 func (s *Server) SlaveCommand(ctx context.Context, req *pb.SlaveCommandRequest) (*pb.SlaveCommandResponse, error) {
 	s.mu.RLock()
+	fmt.Println("SlaveCommand RLock")
 	slCtr, ok := s.slCtrMap[req.ConnectionId]
 	s.mu.RUnlock()
+	fmt.Println("SlaveCommand RUnlock")
 	if !ok {
 		return nil, ErrInvalidConnectionID
 	}
@@ -136,6 +142,7 @@ func (s *Server) SlaveCommandDefaultStore(stream grpc.ClientStreamingServer[pb.S
 			return fmt.Errorf("failed to receive a chunk: %v", err)
 		}
 		s.mu.Lock()
+		fmt.Println("SlaveCommandDefaultStore Lock")
 		slCtr, ok := s.slCtrMap[chunk.ConnectionId]
 		if !ok {
 			return ErrRequestNotFound
@@ -191,6 +198,7 @@ func (s *Server) SlaveCommandDefaultStore(stream grpc.ClientStreamingServer[pb.S
 			}
 		}
 		s.mu.Unlock()
+		fmt.Println("SlaveCommandDefaultStore Unlock")
 		if flag == strOkFlag|threadOnlyStrOkFlag|slaveValuesOkFlag {
 			// Stream is done
 			return stream.SendAndClose(&pb.SlaveCommandDefaultStoreResponse{})
@@ -201,6 +209,7 @@ func (s *Server) SlaveCommandDefaultStore(stream grpc.ClientStreamingServer[pb.S
 // CallExec handles the exec request from the master node
 func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingServer[pb.CallExecResponse]) error {
 	s.mu.Lock()
+	fmt.Println("CallExec Lock")
 	slCtr, ok := s.slCtrMap[req.ConnectionId]
 	if !ok {
 		return ErrInvalidConnectionID
@@ -210,6 +219,7 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 		return ErrCommandNotFound
 	}
 	s.mu.Unlock()
+	fmt.Println("CallExec Unlock")
 	var err error
 	defer func() {
 		s.mu.Lock()
@@ -315,8 +325,10 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 // ReceiveChanelConnect handles the channel connection request from the master node
 func (s *Server) ReceiveChanelConnect(req *pb.ReceiveChanelConnectRequest, stream grpc.ServerStreamingServer[pb.ReceiveChanelConnectResponse]) error {
 	s.mu.RLock()
+	fmt.Println("ReceiveChanelConnect RLock")
 	slCtr, ok := s.slCtrMap[req.ConnectionId]
 	s.mu.RUnlock()
+	fmt.Println("ReceiveChanelConnect RUnlock")
 	if !ok {
 		return ErrInvalidConnectionID
 	}
@@ -352,8 +364,10 @@ func (s *Server) SendLoader(stream grpc.ClientStreamingServer[pb.SendLoaderReque
 			return ErrRequestNotFound
 		}
 		s.mu.RLock()
+		fmt.Println("SendLoader RLock")
 		slCtr, ok := s.slCtrMap[conId]
 		s.mu.RUnlock()
+		fmt.Println("SendLoader RUnlock")
 		if !ok {
 			return ErrRequestNotFound
 		}
@@ -375,8 +389,10 @@ func (s *Server) SendAuth(ctx context.Context, req *pb.SendAuthRequest) (*pb.Sen
 		return nil, ErrRequestNotFound
 	}
 	s.mu.RLock()
+	fmt.Println("SendAuth RLock")
 	slCtr, ok := s.slCtrMap[conID]
 	s.mu.RUnlock()
+	fmt.Println("SendAuth RUnlock")
 	if !ok {
 		return nil, ErrRequestNotFound
 	}
@@ -399,8 +415,10 @@ func (s *Server) SendStoreData(ctx context.Context, req *pb.SendStoreDataRequest
 		return nil, ErrRequestNotFound
 	}
 	s.mu.RLock()
+	fmt.Println("SendStoreData RLock")
 	slCtr, ok := s.slCtrMap[conID]
 	s.mu.RUnlock()
+	fmt.Println("SendStoreData RUnlock")
 	if !ok {
 		return nil, ErrRequestNotFound
 	}
@@ -420,8 +438,10 @@ func (s *Server) SendStoreOk(ctx context.Context, req *pb.SendStoreOkRequest) (*
 		return nil, ErrRequestNotFound
 	}
 	s.mu.RLock()
+	fmt.Println("SendStoreOk RLock")
 	slCtr, ok := s.slCtrMap[conID]
 	s.mu.RUnlock()
+	fmt.Println("SendStoreOk RUnlock")
 	if !ok {
 		return nil, ErrRequestNotFound
 	}
@@ -438,8 +458,10 @@ func (s *Server) SendTarget(ctx context.Context, req *pb.SendTargetRequest) (*pb
 		return nil, ErrRequestNotFound
 	}
 	s.mu.RLock()
+	fmt.Println("SendTarget RLock")
 	slCtr, ok := s.slCtrMap[conID]
 	s.mu.RUnlock()
+	fmt.Println("SendTarget RUnlock")
 	if !ok {
 		return nil, ErrRequestNotFound
 	}
@@ -455,8 +477,10 @@ func (s *Server) SendTarget(ctx context.Context, req *pb.SendTargetRequest) (*pb
 // ReceiveLoadTermChannel handles the load term channel request from the master node
 func (s *Server) ReceiveLoadTermChannel(ctx context.Context, req *pb.ReceiveLoadTermChannelRequest) (*pb.ReceiveLoadTermChannelResponse, error) {
 	s.mu.RLock()
+	fmt.Println("ReceiveLoadTermChannel RLock")
 	cmdTermChan, ok := s.cmdTermMap[req.CommandId]
 	s.mu.RUnlock()
+	fmt.Println("ReceiveLoadTermChannel RUnlock")
 	if !ok {
 		return nil, ErrCommandNotFound
 	}
