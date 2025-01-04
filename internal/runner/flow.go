@@ -869,8 +869,8 @@ func slaveCmdRun(
 				logger.Value("error", err), logger.Value("on", "Flow"))
 			return fmt.Errorf("failed to marshal default store: %v", err)
 		}
-		for i := 0; i < len(defaultStrBytes); i += defaultChunkSize {
-			end := i + defaultChunkSize
+		for i := 0; i < len(defaultStrBytes); i += DefaultChunkSize {
+			end := i + DefaultChunkSize
 			if end > len(defaultStrBytes) {
 				end = len(defaultStrBytes)
 			}
@@ -892,8 +892,8 @@ func slaveCmdRun(
 				logger.Value("error", err), logger.Value("on", "Flow"))
 			return fmt.Errorf("failed to marshal default thread only store: %v", err)
 		}
-		for i := 0; i < len(defaultThreadOnlyStrBytes); i += defaultChunkSize {
-			end := i + defaultChunkSize
+		for i := 0; i < len(defaultThreadOnlyStrBytes); i += DefaultChunkSize {
+			end := i + DefaultChunkSize
 			if end > len(defaultThreadOnlyStrBytes) {
 				end = len(defaultThreadOnlyStrBytes)
 			}
@@ -915,8 +915,8 @@ func slaveCmdRun(
 				logger.Value("error", err), logger.Value("on", "Flow"))
 			return fmt.Errorf("failed to marshal slave values: %v", err)
 		}
-		for i := 0; i < len(defaultSlaveValuesStrBytes); i += defaultChunkSize {
-			end := i + defaultChunkSize
+		for i := 0; i < len(defaultSlaveValuesStrBytes); i += DefaultChunkSize {
+			end := i + DefaultChunkSize
 			if end > len(defaultSlaveValuesStrBytes) {
 				end = len(defaultSlaveValuesStrBytes)
 			}

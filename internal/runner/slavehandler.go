@@ -22,7 +22,7 @@ type SlaveRequestHandler struct {
 	receiveTermChan <-chan ReceiveTermType
 }
 
-const defaultChunkSize = 1024
+const DefaultChunkSize = 1024
 
 // NewSlaveRequestHandler creates a new ResponseHandler.
 func NewSlaveRequestHandler(
@@ -33,7 +33,7 @@ func NewSlaveRequestHandler(
 	return &SlaveRequestHandler{
 		resChan:         resChan,
 		cli:             cli,
-		chunkSize:       defaultChunkSize,
+		chunkSize:       DefaultChunkSize,
 		receiveTermChan: termChan,
 	}
 }

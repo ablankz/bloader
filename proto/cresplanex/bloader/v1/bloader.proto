@@ -82,9 +82,11 @@ message CallExecRequest {
 
 message CallExecResponse {
     string output_id = 1;
-    string output_root = 2;
-    bytes output = 3;
-    bool is_last_chunk = 4;
+    CallExecOutputType output_type = 2;
+    string output_root = 3;
+    oneof output {
+        CallExecOutputHTTP output_http = 4;
+    }
 }
 
 enum CallExecOutputType {
