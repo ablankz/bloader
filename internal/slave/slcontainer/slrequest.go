@@ -141,10 +141,13 @@ func (r *ReceiveChanelRequestContainer) SendStore(
 
 	for _, storeData := range req.StoreData {
 		strData = append(strData, &pb.StoreData{
-			BucketId:   storeData.BucketID,
-			StoreKey:   storeData.StoreKey,
-			Data:       storeData.Data,
-			Encryption: &pb.Encryption{},
+			BucketId: storeData.BucketID,
+			StoreKey: storeData.StoreKey,
+			Data:     storeData.Data,
+			Encryption: &pb.Encryption{
+				Enabled:   storeData.Encryption.Enabled,
+				EncryptId: storeData.Encryption.EncryptID,
+			},
 		})
 	}
 
