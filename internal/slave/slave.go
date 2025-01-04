@@ -56,5 +56,11 @@ func SlaveRun(ctr *container.Container) error {
 		return fmt.Errorf("failed to serve: %v", err)
 	}
 
+	go func() {
+		<-ctr.Ctx.Done()
+		ctr.Logger.Info(ctr.Ctx, "Shutting down the worker node")
+		grpcServer.GracefulStop()
+	}()
+
 	return nil
 }

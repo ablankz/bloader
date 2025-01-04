@@ -25,32 +25,27 @@ type commandTermData struct {
 
 // Server represents the server for the worker node
 type Server struct {
-	globalCtx    context.Context
-	globalCancel context.CancelFunc
-	mu           *sync.RWMutex
-	encryptCtr   encrypt.EncrypterContainer
-	env          string
-	log          logger.Logger
-	slaveConCtr  *runner.ConnectionContainer
-	slCtrMap     map[string]*slcontainer.SlaveContainer
-	reqConMap    *slcontainer.RequestConnectionMapper
-	cmdTermMap   map[string]chan commandTermData
+	mu          *sync.RWMutex
+	encryptCtr  encrypt.EncrypterContainer
+	env         string
+	log         logger.Logger
+	slaveConCtr *runner.ConnectionContainer
+	slCtrMap    map[string]*slcontainer.SlaveContainer
+	reqConMap   *slcontainer.RequestConnectionMapper
+	cmdTermMap  map[string]chan commandTermData
 }
 
 // NewServer creates a new server for the worker node
 func NewServer(ctr *container.Container, slaveConCtr *runner.ConnectionContainer) *Server {
-	ctx, cancel := context.WithCancel(ctr.Ctx)
 	return &Server{
-		globalCtx:    ctx,
-		globalCancel: cancel,
-		mu:           &sync.RWMutex{},
-		encryptCtr:   ctr.EncypterContainer,
-		env:          ctr.Config.Env,
-		log:          ctr.Logger,
-		slaveConCtr:  slaveConCtr,
-		slCtrMap:     make(map[string]*slcontainer.SlaveContainer),
-		reqConMap:    slcontainer.NewRequestConnectionMapper(),
-		cmdTermMap:   make(map[string]chan commandTermData),
+		mu:          &sync.RWMutex{},
+		encryptCtr:  ctr.EncypterContainer,
+		env:         ctr.Config.Env,
+		log:         ctr.Logger,
+		slaveConCtr: slaveConCtr,
+		slCtrMap:    make(map[string]*slcontainer.SlaveContainer),
+		reqConMap:   slcontainer.NewRequestConnectionMapper(),
+		cmdTermMap:  make(map[string]chan commandTermData),
 	}
 }
 
@@ -102,8 +97,6 @@ func (s *Server) SlaveCommand(ctx context.Context, req *pb.SlaveCommandRequest) 
 		return nil, ErrFailedToSendLoaderResourceRequest
 	}
 	select {
-	case <-s.globalCtx.Done():
-		return nil, ErrFailedToSendLoaderResourceRequest
 	case <-ctx.Done():
 		return nil, ErrFailedToSendLoaderResourceRequest
 	case <-term:
@@ -242,9 +235,6 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 		case <-stream.Context().Done():
 			s.log.Warn(stream.Context(), "stream context done",
 				logger.Value("ConnectionID", req.ConnectionId), logger.Value("Error", stream.Context().Err()))
-		case <-s.globalCtx.Done():
-			s.log.Warn(stream.Context(), "global context done",
-				logger.Value("ConnectionID", req.ConnectionId), logger.Value("Error", s.globalCtx.Err()))
 		}
 
 		close(cmdTerm)
@@ -287,10 +277,6 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 			case <-stream.Context().Done():
 				s.log.Warn(st.Context(), "stream context done",
 					logger.Value("ConnectionID", req.ConnectionId), logger.Value("Error", stream.Context().Err()))
-				return
-			case <-s.globalCtx.Done():
-				s.log.Warn(st.Context(), "global context done",
-					logger.Value("ConnectionID", req.ConnectionId), logger.Value("Error", s.globalCtx.Err()))
 				return
 			case res := <-outputChan:
 				if err := st.Send(res); err != nil {
@@ -351,10 +337,6 @@ func (s *Server) ReceiveChanelConnect(req *pb.ReceiveChanelConnectRequest, strea
 			s.log.Warn(stream.Context(), "stream context done",
 				logger.Value("ConnectionID", req.ConnectionId), logger.Value("Error", stream.Context().Err()))
 			return fmt.Errorf("context done: %v", stream.Context().Err())
-		case <-s.globalCtx.Done():
-			s.log.Warn(stream.Context(), "global context done",
-				logger.Value("ConnectionID", req.ConnectionId), logger.Value("Error", s.globalCtx.Err()))
-			return fmt.Errorf("global context done: %v", s.globalCtx.Err())
 		}
 	}
 }
@@ -494,7 +476,5 @@ func (s *Server) ReceiveLoadTermChannel(ctx context.Context, req *pb.ReceiveLoad
 		}, nil
 	case <-ctx.Done():
 		return nil, fmt.Errorf("context done")
-	case <-s.globalCtx.Done():
-		return nil, fmt.Errorf("global context done")
 	}
 }
