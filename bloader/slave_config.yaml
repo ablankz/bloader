@@ -2,13 +2,10 @@ type: slave
 env: "production" # Must be set to the same value as the master.
 slave_setting:
   port: 50051
-  # certificate:
-  #   enabled: true
-  #   slave_cert: "certs/slave.crt"
-  #   slave_key: "certs/slave.key"
-  encrypt:
+  certificate:
     enabled: true
-    encrypt_id: "encryptStaticCBC"
+    slave_cert: "certs/slave.crt"
+    slave_key: "certs/slave.key"
 encrypts:
     # The id is required, and it must be unique.
   - id: "encryptStaticCBC"

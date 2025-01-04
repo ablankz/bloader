@@ -8,10 +8,5 @@ slaves:
       ca_cert: "certs/ca.crt"
       server_name_override: "localhost"
       insecure_skip_verify: true
-    encrypt:
-    {{- range .encrypts }}
-      enabled: "{{ .enabled }}"
-      encrypt_id: "{{ .encrypt_id }}"
-    {{- end }}
 {{- end }}
 
