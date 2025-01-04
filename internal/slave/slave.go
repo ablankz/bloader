@@ -54,6 +54,7 @@ func SlaveRun(ctr *container.Container) error {
 
 	go func() {
 		<-ctr.Ctx.Done()
+		fmt.Println("\nSignal received: cleaning up...")
 		ctr.Logger.Info(ctr.Ctx, "Shutting down the worker node")
 		grpcServer.GracefulStop()
 	}()
