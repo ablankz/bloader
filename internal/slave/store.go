@@ -30,6 +30,7 @@ func (s *SlaveStore) Store(ctx context.Context, data []runner.ValidStoreValueDat
 				return fmt.Errorf("failed to store data: %v", err)
 			}
 		}
+		fmt.Println("encrypt config", d.Encrypt)
 		strData[i] = slcontainer.StoreData{
 			BucketID:   d.BucketID,
 			StoreKey:   d.Key,

@@ -15,6 +15,6 @@ data:
         email: {{ randAlpha $randOn6to8 | lower }}@{{ index $mailDomainList $randOn3 }}
         phone: {{ randInt 1000000000 9999999999 }}
     {{- end }}
-    # encrypt:
-    #   enabled: true
-    #   encrypt_id: encryptDynamicCBC
+    encrypt:
+      enabled: true
+      encrypt_id: encryptDynamicCBC
