@@ -133,7 +133,9 @@ message ReceiveChanelConnectAuthResourceRequest {
 }
 
 message ReceiveChanelConnectStore {
-    repeated StoreData store_data = 1;
+    string uid = 1;
+    bytes data = 2;
+    bool is_last_chunk = 3;
 }
 
 message ReceiveChanelConnectStoreResourceRequest {

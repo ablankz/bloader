@@ -4,7 +4,7 @@ data:
   - bucket_id: "bucketForApp"
     key: "test"
     value:
-    {{- range $index, $element := until 2 }}
+    {{- range $index, $element := until 100000 }}
     {{- $randOn3 := randInt 0 3 }}
     {{- $randOn4to6 := randInt 4 7 }}
     {{- $rand2On4to6 := randInt 4 7 }}

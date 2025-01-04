@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	rpc "buf.build/gen/go/cresplanex/bloader/grpc/go/cresplanex/bloader/v1/bloaderv1grpc"
 	pb "buf.build/gen/go/cresplanex/bloader/protocolbuffers/go/cresplanex/bloader/v1"
 	"github.com/ablankz/bloader/internal/logger"
+	"google.golang.org/protobuf/proto"
 )
 
 // SlaveRequestHandler is a struct that holds the response handler information.
@@ -20,6 +22,8 @@ type SlaveRequestHandler struct {
 	chunkSize int
 	// receiveTermChan is a channel for receiving term.
 	receiveTermChan <-chan ReceiveTermType
+	// dataBufferMap is a map.
+	dataBufferMap map[string]*bytes.Buffer
 }
 
 const DefaultChunkSize = 1024
@@ -35,6 +39,7 @@ func NewSlaveRequestHandler(
 		cli:             cli,
 		chunkSize:       DefaultChunkSize,
 		receiveTermChan: termChan,
+		dataBufferMap:   make(map[string]*bytes.Buffer),
 	}
 }
 
@@ -164,32 +169,50 @@ func (rh *SlaveRequestHandler) HandleResponse(
 					logger.Value("store_data", strData))
 			case pb.RequestType_REQUEST_TYPE_STORE:
 				storeReq := res.GetStore()
-				storeData := make([]ValidStoreValueData, len(storeReq.StoreData))
-				for i, data := range storeReq.StoreData {
-					var val any
-					if err := json.Unmarshal(data.Data, &val); err != nil {
-						return fmt.Errorf("failed to unmarshal store data: %v", err)
+				buffer, ok := rh.dataBufferMap[res.RequestId]
+				if !ok {
+					buffer = &bytes.Buffer{}
+					rh.dataBufferMap[res.RequestId] = buffer
+				}
+				if _, err := buffer.Write(storeReq.Data); err != nil {
+					return fmt.Errorf("failed to write store data: %v", err)
+				}
+				if storeReq.IsLastChunk {
+					byteData := buffer.Bytes()
+					delete(rh.dataBufferMap, res.RequestId)
+					var dataList pb.StoreDataList
+					if err := proto.Unmarshal(byteData, &dataList); err != nil {
+						return fmt.Errorf("failed to unmarshal store data list: %v", err)
 					}
-					storeData[i] = ValidStoreValueData{
-						BucketID: data.BucketId,
-						Key:      data.StoreKey,
-						Value:    val,
-						Encrypt: ValidCredentialEncryptConfig{
-							Enabled:   data.Encryption.Enabled,
-							EncryptID: data.Encryption.EncryptId,
-						},
+
+					storeData := make([]ValidStoreValueData, len(dataList.Data))
+					for i, data := range dataList.Data {
+						var val any
+						if err := json.Unmarshal(data.Data, &val); err != nil {
+							return fmt.Errorf("failed to unmarshal store data: %v", err)
+						}
+						storeData[i] = ValidStoreValueData{
+							BucketID: data.BucketId,
+							Key:      data.StoreKey,
+							Value:    val,
+							Encrypt: ValidCredentialEncryptConfig{
+								Enabled:   data.Encryption.Enabled,
+								EncryptID: data.Encryption.EncryptId,
+							},
+						}
 					}
+
+					if err := store.Store(ctx, storeData, nil); err != nil {
+						return fmt.Errorf("failed to store data: %v", err)
+					}
+					if _, err := rh.cli.SendStoreOk(ctx, &pb.SendStoreOkRequest{
+						RequestId: res.RequestId,
+					}); err != nil {
+						return fmt.Errorf("failed to send store ok: %v", err)
+					}
+					log.Info(ctx, "Stored data: %v",
+						logger.Value("store_data", storeData))
 				}
-				if err := store.Store(ctx, storeData, nil); err != nil {
-					return fmt.Errorf("failed to store data: %v", err)
-				}
-				if _, err := rh.cli.SendStoreOk(ctx, &pb.SendStoreOkRequest{
-					RequestId: res.RequestId,
-				}); err != nil {
-					return fmt.Errorf("failed to send store ok: %v", err)
-				}
-				log.Info(ctx, "Stored data: %v",
-					logger.Value("store_data", storeData))
 			case pb.RequestType_REQUEST_TYPE_REQUEST_RESOURCE_TARGET:
 				targetResourceReq := res.GetTargetResourceRequest()
 				target, err := targetFactor.Factorize(ctx, targetResourceReq.TargetId)

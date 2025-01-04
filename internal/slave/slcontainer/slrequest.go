@@ -2,10 +2,13 @@ package slcontainer
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	pb "buf.build/gen/go/cresplanex/bloader/protocolbuffers/go/cresplanex/bloader/v1"
+	"github.com/ablankz/bloader/internal/runner"
 	"github.com/ablankz/bloader/internal/utils"
+	"google.golang.org/protobuf/proto"
 )
 
 // RequestTermCaster is an interface that represents a request term caster
@@ -131,7 +134,7 @@ func (r *ReceiveChanelRequestContainer) SendStore(
 	connectionID string,
 	mapper *RequestConnectionMapper,
 	req StoreDataRequest,
-) <-chan struct{} {
+) (<-chan struct{}, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -151,24 +154,41 @@ func (r *ReceiveChanelRequestContainer) SendStore(
 		})
 	}
 
-	pbReq := &pb.ReceiveChanelConnectResponse{
-		RequestId:   requestID,
-		RequestType: pb.RequestType_REQUEST_TYPE_STORE,
-		Request: &pb.ReceiveChanelConnectResponse_Store{
-			Store: &pb.ReceiveChanelConnectStore{
-				StoreData: strData,
-			},
-		},
+	strDataList := &pb.StoreDataList{
+		Data: strData,
 	}
 
-	select {
-	case <-ctx.Done():
-	case r.ReqChan <- pbReq: // nothing
+	b, err := proto.Marshal(strDataList)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal store data list: %w", err)
+	}
+	uid := utils.GenerateUniqueID()
+
+	for i := 0; i < len(b); i += runner.DefaultChunkSize {
+		end := i + runner.DefaultChunkSize
+		if end > len(b) {
+			end = len(b)
+		}
+		pbReq := &pb.ReceiveChanelConnectResponse{
+			RequestId:   requestID,
+			RequestType: pb.RequestType_REQUEST_TYPE_STORE,
+			Request: &pb.ReceiveChanelConnectResponse_Store{
+				Store: &pb.ReceiveChanelConnectStore{
+					Uid:         uid,
+					Data:        b[i:end],
+					IsLastChunk: end == len(b),
+				},
+			},
+		}
+		select {
+		case <-ctx.Done():
+		case r.ReqChan <- pbReq: // nothing
+		}
 	}
 
 	mapper.RegisterRequestConnection(requestID, connectionID)
 
-	return r.termCaster.RegisterRequest(requestID)
+	return r.termCaster.RegisterRequest(requestID), nil
 }
 
 // SendStoreResourceRequests sets the store requests channel

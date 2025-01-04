@@ -38,7 +38,7 @@ func (s *SlaveStore) Store(ctx context.Context, data []runner.ValidStoreValueDat
 		}
 	}
 
-	term := s.receiveChanelRequestContainer.SendStore(
+	term, err := s.receiveChanelRequestContainer.SendStore(
 		ctx,
 		s.connectionID,
 		s.mapper,
@@ -46,9 +46,8 @@ func (s *SlaveStore) Store(ctx context.Context, data []runner.ValidStoreValueDat
 			StoreData: strData,
 		},
 	)
-
-	if term == nil {
-		return fmt.Errorf("failed to send store data request")
+	if err != nil {
+		return fmt.Errorf("failed to send store data request: %v", err)
 	}
 
 	select {
@@ -85,7 +84,7 @@ func (s *SlaveStore) StoreWithExtractor(ctx context.Context, res interface{}, da
 		}
 	}
 
-	term := s.receiveChanelRequestContainer.SendStore(
+	term, err := s.receiveChanelRequestContainer.SendStore(
 		ctx,
 		s.connectionID,
 		s.mapper,
@@ -94,8 +93,8 @@ func (s *SlaveStore) StoreWithExtractor(ctx context.Context, res interface{}, da
 		},
 	)
 
-	if term == nil {
-		return fmt.Errorf("failed to send store data request")
+	if err != nil {
+		return fmt.Errorf("failed to send store data request: %v", err)
 	}
 
 	select {

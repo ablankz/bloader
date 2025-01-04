@@ -4,11 +4,19 @@ package cresplanex.bloader.v1;
 
 import "cresplanex/bloader/v1/encrypt.proto";
 
+message StoreDataList {
+    repeated StoreData data = 1;
+}
+
 message StoreData {
     string bucket_id = 1;
     string store_key = 2;
     bytes data = 3;
     Encryption encryption = 4;
+}
+
+message StoreExportDataList {
+    repeated StoreExportData data = 1;
 }
 
 message StoreExportData {
