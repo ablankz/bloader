@@ -52,15 +52,15 @@ func SlaveRun(ctr *container.Container) error {
 	ctr.Logger.Info(ctr.Ctx, "Starting the worker node",
 		logger.Value("port", ctr.Config.SlaveSetting.Port))
 
-	if err := grpcServer.Serve(lister); err != nil {
-		return fmt.Errorf("failed to serve: %v", err)
-	}
-
 	go func() {
 		<-ctr.Ctx.Done()
 		ctr.Logger.Info(ctr.Ctx, "Shutting down the worker node")
 		grpcServer.GracefulStop()
 	}()
+
+	if err := grpcServer.Serve(lister); err != nil {
+		return fmt.Errorf("failed to serve: %v", err)
+	}
 
 	return nil
 }
