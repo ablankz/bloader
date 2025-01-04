@@ -178,12 +178,34 @@ func (rh *SlaveRequestHandler) HandleResponse(
 					); err != nil {
 						return fmt.Errorf("failed to import store data: %v", err)
 					}
-					_, err := rh.cli.SendStoreData(ctx, &pb.SendStoreDataRequest{
-						RequestId: res.RequestId,
-						StoreData: strData,
-					})
+
+					stream, err := rh.cli.SendStoreData(ctx)
 					if err != nil {
 						return fmt.Errorf("failed to send store data: %v", err)
+					}
+					strDataList := &pb.StoreExportDataList{
+						Data: strData,
+					}
+					b, err := proto.Marshal(strDataList)
+					if err != nil {
+						return fmt.Errorf("failed to marshal store data list: %v", err)
+					}
+					for i := 0; i < len(b); i += rh.chunkSize {
+						end := i + rh.chunkSize
+						if end > len(b) {
+							end = len(b)
+						}
+						if err := stream.Send(&pb.SendStoreDataRequest{
+							RequestId:   res.RequestId,
+							Data:        b[i:end],
+							IsLastChunk: end == len(b),
+						}); err != nil {
+							return fmt.Errorf("failed to send store data request: %v", err)
+						}
+					}
+					_, err = stream.CloseAndRecv()
+					if err != nil {
+						return fmt.Errorf("failed to receive store data response: %v", err)
 					}
 					log.Info(ctx, "Sent store: %v",
 						logger.Value("store_data", strData))

@@ -3,7 +3,6 @@ syntax = "proto3";
 package cresplanex.bloader.v1;
 
 import "cresplanex/bloader/v1/auth.proto";
-import "cresplanex/bloader/v1/store.proto";
 import "cresplanex/bloader/v1/target.proto";
 
 service BloaderSlaveService {
@@ -23,7 +22,7 @@ service BloaderSlaveService {
 
     rpc SendAuth(SendAuthRequest) returns (SendAuthResponse);
 
-    rpc SendStoreData(SendStoreDataRequest) returns (SendStoreDataResponse);
+    rpc SendStoreData(stream SendStoreDataRequest) returns (SendStoreDataResponse);
 
     rpc SendStoreOk(SendStoreOkRequest) returns (SendStoreOkResponse);
 
@@ -170,7 +169,8 @@ message SendAuthResponse {
 
 message SendStoreDataRequest {
     string request_id = 1;
-    repeated StoreExportData store_data = 2;
+    bytes data = 2;
+    bool is_last_chunk = 3;
 }
 
 message SendStoreDataResponse {

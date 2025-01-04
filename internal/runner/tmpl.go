@@ -39,8 +39,12 @@ func (l LocalTmplFactor) TmplFactorize(ctx context.Context, path string) (string
 	var buffer bytes.Buffer
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		buffer.WriteString(scanner.Text())
-		buffer.WriteString("\n")
+		if _, err := buffer.WriteString(scanner.Text()); err != nil {
+			return "", fmt.Errorf("failed to write buffer: %v", err)
+		}
+		if _, err := buffer.WriteString("\n"); err != nil {
+			return "", fmt.Errorf("failed to write buffer: %v", err)
+		}
 	}
 	if err := scanner.Err(); err != nil {
 		return "", fmt.Errorf("failed to read file: %v", err)

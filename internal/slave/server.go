@@ -16,6 +16,7 @@ import (
 	"github.com/ablankz/bloader/internal/slave/slcontainer"
 	"github.com/ablankz/bloader/internal/utils"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 )
 
 // commandTermData represents the command term data
@@ -401,26 +402,45 @@ func (s *Server) SendAuth(ctx context.Context, req *pb.SendAuthRequest) (*pb.Sen
 }
 
 // SendStoreData handles the store data request from the master node
-func (s *Server) SendStoreData(ctx context.Context, req *pb.SendStoreDataRequest) (*pb.SendStoreDataResponse, error) {
-	conID, ok := s.reqConMap.GetConnectionID(req.RequestId)
-	if !ok {
-		return nil, ErrRequestNotFound
-	}
-	s.mu.RLock()
-	slCtr, ok := s.slCtrMap[conID]
-	s.mu.RUnlock()
-	if !ok {
-		return nil, ErrRequestNotFound
-	}
-
-	for _, data := range req.StoreData {
-		if err := slCtr.Store.AddData(data.BucketId, data.StoreKey, data.Data); err != nil {
-			return nil, err
+func (s *Server) SendStoreData(stream grpc.ClientStreamingServer[pb.SendStoreDataRequest, pb.SendStoreDataResponse]) error {
+	buffer := &bytes.Buffer{}
+	for {
+		chunk, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		} else if err != nil {
+			return fmt.Errorf("failed to receive a chunk: %v", err)
+		}
+		conId, ok := s.reqConMap.GetConnectionID(chunk.RequestId)
+		if !ok {
+			return ErrRequestNotFound
+		}
+		s.mu.RLock()
+		slCtr, ok := s.slCtrMap[conId]
+		s.mu.RUnlock()
+		if !ok {
+			return ErrRequestNotFound
+		}
+		if _, err := buffer.Write(chunk.Data); err != nil {
+			return fmt.Errorf("failed to write to buffer: %v", err)
+		}
+		if chunk.IsLastChunk {
+			// Stream is done
+			totalData := buffer.Bytes()
+			var storeData pb.StoreExportDataList
+			if err := proto.Unmarshal(totalData, &storeData); err != nil {
+				return fmt.Errorf("failed to unmarshal store data: %v", err)
+			}
+			for _, data := range storeData.Data {
+				if err := slCtr.Store.AddData(data.BucketId, data.StoreKey, data.Data); err != nil {
+					return fmt.Errorf("failed to add data: %v", err)
+				}
+			}
+			slCtr.ReceiveChanelRequestContainer.Cast(chunk.RequestId)
+			s.reqConMap.DeleteRequest(chunk.RequestId)
+			return stream.SendAndClose(&pb.SendStoreDataResponse{})
 		}
 	}
-	slCtr.ReceiveChanelRequestContainer.Cast(req.RequestId)
-	s.reqConMap.DeleteRequest(req.RequestId)
-	return &pb.SendStoreDataResponse{}, nil
 }
 
 // SendStoreOk handles the store ok request from the master node
