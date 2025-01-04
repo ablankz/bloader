@@ -6,9 +6,9 @@ slave_setting:
     enabled: true
     slave_cert: "certs/slave.crt"
     slave_key: "certs/slave.key"
-  # encrypt:
-  #   enabled: true
-  #   encrypt_id: "encryptStaticCBC"
+  encrypt:
+    enabled: true
+    encrypt_id: "encryptStaticCBC"
 encrypts:
     # The id is required, and it must be unique.
   - id: "encryptStaticCBC"

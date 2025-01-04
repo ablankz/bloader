@@ -50,7 +50,6 @@ func (l LocalStore) Store(ctx context.Context, data []ValidStoreValueData, cb St
 		if err != nil {
 			return fmt.Errorf("failed to marshal store data: %v", err)
 		}
-		fmt.Println("encrypt config", d.Encrypt)
 		if d.Encrypt.Enabled {
 			encrypter, ok := l.encCtr[d.Encrypt.EncryptID]
 			if !ok {
