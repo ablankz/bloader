@@ -414,7 +414,9 @@ func (s *Server) SendStoreData(ctx context.Context, req *pb.SendStoreDataRequest
 	}
 
 	for _, data := range req.StoreData {
-		slCtr.Store.AddData(data.BucketId, data.StoreKey, data.Data)
+		if err := slCtr.Store.AddData(data.BucketId, data.StoreKey, data.Data); err != nil {
+			return nil, err
+		}
 	}
 	slCtr.ReceiveChanelRequestContainer.Cast(req.RequestId)
 	s.reqConMap.DeleteRequest(req.RequestId)

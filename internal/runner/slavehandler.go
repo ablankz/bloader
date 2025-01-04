@@ -164,13 +164,16 @@ func (rh *SlaveRequestHandler) HandleResponse(
 					logger.Value("store_data", strData))
 			case pb.RequestType_REQUEST_TYPE_STORE:
 				storeReq := res.GetStore()
-				fmt.Println("len(storeReq.StoreData):", len(storeReq.StoreData))
 				storeData := make([]ValidStoreValueData, len(storeReq.StoreData))
 				for i, data := range storeReq.StoreData {
+					var val any
+					if err := json.Unmarshal(data.Data, &val); err != nil {
+						return fmt.Errorf("failed to unmarshal store data: %v", err)
+					}
 					storeData[i] = ValidStoreValueData{
 						BucketID: data.BucketId,
 						Key:      data.StoreKey,
-						Value:    data.Data,
+						Value:    val,
 						Encrypt: ValidCredentialEncryptConfig{
 							Enabled:   data.Encryption.Enabled,
 							EncryptID: data.Encryption.EncryptId,

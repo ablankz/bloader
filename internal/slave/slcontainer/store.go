@@ -2,6 +2,7 @@ package slcontainer
 
 import (
 	"encoding/json"
+	"fmt"
 	"sync"
 )
 
@@ -26,14 +27,18 @@ func NewStore() *Store {
 }
 
 // AddData adds the data to the store
-func (s *Store) AddData(bucketID, storeKey string, data []byte) {
+func (s *Store) AddData(bucketID, storeKey string, data []byte) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	var v any
-	json.Unmarshal(data, &v)
+	if err := json.Unmarshal(data, &v); err != nil {
+		return fmt.Errorf("failed to unmarshal data: %v", err)
+	}
 
 	s.data[StoreDataKey{BucketID: bucketID, StoreKey: storeKey}] = v
+
+	return nil
 }
 
 // RemoveData removes the data from the store
