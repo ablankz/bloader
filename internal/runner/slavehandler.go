@@ -164,6 +164,7 @@ func (rh *SlaveRequestHandler) HandleResponse(
 					logger.Value("store_data", strData))
 			case pb.RequestType_REQUEST_TYPE_STORE:
 				storeReq := res.GetStore()
+				fmt.Println("len(storeReq.StoreData):", len(storeReq.StoreData))
 				storeData := make([]ValidStoreValueData, len(storeReq.StoreData))
 				for i, data := range storeReq.StoreData {
 					storeData[i] = ValidStoreValueData{

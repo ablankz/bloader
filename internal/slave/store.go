@@ -20,7 +20,7 @@ type SlaveStore struct {
 // Store stores the data
 func (s *SlaveStore) Store(ctx context.Context, data []runner.ValidStoreValueData, cb runner.StoreCallback) error {
 	strData := make([]slcontainer.StoreData, len(data))
-	for _, d := range data {
+	for i, d := range data {
 		valBytes, err := json.Marshal(d.Value)
 		if err != nil {
 			return fmt.Errorf("failed to marshal data: %v", err)
@@ -30,12 +30,12 @@ func (s *SlaveStore) Store(ctx context.Context, data []runner.ValidStoreValueDat
 				return fmt.Errorf("failed to store data: %v", err)
 			}
 		}
-		strData = append(strData, slcontainer.StoreData{
+		strData[i] = slcontainer.StoreData{
 			BucketID:   d.BucketID,
 			StoreKey:   d.Key,
 			Data:       valBytes,
 			Encryption: slcontainer.Encryption(d.Encrypt),
-		})
+		}
 	}
 
 	term := s.receiveChanelRequestContainer.SendStore(
@@ -63,7 +63,7 @@ func (s *SlaveStore) Store(ctx context.Context, data []runner.ValidStoreValueDat
 // StoreWithExtractor stores the data with extractor
 func (s *SlaveStore) StoreWithExtractor(ctx context.Context, res interface{}, data []runner.ValidExecRequestStoreData, cb runner.StoreWithExtractorCallback) error {
 	strData := make([]slcontainer.StoreData, len(data))
-	for _, d := range data {
+	for i, d := range data {
 		result, err := d.Extractor.Extract(res)
 		if err != nil {
 			return fmt.Errorf("failed to extract store data: %v", err)
@@ -77,12 +77,12 @@ func (s *SlaveStore) StoreWithExtractor(ctx context.Context, res interface{}, da
 				return fmt.Errorf("failed to store data: %v", err)
 			}
 		}
-		strData = append(strData, slcontainer.StoreData{
+		strData[i] = slcontainer.StoreData{
 			BucketID:   d.BucketID,
 			StoreKey:   d.StoreKey,
 			Data:       valBytes,
 			Encryption: slcontainer.Encryption(d.Encrypt),
-		})
+		}
 	}
 
 	term := s.receiveChanelRequestContainer.SendStore(
@@ -109,7 +109,7 @@ func (s *SlaveStore) StoreWithExtractor(ctx context.Context, res interface{}, da
 
 // Import loads the data
 func (s *SlaveStore) Import(ctx context.Context, data []runner.ValidStoreImportData, cb runner.ImportCallback) error {
-	shortageData := make([]slcontainer.StoreRespectiveRequest, len(data))
+	shortageData := make([]slcontainer.StoreRespectiveRequest, 0, len(data))
 	for _, d := range data {
 		ok := s.store.ExistData(d.BucketID, d.StoreKey)
 		if !ok {

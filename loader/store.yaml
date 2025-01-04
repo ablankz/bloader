@@ -2,9 +2,9 @@
 kind: StoreValue
 data:
   - bucket_id: "bucketForApp"
-    key: "users"
+    key: "test"
     value:
-    {{- range $index, $element := until .Values.DataCount }}
+    {{- range $index, $element := until 2 }}
     {{- $randOn3 := randInt 0 3 }}
     {{- $randOn4to6 := randInt 4 7 }}
     {{- $rand2On4to6 := randInt 4 7 }}
