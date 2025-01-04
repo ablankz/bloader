@@ -127,50 +127,67 @@ func (rh *SlaveRequestHandler) HandleResponse(
 					logger.Value("auth_id", authResourceReq.AuthId))
 			case pb.RequestType_REQUEST_TYPE_REQUEST_RESOURCE_STORE:
 				storeResourceReq := res.GetStoreResourceRequest()
-				validStore := make([]ValidStoreImportData, len(storeResourceReq.StoreImportRequest))
-				for i, storeReq := range storeResourceReq.StoreImportRequest {
-					validStore[i] = ValidStoreImportData{
-						BucketID: storeReq.BucketId,
-						StoreKey: storeReq.StoreKey,
-					}
-					if storeReq.Encryption != nil {
-						validStore[i].Encrypt = ValidCredentialEncryptConfig{
-							Enabled:   storeReq.Encryption.Enabled,
-							EncryptID: storeReq.Encryption.EncryptId,
-						}
-					}
+				buffer, ok := rh.dataBufferMap[res.RequestId]
+				if !ok {
+					buffer = &bytes.Buffer{}
+					rh.dataBufferMap[res.RequestId] = buffer
 				}
-				strData := make([]*pb.StoreExportData, 0, len(storeResourceReq.StoreImportRequest))
-				if err := store.Import(
-					ctx,
-					validStore,
-					func(ctx context.Context, data ValidStoreImportData, val any, valBytes []byte) error {
-						var err error
-						if valBytes == nil {
-							valBytes, err = json.Marshal(val)
-							if err != nil {
-								return fmt.Errorf("failed to marshal store data: %v", err)
+				if _, err := buffer.Write(storeResourceReq.Data); err != nil {
+					return fmt.Errorf("failed to write import store data: %v", err)
+				}
+				if storeResourceReq.IsLastChunk {
+					byteData := buffer.Bytes()
+					delete(rh.dataBufferMap, res.RequestId)
+					var dataList pb.StoreImportRequestList
+					if err := proto.Unmarshal(byteData, &dataList); err != nil {
+						return fmt.Errorf("failed to unmarshal import store data list: %v", err)
+					}
+
+					storeData := make([]ValidStoreImportData, len(dataList.Data))
+					for i, data := range dataList.Data {
+						storeData[i] = ValidStoreImportData{
+							BucketID: data.BucketId,
+							StoreKey: data.StoreKey,
+						}
+						if data.Encryption != nil {
+							storeData[i].Encrypt = ValidCredentialEncryptConfig{
+								Enabled:   data.Encryption.Enabled,
+								EncryptID: data.Encryption.EncryptId,
 							}
 						}
-						strData = append(strData, &pb.StoreExportData{
-							BucketId: data.BucketID,
-							StoreKey: data.StoreKey,
-							Data:     valBytes,
-						})
-						return nil
-					},
-				); err != nil {
-					return fmt.Errorf("failed to import store data: %v", err)
+					}
+					strData := make([]*pb.StoreExportData, 0, len(dataList.Data))
+					if err := store.Import(
+						ctx,
+						storeData,
+						func(ctx context.Context, data ValidStoreImportData, val any, valBytes []byte) error {
+							var err error
+							if valBytes == nil {
+								valBytes, err = json.Marshal(val)
+								if err != nil {
+									return fmt.Errorf("failed to marshal store data: %v", err)
+								}
+							}
+							strData = append(strData, &pb.StoreExportData{
+								BucketId: data.BucketID,
+								StoreKey: data.StoreKey,
+								Data:     valBytes,
+							})
+							return nil
+						},
+					); err != nil {
+						return fmt.Errorf("failed to import store data: %v", err)
+					}
+					_, err := rh.cli.SendStoreData(ctx, &pb.SendStoreDataRequest{
+						RequestId: res.RequestId,
+						StoreData: strData,
+					})
+					if err != nil {
+						return fmt.Errorf("failed to send store data: %v", err)
+					}
+					log.Info(ctx, "Sent store: %v",
+						logger.Value("store_data", strData))
 				}
-				_, err := rh.cli.SendStoreData(ctx, &pb.SendStoreDataRequest{
-					RequestId: res.RequestId,
-					StoreData: strData,
-				})
-				if err != nil {
-					return fmt.Errorf("failed to send store data: %v", err)
-				}
-				log.Info(ctx, "Sent store: %v",
-					logger.Value("store_data", strData))
 			case pb.RequestType_REQUEST_TYPE_STORE:
 				storeReq := res.GetStore()
 				buffer, ok := rh.dataBufferMap[res.RequestId]

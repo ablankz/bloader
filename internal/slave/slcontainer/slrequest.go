@@ -143,15 +143,18 @@ func (r *ReceiveChanelRequestContainer) SendStore(
 	strData := make([]*pb.StoreData, 0, len(req.StoreData))
 
 	for _, storeData := range req.StoreData {
-		strData = append(strData, &pb.StoreData{
+		data := &pb.StoreData{
 			BucketId: storeData.BucketID,
 			StoreKey: storeData.StoreKey,
 			Data:     storeData.Data,
-			Encryption: &pb.Encryption{
+		}
+		if storeData.Encryption.Enabled {
+			data.Encryption = &pb.Encryption{
 				Enabled:   storeData.Encryption.Enabled,
 				EncryptId: storeData.Encryption.EncryptID,
-			},
-		})
+			}
+		}
+		strData = append(strData, data)
 	}
 
 	strDataList := &pb.StoreDataList{
@@ -203,36 +206,52 @@ func (r *ReceiveChanelRequestContainer) SendStoreResourceRequests(
 
 	requestID := utils.GenerateUniqueID()
 
-	importReqs := make([]*pb.StoreImportRequest, 0, len(req.Requests))
+	strData := make([]*pb.StoreImportRequest, 0, len(req.Requests))
 
-	for _, importReq := range req.Requests {
-		req := &pb.StoreImportRequest{
-			BucketId: importReq.BucketID,
-			StoreKey: importReq.StoreKey,
+	for _, storeData := range req.Requests {
+		data := &pb.StoreImportRequest{
+			BucketId: storeData.BucketID,
+			StoreKey: storeData.StoreKey,
 		}
-		if importReq.Encryption.Enabled {
-			req.Encryption = &pb.Encryption{
-				Enabled:   importReq.Encryption.Enabled,
-				EncryptId: importReq.Encryption.EncryptID,
+		if storeData.Encryption.Enabled {
+			data.Encryption = &pb.Encryption{
+				Enabled:   storeData.Encryption.Enabled,
+				EncryptId: storeData.Encryption.EncryptID,
 			}
 		}
-		importReqs = append(importReqs, req)
+		strData = append(strData, data)
 	}
 
-	pbReq := &pb.ReceiveChanelConnectResponse{
-		RequestId:   requestID,
-		RequestType: pb.RequestType_REQUEST_TYPE_REQUEST_RESOURCE_STORE,
-		Request: &pb.ReceiveChanelConnectResponse_StoreResourceRequest{
-			StoreResourceRequest: &pb.ReceiveChanelConnectStoreResourceRequest{
-				StoreImportRequest: importReqs,
+	strDataList := &pb.StoreImportRequestList{
+		Data: strData,
+	}
+
+	b, err := proto.Marshal(strDataList)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal store data list: %w", err)
+	}
+	uid := utils.GenerateUniqueID()
+
+	for i := 0; i < len(b); i += runner.DefaultChunkSize {
+		end := i + runner.DefaultChunkSize
+		if end > len(b) {
+			end = len(b)
+		}
+		pbReq := &pb.ReceiveChanelConnectResponse{
+			RequestId:   requestID,
+			RequestType: pb.RequestType_REQUEST_TYPE_REQUEST_RESOURCE_STORE,
+			Request: &pb.ReceiveChanelConnectResponse_StoreResourceRequest{
+				StoreResourceRequest: &pb.ReceiveChanelConnectStoreResourceRequest{
+					Uid:         uid,
+					Data:        b[i:end],
+					IsLastChunk: end == len(b),
+				},
 			},
-		},
-	}
-
-	select {
-	case <-ctx.Done():
-		return nil, fmt.Errorf("context canceled")
-	case r.ReqChan <- pbReq: // nothing
+		}
+		select {
+		case <-ctx.Done():
+		case r.ReqChan <- pbReq: // nothing
+		}
 	}
 
 	mapper.RegisterRequestConnection(requestID, connectionID)

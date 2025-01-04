@@ -139,7 +139,9 @@ message ReceiveChanelConnectStore {
 }
 
 message ReceiveChanelConnectStoreResourceRequest {
-    repeated StoreImportRequest store_import_request = 1;
+    string uid = 1;
+    bytes data = 2;
+    bool is_last_chunk = 3;
 }
 
 message ReceiveChanelConnectTargetResourceRequest {

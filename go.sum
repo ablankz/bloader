@@ -11,6 +11,8 @@ buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-00000000000000-94e785f0879b.2
 buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-00000000000000-94e785f0879b.2/go.mod h1:mzKC/Yty3QzLzAicltubIcyllkEB5nX7VZZJfgQkBbA=
 buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-00000000000000-b8eb1c227f6b.2 h1:vx+/LAfkFMvpiN32FujnaPErs6zg3lhk3wwLErwYNHc=
 buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-00000000000000-b8eb1c227f6b.2/go.mod h1:rbIGq5mNQRIepY3ZalN8NLae2A4hDDV2IvytZ9t9jDk=
+buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-00000000000000-d8eb33ba4fb9.2 h1:jYwrb/etXwoyXqpEXajyVWrqqx5rXzs1x9EkHAq5pWw=
+buf.build/gen/go/cresplanex/bloader/grpc/go v1.5.1-00000000000000-d8eb33ba4fb9.2/go.mod h1:AMFg6D4om7b5AHfVg6xGZE8IgwzYMV+IGnoO66HOTCU=
 buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-1166d5c55014.1 h1:mT4UECYzl8hGZSYdy94ofRFxSHyV3+ZKOD0X6+xO/FE=
 buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-1166d5c55014.1/go.mod h1:gyq/+6VX/BGNTQr+gfwFiQiRO7Hl7iNpf3WC/Gs2BfI=
 buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-43357062e379.1 h1:AdYJvSX2mEv7hXlxhTCP2XSWlMpgsiF+VWckV0V52ao=
@@ -23,6 +25,8 @@ buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-94
 buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-94e785f0879b.1/go.mod h1:gyq/+6VX/BGNTQr+gfwFiQiRO7Hl7iNpf3WC/Gs2BfI=
 buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-b8eb1c227f6b.1 h1:VTCX4qZEZpxv8Cf6jcnecIqysfYYxELk3KfQbPkhxnA=
 buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-b8eb1c227f6b.1/go.mod h1:gyq/+6VX/BGNTQr+gfwFiQiRO7Hl7iNpf3WC/Gs2BfI=
+buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-d8eb33ba4fb9.1 h1:AhcweTwXuCdZ7Jn+85Cd3A2m8DC5m/cMMpASboViCiA=
+buf.build/gen/go/cresplanex/bloader/protocolbuffers/go v1.36.1-00000000000000-d8eb33ba4fb9.1/go.mod h1:gyq/+6VX/BGNTQr+gfwFiQiRO7Hl7iNpf3WC/Gs2BfI=
 dario.cat/mergo v1.0.1 h1:Ra4+bf83h2ztPIQYNP99R6m+Y7KfnARDfID+a+vLl4s=
 dario.cat/mergo v1.0.1/go.mod h1:uNxQE+84aUszobStD9th8a29P2fMDhsBdgRYvZOxGmk=
 github.com/BurntSushi/toml v1.4.0 h1:kuoIxZQy2WRRk1pttg9asf+WVv6tWQuBNVmK8+nqPr0=
