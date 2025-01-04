@@ -4,16 +4,6 @@ output:
   enabled: true
   ids: 
     - outputLocalCSV
-store_import:
-  enabled: true
-  data:
-    - key: "tttt"
-      bucket_id: "bucketForApp"
-      thread_only: true
-      store_key: "test"
-      encrypt:
-        enabled: true
-        encrypt_id: encryptDynamicCBC
 auth: 
   enabled: true
   auth_id: authForWeb

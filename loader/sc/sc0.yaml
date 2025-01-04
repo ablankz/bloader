@@ -9,11 +9,11 @@ step:
       mkdir: false
       values:
         - key: "ThreadPerSlaveCount"
-          value: 2
+          value: 25
         - key: "RequestPerSlaveCount"
           value: 3000
         - key: "SlaveCount"
-          value: 1
+          value: 4
       concurrency: -1
       flows:
         - id: "usersStore"
