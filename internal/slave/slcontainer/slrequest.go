@@ -206,10 +206,17 @@ func (r *ReceiveChanelRequestContainer) SendStoreResourceRequests(
 	importReqs := make([]*pb.StoreImportRequest, 0, len(req.Requests))
 
 	for _, importReq := range req.Requests {
-		importReqs = append(importReqs, &pb.StoreImportRequest{
+		req := &pb.StoreImportRequest{
 			BucketId: importReq.BucketID,
 			StoreKey: importReq.StoreKey,
-		})
+		}
+		if importReq.Encryption.Enabled {
+			req.Encryption = &pb.Encryption{
+				Enabled:   importReq.Encryption.Enabled,
+				EncryptId: importReq.Encryption.EncryptID,
+			}
+		}
+		importReqs = append(importReqs, req)
 	}
 
 	pbReq := &pb.ReceiveChanelConnectResponse{
