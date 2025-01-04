@@ -9,13 +9,16 @@ import (
 	"sync"
 
 	pb "buf.build/gen/go/cresplanex/bloader/protocolbuffers/go/cresplanex/bloader/v1"
+	flexpb "buf.build/gen/go/cresplanex/types/protocolbuffers/go/cresplanex/flex/v1"
 	"github.com/ablankz/bloader/internal/container"
 	"github.com/ablankz/bloader/internal/encrypt"
 	"github.com/ablankz/bloader/internal/logger"
 	"github.com/ablankz/bloader/internal/runner"
 	"github.com/ablankz/bloader/internal/slave/slcontainer"
 	"github.com/ablankz/bloader/internal/utils"
+	common "github.com/ablankz/go-cmproto"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 )
 
 // commandTermData represents the command term data
@@ -152,10 +155,13 @@ func (s *Server) SlaveCommandDefaultStore(stream grpc.ClientStreamingServer[pb.S
 			}
 			if chunk.IsLastChunk {
 				finalData := strBuffer.Bytes()
-				decoder := json.NewDecoder(bytes.NewReader(finalData))
-				mapData := make(map[string]any)
-				if err := decoder.Decode(&mapData); err != nil {
-					return fmt.Errorf("failed to decode json: %v", err)
+				var flexMap *flexpb.FlexMap
+				if err := proto.Unmarshal(finalData, flexMap); err != nil {
+					return fmt.Errorf("failed to unmarshal proto: %v", err)
+				}
+				mapData, err := common.FromFlexMap(flexMap)
+				if err != nil {
+					return fmt.Errorf("failed to convert to map: %v", err)
 				}
 				if err := slCtr.SetStrMap(chunk.CommandId, mapData); err != nil {
 					return fmt.Errorf("failed to set str map: %v", err)
@@ -205,7 +211,6 @@ func (s *Server) SlaveCommandDefaultStore(stream grpc.ClientStreamingServer[pb.S
 
 // CallExec handles the exec request from the master node
 func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingServer[pb.CallExecResponse]) error {
-
 	s.mu.Lock()
 	slCtr, ok := s.slCtrMap[req.ConnectionId]
 	if !ok {
@@ -322,7 +327,6 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 
 // ReceiveChanelConnect handles the channel connection request from the master node
 func (s *Server) ReceiveChanelConnect(req *pb.ReceiveChanelConnectRequest, stream grpc.ServerStreamingServer[pb.ReceiveChanelConnectResponse]) error {
-
 	s.mu.RLock()
 	slCtr, ok := s.slCtrMap[req.ConnectionId]
 	s.mu.RUnlock()
