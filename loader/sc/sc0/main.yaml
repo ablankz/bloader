@@ -8,7 +8,7 @@ auth:
   enabled: true
   auth_id: authForWeb
 requests:
-{{- with index .Values.usersLists 0 }}
+{{- with index .Values.usersLists $.SlaveValues.Index }}
 {{- range slice .list_per_slave 0 $.Values.ThreadPerSlaveCount }}
   - target_id: "apiServer"
     endpoint: "/user-profiles"

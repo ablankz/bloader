@@ -154,6 +154,7 @@ func (s *Server) SlaveCommandDefaultStore(stream grpc.ClientStreamingServer[pb.S
 				if err := slCtr.SetStrMap(chunk.CommandId, mapData); err != nil {
 					return fmt.Errorf("failed to set str map: %v", err)
 				}
+				fmt.Println("SetStrMapOK")
 				flag |= strOkFlag
 			}
 		case pb.SlaveCommandDefaultStoreType_SLAVE_COMMAND_DEFAULT_STORE_TYPE_THREAD_ONLY_STORE:
@@ -170,6 +171,7 @@ func (s *Server) SlaveCommandDefaultStore(stream grpc.ClientStreamingServer[pb.S
 				if err := slCtr.SetThreadOnlyStrMap(chunk.CommandId, mapData); err != nil {
 					return fmt.Errorf("failed to set thread only str map: %v", err)
 				}
+				fmt.Println("SetThreadOnlyStrMapOK")
 				flag |= threadOnlyStrOkFlag
 			}
 		case pb.SlaveCommandDefaultStoreType_SLAVE_COMMAND_DEFAULT_STORE_TYPE_SLAVE_VALUES:
@@ -186,6 +188,10 @@ func (s *Server) SlaveCommandDefaultStore(stream grpc.ClientStreamingServer[pb.S
 				if err := slCtr.SetSlaveValues(chunk.CommandId, mapData); err != nil {
 					return fmt.Errorf("failed to set slave values: %v", err)
 				}
+				fmt.Println("SetSlaveValuesOK")
+				fmt.Println("mapData", mapData)
+				test, _ := slCtr.GetCommandMap(chunk.CommandId)
+				fmt.Println("test", test.SlaveValues)
 				flag |= slaveValuesOkFlag
 			}
 		}

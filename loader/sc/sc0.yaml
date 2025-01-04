@@ -13,7 +13,7 @@ step:
         - key: "RequestPerSlaveCount"
           value: 3000
         - key: "SlaveCount"
-          value: 2
+          value: 1
       concurrency: -1
       flows:
         - id: "usersStore"
