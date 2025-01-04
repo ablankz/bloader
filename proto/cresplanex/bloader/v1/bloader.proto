@@ -5,7 +5,6 @@ package cresplanex.bloader.v1;
 import "cresplanex/bloader/v1/auth.proto";
 import "cresplanex/bloader/v1/store.proto";
 import "cresplanex/bloader/v1/target.proto";
-import "cresplanex/flex/v1/flex.proto";
 
 service BloaderSlaveService {
     rpc Connect(ConnectRequest) returns (ConnectResponse);
@@ -13,6 +12,8 @@ service BloaderSlaveService {
     rpc Disconnect(DisconnectRequest) returns (DisconnectResponse);
 
     rpc SlaveCommand(SlaveCommandRequest) returns (SlaveCommandResponse);
+
+    rpc SlaveCommandDefaultStore(stream SlaveCommandDefaultStoreRequest) returns (SlaveCommandDefaultStoreResponse);
 
     rpc CallExec(CallExecRequest) returns (stream CallExecResponse);
 
@@ -49,14 +50,29 @@ message DisconnectResponse {
 message SlaveCommandRequest {
     string connection_id = 1;
     string loader_id = 2;
-    cresplanex.flex.v1.FlexMap default_store = 3;
-    cresplanex.flex.v1.FlexMap default_thread_only_store = 4;
-    string output_root = 5;
-    cresplanex.flex.v1.FlexMap slave_values = 6;
+    string output_root = 3;
 }
 
 message SlaveCommandResponse {
     string command_id = 1;
+}
+
+enum SlaveCommandDefaultStoreType {
+    SLAVE_COMMAND_DEFAULT_STORE_TYPE_UNSPECIFIED = 0;
+    SLAVE_COMMAND_DEFAULT_STORE_TYPE_STORE = 1;
+    SLAVE_COMMAND_DEFAULT_STORE_TYPE_THREAD_ONLY_STORE = 2;
+    SLAVE_COMMAND_DEFAULT_STORE_TYPE_SLAVE_VALUES = 3;
+}
+
+message SlaveCommandDefaultStoreRequest {
+    string connection_id = 1;
+    string command_id = 2;
+    SlaveCommandDefaultStoreType store_type = 3;
+    bytes default_store = 4;
+    bool is_last_chunk = 5;
+}
+
+message SlaveCommandDefaultStoreResponse {
 }
 
 message CallExecRequest {

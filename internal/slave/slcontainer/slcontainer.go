@@ -1,6 +1,9 @@
 package slcontainer
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
 
 // SlaveContainer represents the container for the slave node
 type SlaveContainer struct {
@@ -49,4 +52,45 @@ func (s *SlaveContainer) GetCommandMap(cmdID string) (CommandMapData, bool) {
 // DeleteCommandMap deletes the command map from the slave container
 func (s *SlaveContainer) DeleteCommandMap(cmdID string) {
 	s.CommandMap.Delete(cmdID)
+}
+
+// SetStrMap sets the str map for the command map
+func (s *SlaveContainer) SetStrMap(cmdID string, strMap map[string]any) error {
+	syncMap := &sync.Map{}
+	for k, v := range strMap {
+		syncMap.Store(k, v)
+	}
+	if data, ok := s.GetCommandMap(cmdID); ok {
+		data.StrMap = syncMap
+		s.AddCommandMap(cmdID, data)
+	} else {
+		return fmt.Errorf("CommandMap not found")
+	}
+	return nil
+}
+
+// SetThreadOnlyStrMap sets the thread only str map for the command map
+func (s *SlaveContainer) SetThreadOnlyStrMap(cmdID string, strMap map[string]any) error {
+	syncMap := &sync.Map{}
+	for k, v := range strMap {
+		syncMap.Store(k, v)
+	}
+	if data, ok := s.GetCommandMap(cmdID); ok {
+		data.ThreadOnlyStrMap = syncMap
+		s.AddCommandMap(cmdID, data)
+	} else {
+		return fmt.Errorf("CommandMap not found")
+	}
+	return nil
+}
+
+// SetSlaveValues sets the slave values for the command map
+func (s *SlaveContainer) SetSlaveValues(cmdID string, slaveValues map[string]any) error {
+	if data, ok := s.GetCommandMap(cmdID); ok {
+		data.SlaveValues = slaveValues
+		s.AddCommandMap(cmdID, data)
+	} else {
+		return fmt.Errorf("CommandMap not found")
+	}
+	return nil
 }

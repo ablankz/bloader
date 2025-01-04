@@ -2,6 +2,7 @@ package runner
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"sync"
@@ -865,18 +866,97 @@ func slaveCmdRun(
 			return fmt.Errorf("failed to create slave values: %v", err)
 		}
 		res, err := mapData.Cli.SlaveCommand(ctx, &pb.SlaveCommandRequest{
-			ConnectionId:           mapData.ConnectionID,
-			LoaderId:               f.File,
-			DefaultStore:           defaultStr,
-			DefaultThreadOnlyStore: defaultThreadOnlyStr,
-			OutputRoot:             oRoot,
-			SlaveValues:            slaveValues,
+			ConnectionId: mapData.ConnectionID,
+			LoaderId:     f.File,
+			OutputRoot:   oRoot,
 		})
 		if err != nil {
 			log.Error(ctx, "failed to execute",
 				logger.Value("error", err), logger.Value("on", "Flow"))
 			return fmt.Errorf("failed to execute slave command: %v", err)
 		}
+
+		stream, err := mapData.Cli.SlaveCommandDefaultStore(ctx)
+		if err != nil {
+			log.Error(ctx, "failed to execute",
+				logger.Value("error", err), logger.Value("on", "Flow"))
+			return fmt.Errorf("failed to execute slave command default store: %v", err)
+		}
+		defaultStrBytes, err := json.Marshal(defaultStr)
+		if err != nil {
+			log.Error(ctx, "failed to marshal",
+				logger.Value("error", err), logger.Value("on", "Flow"))
+			return fmt.Errorf("failed to marshal default store: %v", err)
+		}
+		for i := 0; i < len(defaultStrBytes); i += defaultChunkSize {
+			end := i + defaultChunkSize
+			if end > len(defaultStrBytes) {
+				end = len(defaultStrBytes)
+			}
+			if err := stream.Send(&pb.SlaveCommandDefaultStoreRequest{
+				ConnectionId: mapData.ConnectionID,
+				CommandId:    res.CommandId,
+				StoreType:    pb.SlaveCommandDefaultStoreType_SLAVE_COMMAND_DEFAULT_STORE_TYPE_STORE,
+				DefaultStore: defaultStrBytes[i:end],
+				IsLastChunk:  end == len(defaultStrBytes),
+			}); err != nil {
+				log.Error(ctx, "failed to send",
+					logger.Value("error", err), logger.Value("on", "Flow"))
+				return fmt.Errorf("failed to send slave command default store request: %v", err)
+			}
+		}
+		defaultThreadOnlyStrBytes, err := json.Marshal(defaultThreadOnlyStr)
+		if err != nil {
+			log.Error(ctx, "failed to marshal",
+				logger.Value("error", err), logger.Value("on", "Flow"))
+			return fmt.Errorf("failed to marshal default thread only store: %v", err)
+		}
+		for i := 0; i < len(defaultThreadOnlyStrBytes); i += defaultChunkSize {
+			end := i + defaultChunkSize
+			if end > len(defaultThreadOnlyStrBytes) {
+				end = len(defaultThreadOnlyStrBytes)
+			}
+			if err := stream.Send(&pb.SlaveCommandDefaultStoreRequest{
+				ConnectionId: mapData.ConnectionID,
+				CommandId:    res.CommandId,
+				StoreType:    pb.SlaveCommandDefaultStoreType_SLAVE_COMMAND_DEFAULT_STORE_TYPE_THREAD_ONLY_STORE,
+				DefaultStore: defaultThreadOnlyStrBytes[i:end],
+				IsLastChunk:  end == len(defaultThreadOnlyStrBytes),
+			}); err != nil {
+				log.Error(ctx, "failed to send",
+					logger.Value("error", err), logger.Value("on", "Flow"))
+				return fmt.Errorf("failed to send slave command default store request: %v", err)
+			}
+		}
+		defaultSlaveValuesStrBytes, err := json.Marshal(slaveValues)
+		if err != nil {
+			log.Error(ctx, "failed to marshal",
+				logger.Value("error", err), logger.Value("on", "Flow"))
+			return fmt.Errorf("failed to marshal slave values: %v", err)
+		}
+		for i := 0; i < len(defaultSlaveValuesStrBytes); i += defaultChunkSize {
+			end := i + defaultChunkSize
+			if end > len(defaultSlaveValuesStrBytes) {
+				end = len(defaultSlaveValuesStrBytes)
+			}
+			if err := stream.Send(&pb.SlaveCommandDefaultStoreRequest{
+				ConnectionId: mapData.ConnectionID,
+				CommandId:    res.CommandId,
+				StoreType:    pb.SlaveCommandDefaultStoreType_SLAVE_COMMAND_DEFAULT_STORE_TYPE_SLAVE_VALUES,
+				DefaultStore: defaultSlaveValuesStrBytes[i:end],
+				IsLastChunk:  end == len(defaultSlaveValuesStrBytes),
+			}); err != nil {
+				log.Error(ctx, "failed to send",
+					logger.Value("error", err), logger.Value("on", "Flow"))
+				return fmt.Errorf("failed to send slave command default store request: %v", err)
+			}
+		}
+		if _, err := stream.CloseAndRecv(); err != nil {
+			log.Error(ctx, "failed to receive",
+				logger.Value("error", err), logger.Value("on", "Flow"))
+			return fmt.Errorf("failed to receive slave command default store response: %v", err)
+		}
+
 		slaveExecutors[i] = slaveExecutor{
 			slaveID:       slaveID,
 			cmdID:         res.CommandId,
@@ -953,6 +1033,11 @@ func (e slaveExecutor) exec(
 		for {
 			res, err := stream.Recv()
 			if err == io.EOF {
+				if err := stream.CloseSend(); err != nil {
+					log.Error(ctx, "failed to close send",
+						logger.Value("error", err), logger.Value("on", "Flow"))
+				}
+
 				break
 			}
 			if err != nil {

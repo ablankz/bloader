@@ -1,7 +1,9 @@
 package slave
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"sync"
@@ -13,7 +15,6 @@ import (
 	"github.com/ablankz/bloader/internal/runner"
 	"github.com/ablankz/bloader/internal/slave/slcontainer"
 	"github.com/ablankz/bloader/internal/utils"
-	common "github.com/ablankz/go-cmproto"
 	"google.golang.org/grpc"
 )
 
@@ -104,34 +105,10 @@ func (s *Server) SlaveCommand(ctx context.Context, req *pb.SlaveCommandRequest) 
 	if !ok {
 		return nil, ErrLoaderNotFound
 	}
-	strMap := sync.Map{}
-	threadOnlyStrMap := sync.Map{}
-
-	fMap, err := common.FromFlexMap(req.DefaultStore)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert default store: %v", err)
-	}
-	for k, v := range fMap {
-		strMap.Store(k, v)
-	}
-	fMap, err = common.FromFlexMap(req.DefaultThreadOnlyStore)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert default thread only store: %v", err)
-	}
-	for k, v := range fMap {
-		threadOnlyStrMap.Store(k, v)
-	}
-	slaveValues, err := common.FromFlexMap(req.SlaveValues)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert slave values: %v", err)
-	}
 
 	cmdMapData := slcontainer.CommandMapData{
-		LoaderID:         req.LoaderId,
-		OutputRoot:       req.OutputRoot,
-		StrMap:           &strMap,
-		ThreadOnlyStrMap: &threadOnlyStrMap,
-		SlaveValues:      slaveValues,
+		LoaderID:   req.LoaderId,
+		OutputRoot: req.OutputRoot,
 	}
 	slCtr.AddCommandMap(uid, cmdMapData)
 	s.cmdTermMap[uid] = make(chan commandTermData)
@@ -139,6 +116,85 @@ func (s *Server) SlaveCommand(ctx context.Context, req *pb.SlaveCommandRequest) 
 	return &pb.SlaveCommandResponse{
 		CommandId: uid,
 	}, nil
+}
+
+// SlaveCommandDefaultStore handles the command default store request from the master node
+func (s *Server) SlaveCommandDefaultStore(stream grpc.ClientStreamingServer[pb.SlaveCommandDefaultStoreRequest, pb.SlaveCommandDefaultStoreResponse]) error {
+	var strBuffer bytes.Buffer
+	var threadOnlyStrBuffer bytes.Buffer
+	var slaveValuesBuffer bytes.Buffer
+	const strOkFlag = 1 << 0
+	const threadOnlyStrOkFlag = 1 << 1
+	const slaveValuesOkFlag = 1 << 2
+	var flag int
+	for {
+		chunk, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		} else if err != nil {
+			return fmt.Errorf("failed to receive a chunk: %v", err)
+		}
+		s.mu.Lock()
+		slCtr, ok := s.slCtrMap[chunk.ConnectionId]
+		if !ok {
+			return ErrRequestNotFound
+		}
+		switch chunk.StoreType {
+		case pb.SlaveCommandDefaultStoreType_SLAVE_COMMAND_DEFAULT_STORE_TYPE_STORE:
+			if _, err := strBuffer.Write(chunk.DefaultStore); err != nil {
+				return fmt.Errorf("failed to write to buffer: %v", err)
+			}
+			if chunk.IsLastChunk {
+				finalData := strBuffer.Bytes()
+				decoder := json.NewDecoder(bytes.NewReader(finalData))
+				mapData := make(map[string]any)
+				if err := decoder.Decode(&mapData); err != nil {
+					return fmt.Errorf("failed to decode json: %v", err)
+				}
+				if err := slCtr.SetStrMap(chunk.CommandId, mapData); err != nil {
+					return fmt.Errorf("failed to set str map: %v", err)
+				}
+				flag |= strOkFlag
+			}
+		case pb.SlaveCommandDefaultStoreType_SLAVE_COMMAND_DEFAULT_STORE_TYPE_THREAD_ONLY_STORE:
+			if _, err := threadOnlyStrBuffer.Write(chunk.DefaultStore); err != nil {
+				return fmt.Errorf("failed to write to buffer: %v", err)
+			}
+			if chunk.IsLastChunk {
+				finalData := threadOnlyStrBuffer.Bytes()
+				decoder := json.NewDecoder(bytes.NewReader(finalData))
+				mapData := make(map[string]any)
+				if err := decoder.Decode(&mapData); err != nil {
+					return fmt.Errorf("failed to decode json: %v", err)
+				}
+				if err := slCtr.SetThreadOnlyStrMap(chunk.CommandId, mapData); err != nil {
+					return fmt.Errorf("failed to set thread only str map: %v", err)
+				}
+				flag |= threadOnlyStrOkFlag
+			}
+		case pb.SlaveCommandDefaultStoreType_SLAVE_COMMAND_DEFAULT_STORE_TYPE_SLAVE_VALUES:
+			if _, err := slaveValuesBuffer.Write(chunk.DefaultStore); err != nil {
+				return fmt.Errorf("failed to write to buffer: %v", err)
+			}
+			if chunk.IsLastChunk {
+				finalData := slaveValuesBuffer.Bytes()
+				decoder := json.NewDecoder(bytes.NewReader(finalData))
+				mapData := make(map[string]any)
+				if err := decoder.Decode(&mapData); err != nil {
+					return fmt.Errorf("failed to decode json: %v", err)
+				}
+				if err := slCtr.SetSlaveValues(chunk.CommandId, mapData); err != nil {
+					return fmt.Errorf("failed to set slave values: %v", err)
+				}
+				flag |= slaveValuesOkFlag
+			}
+		}
+		s.mu.Unlock()
+		if flag == strOkFlag|threadOnlyStrOkFlag|slaveValuesOkFlag {
+			// Stream is done
+			return stream.SendAndClose(&pb.SlaveCommandDefaultStoreResponse{})
+		}
+	}
 }
 
 // CallExec handles the exec request from the master node
@@ -283,15 +339,14 @@ func (s *Server) SendLoader(stream grpc.ClientStreamingServer[pb.SendLoaderReque
 		if !ok {
 			return ErrRequestNotFound
 		}
+		slCtr.Loader.WriteString(chunk.LoaderId, string(chunk.Content))
 		if chunk.IsLastChunk {
 			// Stream is done
-			slCtr.Loader.WriteString(chunk.LoaderId, string(chunk.Content))
 			slCtr.Loader.Build(chunk.LoaderId)
 			slCtr.ReceiveChanelRequestContainer.Cast(chunk.RequestId)
 			s.reqConMap.DeleteRequest(chunk.RequestId)
 			return stream.SendAndClose(&pb.SendLoaderResponse{})
 		}
-		slCtr.Loader.WriteString(chunk.LoaderId, string(chunk.Content))
 	}
 }
 
