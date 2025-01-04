@@ -5,45 +5,43 @@ step:
   concurrency: 0
   flows:
     - id: "store"
-      type: file
-      file: "sc/sc1/store.yaml"
+      type: flow
       mkdir: false
       values:
-        - key: "ThreadCount"
-          value: 100
-        - key: "RequestCount"
+        - key: "ThreadPerSlaveCount"
+          value: 25
+        - key: "RequestPerSlaveCount"
           value: 3000
-      thread_only_values: []
+        - key: "SlaveCount"
+          value: 4
+      concurrency: -1
+      flows:
+        - id: "usersStore"
+          type: file
+          mkdir: false
+          file: "sc/sc1/store.yaml"
+          values: []
+          thread_only_values: []
+        - id: "slaveStoreInMemory"
+          type: file
+          mkdir: false
+          file: "sc/slave/memory.yaml"
+          values: []
+          thread_only_values: []
     - id: "import"
-      type: file
-      file: "sc/sc1/store_import.yaml"
-      mkdir: false
-      values: []
-      thread_only_values: []
-    - id: "main"
       type: flow
       mkdir: false
       concurrency: -1
       flows:
-        - id: "metrics"
+        - id: "storeImport"
           type: file
-          mkdir: true
-          file: "sc/metrics/main.yaml"
-          values:
-            - key: "MetricsInterval"
-              value: "5s"
-            - key: "MetricsBreakTime"
-              value: "10m"
+          file: "sc/sc1/store_import.yaml"
+          mkdir: false
+          values: []
           thread_only_values: []
-        - id: "request"
-          type: file
-          mkdir: true
-          file: "sc/sc1/main.yaml"
-          values:
-            - key: "ThreadCount"
-              value: 100
-          thread_only_values:
-            - key: "Interval"
-              value: "100ms"
-            - key: "BreakTime"
-              value: "5m"
+    - id: "main"
+      type: file
+      mkdir: false
+      file: "sc/sc1/sc1.yaml"
+      values: []
+      thread_only_values: []
