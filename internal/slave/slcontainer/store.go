@@ -55,6 +55,11 @@ func (s *Store) GetData(bucketID, storeKey string) (any, bool) {
 	defer s.mu.RUnlock()
 
 	data, ok := s.data[StoreDataKey{BucketID: bucketID, StoreKey: storeKey}]
+
+	if arr, ok := data.([]any); ok {
+		fmt.Println("key", storeKey, "len(arr):", len(arr))
+	}
+
 	return data, ok
 }
 

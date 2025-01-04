@@ -40,3 +40,4 @@ step:
           additional_thread_only_values: []
         {{- end }}
       file: "sc/sc0/main.yaml"
+      # file: "store.yaml"
