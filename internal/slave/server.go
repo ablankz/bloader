@@ -61,6 +61,9 @@ func (s *Server) Connect(ctx context.Context, req *pb.ConnectRequest) (*pb.Conne
 	uid := utils.GenerateUniqueID()
 	s.slCtrMap[uid] = slcontainer.NewSlaveContainer()
 	response.ConnectionId = uid
+
+	fmt.Println("Connect", uid)
+
 	return response, nil
 }
 
@@ -68,6 +71,8 @@ func (s *Server) Connect(ctx context.Context, req *pb.ConnectRequest) (*pb.Conne
 func (s *Server) Disconnect(ctx context.Context, req *pb.DisconnectRequest) (*pb.DisconnectResponse, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	fmt.Println("Disconnect", req.ConnectionId)
 
 	delete(s.slCtrMap, req.ConnectionId)
 	s.reqConMap.DeleteRequestConnection(req.ConnectionId)
@@ -443,6 +448,7 @@ func (s *Server) ReceiveLoadTermChannel(ctx context.Context, req *pb.ReceiveLoad
 		return nil, ErrCommandNotFound
 	}
 	defer func() {
+		fmt.Println("ReceiveLoadTermChannel", req.CommandId)
 		s.mu.Lock()
 		defer s.mu.Unlock()
 		close(s.cmdTermMap[req.CommandId])

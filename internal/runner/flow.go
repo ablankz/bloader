@@ -1077,7 +1077,6 @@ func (e slaveExecutor) exec(
 					}
 					continue
 				}
-				fmt.Println("not isFirst", writerData)
 				if err := writerData.httpDataWriter(
 					ctx,
 					log,
