@@ -66,6 +66,7 @@ func (o SlaveOutput) HTTPDataWriteFactory(
 			case o.outputChan <- &pb.CallExecResponse{
 				OutputId:   o.OutputID,
 				OutputType: pb.CallExecOutputType_CALL_EXEC_OUTPUT_TYPE_HTTP,
+				OutputRoot: uniqueName,
 				Output: &pb.CallExecResponse_OutputHttp{
 					OutputHttp: &pb.CallExecOutputHTTP{
 						Data: data,

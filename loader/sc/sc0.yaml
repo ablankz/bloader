@@ -9,7 +9,7 @@ step:
       mkdir: false
       values:
         - key: "ThreadPerSlaveCount"
-          value: 1
+          value: 2
         - key: "RequestPerSlaveCount"
           value: 3000
         - key: "SlaveCount"

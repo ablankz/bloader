@@ -83,13 +83,4 @@ func (o LocalOutput) HTTPDataWriteFactory(
 		}, nil
 }
 
-// WriteForStringArray writes the data to the output
-func (o LocalOutput) WriteForStringArray(
-	ctx context.Context,
-	log logger.Logger,
-	data []string,
-) error {
-	return nil
-}
-
 var _ Output = LocalOutput{}

@@ -9,7 +9,6 @@ import (
 	"sync/atomic"
 
 	pb "buf.build/gen/go/cresplanex/bloader/protocolbuffers/go/cresplanex/bloader/v1"
-	common "github.com/ablankz/go-cmproto"
 
 	"github.com/ablankz/bloader/internal/encrypt"
 	"github.com/ablankz/bloader/internal/logger"
@@ -839,18 +838,6 @@ func slaveCmdRun(
 		for _, v := range exec.AdditionalThreadOnlyValues {
 			threadOnlyStr[v.Key] = v.Value
 		}
-		defaultStr, err := common.NewFlexMap(globalStr)
-		if err != nil {
-			log.Error(ctx, "failed to create default store",
-				logger.Value("error", err), logger.Value("on", "Flow"))
-			return fmt.Errorf("failed to create default store: %v", err)
-		}
-		defaultThreadOnlyStr, err := common.NewFlexMap(threadOnlyStr)
-		if err != nil {
-			log.Error(ctx, "failed to create default thread only store",
-				logger.Value("error", err), logger.Value("on", "Flow"))
-			return fmt.Errorf("failed to create default thread only store: %v", err)
-		}
 		oRoot := outputRoot
 		if exec.Output.Enabled {
 			oRoot = oRoot + "/" + exec.Output.RootPath
@@ -858,12 +845,6 @@ func slaveCmdRun(
 		slaveValuesMap := map[string]any{
 			"SlaveID": slaveID,
 			"Index":   i,
-		}
-		slaveValues, err := common.NewFlexMap(slaveValuesMap)
-		if err != nil {
-			log.Error(ctx, "failed to create",
-				logger.Value("error", err), logger.Value("on", "Flow"))
-			return fmt.Errorf("failed to create slave values: %v", err)
 		}
 		res, err := mapData.Cli.SlaveCommand(ctx, &pb.SlaveCommandRequest{
 			ConnectionId: mapData.ConnectionID,
@@ -882,7 +863,7 @@ func slaveCmdRun(
 				logger.Value("error", err), logger.Value("on", "Flow"))
 			return fmt.Errorf("failed to execute slave command default store: %v", err)
 		}
-		defaultStrBytes, err := json.Marshal(defaultStr)
+		defaultStrBytes, err := json.Marshal(globalStr)
 		if err != nil {
 			log.Error(ctx, "failed to marshal",
 				logger.Value("error", err), logger.Value("on", "Flow"))
@@ -905,7 +886,7 @@ func slaveCmdRun(
 				return fmt.Errorf("failed to send slave command default store request: %v", err)
 			}
 		}
-		defaultThreadOnlyStrBytes, err := json.Marshal(defaultThreadOnlyStr)
+		defaultThreadOnlyStrBytes, err := json.Marshal(threadOnlyStr)
 		if err != nil {
 			log.Error(ctx, "failed to marshal",
 				logger.Value("error", err), logger.Value("on", "Flow"))
@@ -928,7 +909,7 @@ func slaveCmdRun(
 				return fmt.Errorf("failed to send slave command default store request: %v", err)
 			}
 		}
-		defaultSlaveValuesStrBytes, err := json.Marshal(slaveValues)
+		defaultSlaveValuesStrBytes, err := json.Marshal(slaveValuesMap)
 		if err != nil {
 			log.Error(ctx, "failed to marshal",
 				logger.Value("error", err), logger.Value("on", "Flow"))
@@ -1019,14 +1000,18 @@ func (e slaveExecutor) exec(
 	}
 
 	go func() {
-		first := true
-		var httpDataWriter output.HTTPDataWrite
-		var closer output.Close
+		type outputMapData struct {
+			httpDataWriter output.HTTPDataWrite
+			closer         output.Close
+		}
+		outputMap := make(map[string]outputMapData)
 		defer func() {
-			if closer != nil {
-				if err := closer(); err != nil {
-					log.Error(ctx, "failed to close",
-						logger.Value("error", err), logger.Value("on", "Flow"))
+			for _, v := range outputMap {
+				if v.closer != nil {
+					if err := v.closer(); err != nil {
+						log.Error(ctx, "failed to close",
+							logger.Value("error", err), logger.Value("on", "Flow"))
+					}
 				}
 			}
 		}()
@@ -1037,7 +1022,6 @@ func (e slaveExecutor) exec(
 					log.Error(ctx, "failed to close send",
 						logger.Value("error", err), logger.Value("on", "Flow"))
 				}
-
 				break
 			}
 			if err != nil {
@@ -1062,17 +1046,23 @@ func (e slaveExecutor) exec(
 				}
 				return
 			}
+			var isFirst bool
+			writerData, ok := outputMap[res.OutputRoot]
+			if !ok {
+				isFirst = true
+			}
 			switch res.OutputType {
 			case pb.CallExecOutputType_CALL_EXEC_OUTPUT_TYPE_HTTP:
 				httpOut := res.GetOutputHttp()
-				if first {
-					if httpDataWriter, closer, err = output.HTTPDataWriteFactory(
+				if isFirst {
+					httpDataWriter, closer, err := output.HTTPDataWriteFactory(
 						ctx,
 						log,
 						true,
 						res.OutputRoot,
 						httpOut.Data,
-					); err != nil {
+					)
+					if err != nil {
 						log.Error(ctx, "failed to create http data writer",
 							logger.Value("error", err), logger.Value("on", "Flow"))
 						if err := stream.CloseSend(); err != nil {
@@ -1081,10 +1071,14 @@ func (e slaveExecutor) exec(
 						}
 						return
 					}
-					first = false
+					outputMap[res.OutputRoot] = outputMapData{
+						httpDataWriter: httpDataWriter,
+						closer:         closer,
+					}
 					continue
 				}
-				if err := httpDataWriter(
+				fmt.Println("not isFirst", writerData)
+				if err := writerData.httpDataWriter(
 					ctx,
 					log,
 					httpOut.Data,
