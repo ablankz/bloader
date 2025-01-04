@@ -5,6 +5,8 @@ import (
 
 	"github.com/ablankz/bloader/internal/encrypt"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // UnaryClientEncryptInterceptor is a client-side interceptor that encrypts the request and decrypts the response.
@@ -18,7 +20,7 @@ func UnaryServerEncryptInterceptor(encrypter encrypt.Encrypter) grpc.UnaryServer
 		if encryptedReq, ok := req.(string); ok {
 			plainReq, err := encrypter.Decrypt(encryptedReq)
 			if err != nil {
-				return nil, err
+				return nil, status.Errorf(codes.Internal, "failed to decrypt request: %v", err)
 			}
 			req = plainReq
 		}
@@ -31,7 +33,7 @@ func UnaryServerEncryptInterceptor(encrypter encrypt.Encrypter) grpc.UnaryServer
 		if plainResp, ok := resp.([]byte); ok {
 			encryptedResp, err := encrypter.Encrypt(plainResp)
 			if err != nil {
-				return nil, err
+				return nil, status.Errorf(codes.Internal, "failed to encrypt response: %v", err)
 			}
 			resp = encryptedResp
 		}
@@ -69,7 +71,7 @@ func (w *wrappedServerStream) RecvMsg(m interface{}) error {
 	}
 	descryptedMsg, err := w.encrypter.Decrypt(string(encryptedMsg))
 	if err != nil {
-		return err
+		return status.Errorf(codes.Internal, "failed to decrypt request: %v", err)
 	}
 	*m.(*[]byte) = descryptedMsg
 	return nil
@@ -80,7 +82,7 @@ func (w *wrappedServerStream) SendMsg(m interface{}) error {
 	if plainMsg, ok := m.([]byte); ok {
 		encryptedMsg, err := w.encrypter.Encrypt(plainMsg)
 		if err != nil {
-			return err
+			return status.Errorf(codes.Internal, "failed to encrypt response: %v", err)
 		}
 		m = encryptedMsg
 	}
