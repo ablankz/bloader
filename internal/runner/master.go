@@ -29,8 +29,6 @@ const (
 	ReceiveTermTypeReceiveTermTypeEOF ReceiveTermType = "EOF"
 	// ReceiveTermTypeResponseReceiveError represents the ResponseReceiveError
 	ReceiveTermTypeReceiveTermTypeResponseReceiveError ReceiveTermType = "ResponseReceiveError"
-	// ReceiveTermTypeContextDone represents the ContextDone
-	ReceiveTermTypeReceiveTermTypeContextDone ReceiveTermType = "ContextDone"
 	// ReceiveTermTypeStreamContextDone represents the StreamContextDone
 	ReceiveTermTypeReceiveTermTypeStreamContextDone ReceiveTermType = "StreamContextDone"
 	// ReceiveTermTypeDisconnected represents the Disconnected
@@ -169,7 +167,14 @@ func (c *ConnectionContainer) Connect(
 				res, err := receiveStream.Recv()
 				if errors.Is(err, io.EOF) {
 					log.Info(ctx, "receiveChan EOF")
-					receiveTermChan <- ReceiveTermTypeReceiveTermTypeEOF
+					select {
+					case <-ctx.Done():
+						log.Info(ctx, "context done")
+						return
+					case receiveTermChan <- ReceiveTermTypeReceiveTermTypeEOF:
+						log.Info(ctx, "receiveChan EOF")
+					}
+
 					return
 				}
 				if err != nil {
@@ -178,7 +183,14 @@ func (c *ConnectionContainer) Connect(
 					if err := receiveStream.CloseSend(); err != nil {
 						log.Error(ctx, "failed to close receiveChan: %v", logger.Value("error", err))
 					}
-					receiveTermChan <- ReceiveTermTypeReceiveTermTypeResponseReceiveError
+					select {
+					case <-ctx.Done():
+						log.Info(ctx, "context done")
+						return
+					case receiveTermChan <- ReceiveTermTypeReceiveTermTypeResponseReceiveError:
+						log.Info(ctx, "receiveChan response receive error")
+					}
+
 					return
 				}
 				select {
@@ -187,18 +199,29 @@ func (c *ConnectionContainer) Connect(
 					if err := receiveStream.CloseSend(); err != nil {
 						log.Error(ctx, "failed to close receiveChan: %v", logger.Value("error", err))
 					}
-					receiveTermChan <- ReceiveTermTypeReceiveTermTypeContextDone
 					return
 				case <-receiveStream.Context().Done():
 					log.Info(ctx, "receiveChan context done")
-					receiveTermChan <- ReceiveTermTypeReceiveTermTypeStreamContextDone
+					select {
+					case <-ctx.Done():
+						log.Info(ctx, "context done")
+						return
+					case receiveTermChan <- ReceiveTermTypeReceiveTermTypeStreamContextDone:
+						log.Info(ctx, "receiveChan context done")
+					}
 					return
 				case <-termChan:
 					log.Info(ctx, "termChan")
 					if err := receiveStream.CloseSend(); err != nil {
 						log.Error(ctx, "failed to close receiveChan: %v", logger.Value("error", err))
 					}
-					receiveTermChan <- ReceiveTermTypeReceiveTermTypeDisconnected
+					select {
+					case <-ctx.Done():
+						log.Info(ctx, "context done")
+						return
+					case receiveTermChan <- ReceiveTermTypeReceiveTermTypeDisconnected:
+						log.Info(ctx, "receiveChan disconnected")
+					}
 					return
 				case reqChan <- res:
 				}

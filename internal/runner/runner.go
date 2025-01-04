@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -11,6 +12,8 @@ import (
 )
 
 func Run(ctr *container.Container, filename string, data map[string]any) error {
+	ctx, cancel := context.WithCancel(ctr.Ctx)
+	defer cancel()
 
 	var err error
 	if filename == "" {
@@ -27,7 +30,6 @@ func Run(ctr *container.Container, filename string, data map[string]any) error {
 	threadOnlyStore := sync.Map{}
 	slaveValues := make(map[string]any)
 	outputCtr := output.NewOutputContainer(ctr.Config.Env, ctr.Config.Outputs)
-	ctx := ctr.Ctx
 
 	outputRoot := time.Now().Format("20060102_150405")
 

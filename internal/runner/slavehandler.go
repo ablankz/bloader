@@ -50,14 +50,14 @@ func (rh *SlaveRequestHandler) HandleResponse(
 
 	for {
 		select {
+		case <-ctx.Done():
+			return nil
 		case termType := <-rh.receiveTermChan:
 			switch termType {
 			case ReceiveTermTypeReceiveTermTypeEOF:
 				return nil
 			case ReceiveTermTypeReceiveTermTypeResponseReceiveError:
 				return fmt.Errorf("response receive error")
-			case ReceiveTermTypeReceiveTermTypeContextDone:
-				return nil
 			case ReceiveTermTypeReceiveTermTypeStreamContextDone:
 				return nil
 			case ReceiveTermTypeReceiveTermTypeDisconnected:

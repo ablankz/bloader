@@ -4,8 +4,13 @@ Copyright © 2024 hayashi kenta <k.hayashi@cresplanex.com>
 package cmd
 
 import (
+	"context"
+	"fmt"
+	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/ablankz/bloader/internal/config"
 	"github.com/ablankz/bloader/internal/runner"
@@ -42,6 +47,20 @@ It sends requests to the specified server and measures the response time.`,
 			color.Red("This command is not available in slave mode")
 			return
 		}
+
+		ctx, cancel := context.WithCancel(ctr.Ctx)
+		defer cancel()
+
+		ctr.Ctx = ctx
+
+		signalChan := make(chan os.Signal, 1)
+		signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
+
+		go func() {
+			<-signalChan
+			fmt.Println("\nSignal received: cleaning up...")
+			cancel()
+		}()
 
 		data := make(map[string]any)
 		var err error

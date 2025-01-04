@@ -41,9 +41,12 @@ func (e BaseExecutor) Execute(
 	slaveValues map[string]any,
 	eventCaster EventCaster,
 ) error {
-
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+
+	defer func() {
+		fmt.Println("Signal received: cleaning up...", filename)
+	}()
 
 	if err := eventCaster.CastEvent(ctx, RunnerEventStart); err != nil {
 		return fmt.Errorf("failed to cast event: %v", err)

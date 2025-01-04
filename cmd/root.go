@@ -31,6 +31,7 @@ It sends requests to the specified server and measures the response time.`,
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+	ctr.Ctx = context.Background()
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
@@ -49,8 +50,6 @@ func init() {
 }
 
 func initConfig() {
-	ctr.Ctx = context.Background()
-
 	configFile := viper.GetString("config")
 	if configFile != "" {
 		viper.SetConfigFile(configFile)

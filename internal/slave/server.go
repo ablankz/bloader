@@ -218,17 +218,29 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 	s.mu.Unlock()
 	var err error
 	defer func() {
+		fmt.Println("CallExec", req.CommandId)
 		s.mu.Lock()
+		defer fmt.Println("CallExec Done", req.CommandId)
+		fmt.Println("CallExec Lock", req.CommandId)
 		defer s.mu.Unlock()
-		if err != nil {
-			s.cmdTermMap[req.CommandId] <- commandTermData{
-				Success: false,
-			}
+		cmdTerm, ok := s.cmdTermMap[req.CommandId]
+		if !ok {
 			return
 		}
-		s.cmdTermMap[req.CommandId] <- commandTermData{
-			Success: true,
+		var success bool
+		if err == nil {
+			success = true
 		}
+		select {
+		case cmdTerm <- commandTermData{
+			Success: success,
+		}:
+		case <-stream.Context().Done():
+			s.log.Warn(stream.Context(), "stream context done",
+				logger.Value("ConnectionID", req.ConnectionId), logger.Value("Error", stream.Context().Err()))
+		}
+
+		close(cmdTerm)
 	}()
 	tmplFactor := &SlaveTmplFactor{
 		loader:                        slCtr.Loader,
@@ -451,9 +463,10 @@ func (s *Server) ReceiveLoadTermChannel(ctx context.Context, req *pb.ReceiveLoad
 	}
 	defer func() {
 		fmt.Println("ReceiveLoadTermChannel", req.CommandId)
+		defer fmt.Println("ReceiveLoadTermChannel Done", req.CommandId)
 		s.mu.Lock()
+		fmt.Println("ReceiveLoadTermChannel Lock", req.CommandId)
 		defer s.mu.Unlock()
-		close(s.cmdTermMap[req.CommandId])
 		delete(s.cmdTermMap, req.CommandId)
 	}()
 
