@@ -55,6 +55,8 @@ func (s *Store) GetData(bucketID, storeKey string) (any, bool) {
 	defer s.mu.RUnlock()
 
 	data, ok := s.data[StoreDataKey{BucketID: bucketID, StoreKey: storeKey}]
+
+	fmt.Println("bucketID: ", bucketID, "storeKey: ", storeKey, "data: ", data, "ok: ", ok)
 	return data, ok
 }
 

@@ -10,7 +10,7 @@ store_import:
     - key: "tttt"
       bucket_id: "bucketForApp"
       thread_only: true
-      store_key: "tes"
+      store_key: "test"
       encrypt:
         enabled: true
         encrypt_id: encryptDynamicCBC
