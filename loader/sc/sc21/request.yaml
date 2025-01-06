@@ -8,19 +8,22 @@ auth:
   enabled: true
   auth_id: authForWeb
 requests:
-{{- range until .Values.ThreadCount }}
+{{- range slice .list_per_slave 0 $.Values.ThreadPerSlaveCount }}
   - target_id: "apiServer"
-    endpoint: "/user-profiles"
+    endpoint: "/organizations"
     method: GET
     interval: {{ $.ThreadValues.Interval }}
     await_prev_response: false
     headers: {}
     query_param:
-      limit: 30
       offset: 0
       pagination: "offset"
-    path_variables: {}
+      limit: {{ $.ThreadValues.Limit }}
+      with:
+        - users
     body_type: json
+    path_variables: {}
+    body: {}
     success_break:
       - time
     break:
@@ -33,4 +36,5 @@ requests:
           op: ne
           value: 200
     response_type: json
+{{- end }}
 {{- end }}

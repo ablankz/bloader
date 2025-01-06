@@ -14,15 +14,32 @@ step:
           value: 4
       concurrency: -1
       flows:
+        - id: "findTasksStore"
+          type: file
+          mkdir: false
+          file: "sc/store/find_task.yaml"
+          values: []
+          thread_only_values: []
         - id: "slaveStoreInMemory"
           type: file
           mkdir: false
           file: "sc/slave/memory.yaml"
           values: []
           thread_only_values: []
+    - id: "import"
+      type: flow
+      mkdir: false
+      concurrency: -1
+      flows:
+        - id: "storeImport"
+          type: file
+          file: "sc/sc18/store_import.yaml"
+          mkdir: false
+          values: []
+          thread_only_values: []
     - id: "main"
       type: file
       mkdir: false
-      file: "sc/sc13/flow.yaml"
+      file: "sc/sc18/flow.yaml"
       values: []
       thread_only_values: []

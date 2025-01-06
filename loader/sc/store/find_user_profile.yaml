@@ -4,10 +4,10 @@ step:
   flows:
     - id: "retrieve_users"
       type: file
-      file: "sc/store/user_profile/retrieve_users_with_preference.yaml"
-    - id: "update_user_preferences"
+      file: "sc/store/user_profile/retrieve_users.yaml"
+    - id: "find_user_profiles"
       type: file
       depends_on:
         - flow: retrieve_users
           event: sys:terminated
-      file: "sc/store/user_preference/update_user_preference.yaml"
+      file: "sc/store/user_profile/find_user_profile.yaml"

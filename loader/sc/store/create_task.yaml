@@ -4,13 +4,13 @@ step:
   flows:
     - id: "retrieve_users"
       type: file
-      file: "sc/store/task/retrieve_users.yaml"
+      file: "sc/store/user_profile/retrieve_users.yaml"
     - id: "retrieve_teams"
       type: file
-      file: "sc/store/task/retrieve_teams.yaml"
+      file: "sc/store/team/retrieve_teams.yaml"
     - id: "retrieve_file_objects"
       type: file
-      file: "sc/store/task/retrieve_file_objects.yaml"
+      file: "sc/store/file_object/retrieve_file_objects.yaml"
     - id: "create_tasks"
       type: file
       depends_on:

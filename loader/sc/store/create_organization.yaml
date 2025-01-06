@@ -4,7 +4,7 @@ step:
   flows:
     - id: "retrieve_users"
       type: file
-      file: "sc/store/organization/retrieve_users.yaml"
+      file: "sc/store/user_profile/retrieve_users.yaml"
     - id: "create_organizations"
       type: file
       depends_on:

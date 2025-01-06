@@ -2,17 +2,12 @@ kind: Flow
 step:
   concurrency: -1
   flows:
-    - id: "retrieve_users"
-      type: file
-      file: "sc/store/user_profile/retrieve_users.yaml"
     - id: "retrieve_organizations"
       type: file
       file: "sc/store/organization/retrieve_organizations.yaml"
-    - id: "create_teams"
+    - id: "find_organizations"
       type: file
       depends_on:
-        - flow: retrieve_users
-          event: sys:terminated
         - flow: retrieve_organizations
           event: sys:terminated
-      file: "sc/store/team/create_team.yaml"
+      file: "sc/store/organization/find_organization.yaml"

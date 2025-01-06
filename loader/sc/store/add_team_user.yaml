@@ -4,7 +4,7 @@ step:
   flows:
     - id: "retrieve_users"
       type: file
-      file: "sc/store/team/retrieve_users.yaml"
+      file: "sc/store/user_profile/retrieve_users.yaml"
     - id: "retrieve_teams"
       type: file
       file: "sc/store/team/retrieve_teams.yaml"

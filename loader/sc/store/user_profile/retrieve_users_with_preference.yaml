@@ -7,12 +7,14 @@ auth:
   auth_id: authForWeb
 request:
   target_id: "apiServer"
-  endpoint: "/organizations"
+  endpoint: "/user-profiles"
   method: GET
   query_param:
     pagination: "offset"
     limit: {{ mul .Values.SlaveCount .Values.ThreadPerSlaveCount .Values.RequestPerSlaveCount }}
     offset: 0
+    with:
+      - userPreference
   path_variables: {}
   body_type: "json"
   body: {}
@@ -20,7 +22,7 @@ request:
   data: []
   store_data: []
   memory_data:
-    - key: "retrievedOrganizationsLists"
+    - key: "retrievedUsersListsWithPreference"
       extractor:
         type: "jmesPath"
         jmes_path: "data"
