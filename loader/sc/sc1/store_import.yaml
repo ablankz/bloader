@@ -3,6 +3,3 @@ data:
   - key: "usersLists"
     bucket_id: "bucketForApp"
     store_key: "usersLists"
-    # encrypt:
-    #   enabled: true
-    #   encrypt_id: encryptDynamicCBC

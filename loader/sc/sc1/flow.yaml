@@ -29,7 +29,7 @@ step:
           value: "100ms"
         - key: "BreakTime"
           value: "5m"
-      executors: # SlaveValues: index, slaveID
+      executors:
         {{- range slice .Values.slaveLists 0 .Values.SlaveCount }}
         - slave_id: "{{ .id }}"
           output:
@@ -39,4 +39,4 @@ step:
           additional_values: []
           additional_thread_only_values: []
         {{- end }}
-      file: "sc/sc1/main.yaml"
+      file: "sc/sc1/request.yaml"

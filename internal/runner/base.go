@@ -44,6 +44,9 @@ func (e BaseExecutor) Execute(
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	fmt.Printf("BaseExecutor.Execute: filename=%s, outputRoot=%s, index=%d, callCount=%d\n", filename, outputRoot, index, callCount)
+	defer fmt.Printf("Terminate BaseExecutor.Execute: filename=%s, outputRoot=%s, index=%d, callCount=%d\n", filename, outputRoot, index, callCount)
+
 	if err := eventCaster.CastEvent(ctx, RunnerEventStart); err != nil {
 		return fmt.Errorf("failed to cast event: %v", err)
 	}

@@ -1,4 +1,5 @@
 {{- $mailDomainList := list "example.com" "test.com" "demo.org" -}}
+{{- $iter := 0 -}}
 kind: StoreValue
 data:
   - bucket_id: "bucketForApp"
@@ -13,13 +14,11 @@ data:
         {{- $randOn4to6 := randInt 4 7 }}
         {{- $rand2On4to6 := randInt 4 7 }}
         {{- $randOn6to8 := randInt 6 9 }}
-          - id: {{ add $index 1 }}
+          - id: {{ $iter }}
             uuid: {{ uuidv4 }}
             name: {{ randAlpha $randOn4to6 | title }} {{ randAlpha $rand2On4to6 | title }}
             email: {{ randAlpha $randOn6to8 | lower }}@{{ index $mailDomainList $randOn3 }}
+        {{- $iter = add $iter 1 }}
         {{- end }}
       {{- end }}
     {{- end }}
-    # encrypt:
-    #   enabled: true
-    #   encrypt_id: encryptDynamicCBC
