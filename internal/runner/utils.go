@@ -13,17 +13,18 @@ func wait(
 	log logger.Logger,
 	conf ValidRunner,
 	after RunnerSleepValueAfter,
+	filename string,
 ) error {
 	if v, wait := conf.RetrieveSleepValue(after); wait {
 		log.Debug(ctx, "sleeping after execute",
 			logger.Value("duration", v))
-		fmt.Println("sleeping for", v, "...")
+		fmt.Println("Sleeping For", v, "...", "on", filename)
 		select {
 		case <-time.After(v):
 		case <-ctx.Done():
 			return fmt.Errorf("context canceled")
 		}
-		fmt.Println("sleeping complete")
+		fmt.Println("Sleeping Complete", "on", filename)
 	}
 
 	return nil

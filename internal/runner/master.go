@@ -159,7 +159,10 @@ func (c *ConnectionContainer) Connect(
 		receiveTermChan := make(chan ReceiveTermType)
 		termChan := make(chan struct{})
 
+		ctx, cancel := context.WithCancel(ctx)
+
 		go func() {
+			defer cancel()
 			defer close(reqChan)
 			defer close(receiveTermChan)
 

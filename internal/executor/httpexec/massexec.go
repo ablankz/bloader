@@ -69,7 +69,6 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 					case <-ctx.Done():
 						log.Info(ctx, "request processing is interrupted due to context termination",
 							logger.Value("on", "RequestContent.QueryExecute"))
-
 						return
 					case <-chanForWait:
 					}
@@ -155,7 +154,6 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 						case <-ctx.Done():
 							log.Info(ctx, "request processing is interrupted due to context termination",
 								logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))
-
 							return
 						case q.ResChan <- ResponseContent{
 							Success:        false,

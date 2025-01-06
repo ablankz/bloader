@@ -1,4 +1,9 @@
 kind: Flow
+sleep:
+  enabled: true
+  values:
+    - duration: "30s"
+      after: init
 step:
   concurrency: -1
   flows:

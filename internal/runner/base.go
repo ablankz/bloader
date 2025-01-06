@@ -155,7 +155,7 @@ func (e BaseExecutor) Execute(
 		}
 	}
 
-	if err := wait(ctx, e.Logger, validRunner, RunnerSleepValueAfterInit); err != nil {
+	if err := wait(ctx, e.Logger, validRunner, RunnerSleepValueAfterInit, filename); err != nil {
 		return fmt.Errorf("failed to wait: %v", err)
 	}
 
@@ -176,7 +176,7 @@ func (e BaseExecutor) Execute(
 			return err
 		}
 		if err := validStoreValue.Run(ctx, e.Store); err != nil {
-			if err := wait(ctx, e.Logger, validRunner, RunnerSleepValueAfterFailedExec); err != nil {
+			if err := wait(ctx, e.Logger, validRunner, RunnerSleepValueAfterFailedExec, filename); err != nil {
 				return fmt.Errorf("failed to wait: %v", err)
 			}
 			return fmt.Errorf("failed to execute store value: %v", err)
@@ -198,7 +198,7 @@ func (e BaseExecutor) Execute(
 			return err
 		}
 		if err := validMemoryValue.Run(ctx, str); err != nil {
-			if err := wait(ctx, e.Logger, validRunner, RunnerSleepValueAfterFailedExec); err != nil {
+			if err := wait(ctx, e.Logger, validRunner, RunnerSleepValueAfterFailedExec, filename); err != nil {
 				return fmt.Errorf("failed to wait: %v", err)
 			}
 			return fmt.Errorf("failed to execute memory store value: %v", err)
@@ -220,7 +220,7 @@ func (e BaseExecutor) Execute(
 			return err
 		}
 		if err := validStoreImport.Run(ctx, e.Store, str); err != nil {
-			if err := wait(ctx, e.Logger, validRunner, RunnerSleepValueAfterFailedExec); err != nil {
+			if err := wait(ctx, e.Logger, validRunner, RunnerSleepValueAfterFailedExec, filename); err != nil {
 				return fmt.Errorf("failed to wait: %v", err)
 			}
 			return fmt.Errorf("failed to execute store import: %v", err)
@@ -242,7 +242,7 @@ func (e BaseExecutor) Execute(
 			return err
 		}
 		if err := validOneExec.Run(ctx, outputRoot, str, e.Logger, e.Store); err != nil {
-			if err := wait(ctx, e.Logger, validRunner, RunnerSleepValueAfterFailedExec); err != nil {
+			if err := wait(ctx, e.Logger, validRunner, RunnerSleepValueAfterFailedExec, filename); err != nil {
 				return fmt.Errorf("failed to wait: %v", err)
 			}
 			return fmt.Errorf("failed to execute one exec: %v", err)
@@ -279,7 +279,7 @@ func (e BaseExecutor) Execute(
 			e.OutputFactor,
 			e.TargetFactor,
 		); err != nil {
-			if err := wait(ctx, e.Logger, validRunner, RunnerSleepValueAfterFailedExec); err != nil {
+			if err := wait(ctx, e.Logger, validRunner, RunnerSleepValueAfterFailedExec, filename); err != nil {
 				return fmt.Errorf("failed to wait: %v", err)
 			}
 			return fmt.Errorf("failed to execute mass exec: %v", err)
@@ -308,7 +308,7 @@ func (e BaseExecutor) Execute(
 			validSlaveConnect,
 			eventCaster,
 		); err != nil {
-			if err := wait(ctx, e.Logger, validRunner, RunnerSleepValueAfterFailedExec); err != nil {
+			if err := wait(ctx, e.Logger, validRunner, RunnerSleepValueAfterFailedExec, filename); err != nil {
 				return fmt.Errorf("failed to wait: %v", err)
 			}
 			return fmt.Errorf("failed to connect to slave: %v", err)
@@ -378,7 +378,7 @@ func (e BaseExecutor) Execute(
 			callCount,
 			slaveValues,
 		); err != nil {
-			if err := wait(ctx, e.Logger, validRunner, RunnerSleepValueAfterFailedExec); err != nil {
+			if err := wait(ctx, e.Logger, validRunner, RunnerSleepValueAfterFailedExec, filename); err != nil {
 				return fmt.Errorf("failed to wait: %v", err)
 			}
 			return fmt.Errorf("failed to execute flow: %v", err)
@@ -388,7 +388,7 @@ func (e BaseExecutor) Execute(
 		return fmt.Errorf("invalid runner kind: %s", validRunner.Kind)
 	}
 
-	if err := wait(ctx, e.Logger, validRunner, RunnerSleepValueAfterExec); err != nil {
+	if err := wait(ctx, e.Logger, validRunner, RunnerSleepValueAfterExec, filename); err != nil {
 		return fmt.Errorf("failed to wait: %v", err)
 	}
 
