@@ -398,7 +398,7 @@ func attachWaitChan(
 					case event := <-waitChan:
 						mustEvents = utils.RemoveElement(mustEvents, event)
 					case <-ctx.Done():
-						return ctx.Err()
+						return nil
 					}
 				}
 				return nil

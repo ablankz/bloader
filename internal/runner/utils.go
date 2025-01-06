@@ -22,7 +22,9 @@ func wait(
 		select {
 		case <-time.After(v):
 		case <-ctx.Done():
-			return fmt.Errorf("context canceled")
+			log.Info(ctx, "context done while sleeping",
+				logger.Value("on", filename))
+			return nil
 		}
 		fmt.Println("Sleeping Complete", "on", filename)
 	}

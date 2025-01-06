@@ -2,7 +2,6 @@ package runner
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/ablankz/bloader/internal/utils"
 )
@@ -71,7 +70,6 @@ func (ec *DefaultEventCaster) CastEventWithWait(ctx context.Context, event Runne
 	select {
 	case <-waitChan:
 	case <-ctx.Done():
-		return fmt.Errorf("failed to wait for the event: %w", ctx.Err())
 	}
 	return nil
 }
