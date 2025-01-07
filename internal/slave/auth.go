@@ -38,7 +38,7 @@ func (s *SlaveAuthenticatorFactor) Factorize(
 			}
 			select {
 			case <-ctx.Done():
-				return nil, fmt.Errorf("context canceled")
+				return nil, nil
 			case <-term:
 			}
 		}
@@ -63,7 +63,7 @@ func (s *SlaveAuthenticatorFactor) Factorize(
 	}
 	select {
 	case <-ctx.Done():
-		return nil, fmt.Errorf("context canceled")
+		return nil, nil
 	case <-term:
 	}
 

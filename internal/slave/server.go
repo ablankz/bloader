@@ -101,16 +101,13 @@ func (s *Server) SlaveCommand(ctx context.Context, req *pb.SlaveCommandRequest) 
 	}
 	select {
 	case <-ctx.Done():
-		return nil, ErrFailedToSendLoaderResourceRequest
+		return nil, nil
 	case <-s.globalCtx.Done():
-		return nil, ErrFailedToSendLoaderResourceRequest
+		return nil, nil
 	case <-term:
 	}
 	s.log.Info(ctx, "Initial Loader Received",
 		logger.Value("ConnectionID", req.ConnectionId), logger.Value("LoaderID", req.LoaderId))
-	if !ok {
-		return nil, ErrLoaderNotFound
-	}
 
 	cmdMapData := slcontainer.CommandMapData{
 		LoaderID:   req.LoaderId,
@@ -233,10 +230,10 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 			Success: success,
 		}:
 		case <-s.globalCtx.Done():
-			s.log.Warn(s.globalCtx, "global context done",
+			s.log.Debug(s.globalCtx, "global context done",
 				logger.Value("ConnectionID", req.ConnectionId), logger.Value("Error", s.globalCtx.Err()))
 		case <-stream.Context().Done():
-			s.log.Warn(stream.Context(), "stream context done",
+			s.log.Debug(stream.Context(), "stream context done",
 				logger.Value("ConnectionID", req.ConnectionId), logger.Value("Error", stream.Context().Err()))
 		}
 
@@ -276,11 +273,11 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 		for {
 			select {
 			case <-s.globalCtx.Done():
-				s.log.Warn(s.globalCtx, "global context done",
+				s.log.Debug(s.globalCtx, "global context done",
 					logger.Value("ConnectionID", req.ConnectionId), logger.Value("Error", s.globalCtx.Err()))
 				return
 			case <-stream.Context().Done():
-				s.log.Warn(st.Context(), "stream context done",
+				s.log.Debug(st.Context(), "stream context done",
 					logger.Value("ConnectionID", req.ConnectionId), logger.Value("Error", stream.Context().Err()))
 				return
 			case res := <-outputChan:
@@ -336,11 +333,11 @@ func (s *Server) ReceiveChanelConnect(req *pb.ReceiveChanelConnectRequest, strea
 				return fmt.Errorf("failed to send a response: %v", err)
 			}
 		case <-s.globalCtx.Done():
-			s.log.Warn(s.globalCtx, "global context done",
+			s.log.Debug(s.globalCtx, "global context done",
 				logger.Value("ConnectionID", req.ConnectionId), logger.Value("Error", s.globalCtx.Err()))
 			return fmt.Errorf("context done: %v", s.globalCtx.Err())
 		case <-stream.Context().Done():
-			s.log.Warn(stream.Context(), "stream context done",
+			s.log.Debug(stream.Context(), "stream context done",
 				logger.Value("ConnectionID", req.ConnectionId), logger.Value("Error", stream.Context().Err()))
 			return fmt.Errorf("context done: %v", stream.Context().Err())
 		}
@@ -502,8 +499,8 @@ func (s *Server) ReceiveLoadTermChannel(ctx context.Context, req *pb.ReceiveLoad
 			Success: data.Success,
 		}, nil
 	case <-s.globalCtx.Done():
-		return nil, fmt.Errorf("global context done")
+		return nil, nil
 	case <-ctx.Done():
-		return nil, fmt.Errorf("context done")
+		return nil, nil
 	}
 }

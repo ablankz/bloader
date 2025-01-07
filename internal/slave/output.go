@@ -2,7 +2,6 @@ package slave
 
 import (
 	"context"
-	"fmt"
 
 	pb "buf.build/gen/go/cresplanex/bloader/protocolbuffers/go/cresplanex/bloader/v1"
 	"github.com/ablankz/bloader/internal/logger"
@@ -37,7 +36,7 @@ func (o SlaveOutput) HTTPDataWriteFactory(
 
 	select {
 	case <-ctx.Done():
-		return nil, nil, fmt.Errorf("context canceled")
+		return nil, nil, nil
 	case o.outputChan <- &pb.CallExecResponse{
 		OutputId:   o.OutputID,
 		OutputType: pb.CallExecOutputType_CALL_EXEC_OUTPUT_TYPE_HTTP,
@@ -60,7 +59,7 @@ func (o SlaveOutput) HTTPDataWriteFactory(
 			}
 			select {
 			case <-ctx.Done():
-				return fmt.Errorf("context canceled")
+				return nil
 			case o.outputChan <- &pb.CallExecResponse{
 				OutputId:   o.OutputID,
 				OutputType: pb.CallExecOutputType_CALL_EXEC_OUTPUT_TYPE_HTTP,

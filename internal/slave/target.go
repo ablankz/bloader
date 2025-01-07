@@ -37,7 +37,7 @@ func (s *SlaveTargetFactor) Factorize(ctx context.Context, targetID string) (tar
 	}
 	select {
 	case <-ctx.Done():
-		return target.Target{}, fmt.Errorf("context canceled")
+		return target.Target{}, nil
 	case <-term:
 	}
 

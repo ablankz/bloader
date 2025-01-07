@@ -52,7 +52,7 @@ func (s *SlaveStore) Store(ctx context.Context, data []runner.ValidStoreValueDat
 
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("context canceled")
+		return nil
 	case <-term:
 	}
 
@@ -99,7 +99,7 @@ func (s *SlaveStore) StoreWithExtractor(ctx context.Context, res interface{}, da
 
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("context canceled")
+		return nil
 	case <-term:
 	}
 
@@ -134,7 +134,7 @@ func (s *SlaveStore) Import(ctx context.Context, data []runner.ValidStoreImportD
 
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("context canceled")
+		return nil
 	case <-term:
 	}
 

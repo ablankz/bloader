@@ -35,7 +35,7 @@ func (s *SlaveTmplFactor) TmplFactorize(ctx context.Context, path string) (strin
 	}
 	select {
 	case <-ctx.Done():
-		return "", fmt.Errorf("context canceled")
+		return "", nil
 	case <-term:
 	}
 
