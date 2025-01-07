@@ -1,4 +1,4 @@
-region           = "ap-northeast-1"
+region           = "ap-northeast-3"
 profile_name     = "terraform"
 tls_enabled      = true
 tls_period_hours = 8760
@@ -8,7 +8,7 @@ slave_ca_cert_file_path = "certs/slave_ca.crt" # Attention: This is a relative p
 slave_ca_key_file_path  = "certs/slave_ca.key" # Attention: This is a relative path from the bloader directory
 slave_cert_file_path = "certs/slave.crt" # Attention: This is a relative path from the bloader directory
 slave_key_file_path  = "certs/slave.key" # Attention: This is a relative path from the bloader directory
-availability_zone = "ap-northeast-1a"
+availability_zone = "ap-northeast-3a"
 instance_count    = 4
 instance_type     = "c7g.medium"
 instance_architecture = "arm64" # "x86_64" or "arm64"
