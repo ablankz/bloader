@@ -8,7 +8,7 @@ auth:
   enabled: true
   auth_id: authForWeb
 requests:
-{{- range slice .list_per_slave 0 $.Values.ThreadPerSlaveCount }}
+{{- range until (int $.Values.ThreadPerSlaveCount) }}
   - target_id: "apiServer"
     endpoint: "/user-profiles"
     method: GET
@@ -34,5 +34,4 @@ requests:
           op: ne
           value: 200
     response_type: json
-{{- end }}
 {{- end }}

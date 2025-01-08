@@ -2,7 +2,7 @@ kind: Flow
 sleep:
   enabled: true
   values:
-    - duration: "30s"
+    - duration: "5s"
       after: init
 step:
   concurrency: -1

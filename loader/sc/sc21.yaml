@@ -9,7 +9,7 @@ step:
         - key: "ThreadPerSlaveCount"
           value: 25
         - key: "RequestPerSlaveCount"
-          value: 3000
+          value: 3010
         - key: "SlaveCount"
           value: 4
       concurrency: -1

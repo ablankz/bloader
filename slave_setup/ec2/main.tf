@@ -70,7 +70,7 @@ EOF_TLS_KEY
 
   go env
 
-  go run main.go slave run --config bloader/slave_config.yaml
+  go run main.go slave run --config bloader/slave_config.yaml > ./slave.log 2>&1
 fi
 EOF
 

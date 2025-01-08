@@ -74,16 +74,26 @@ func runResponseHandler(
 			log.Warn(ctx, "Term Condition: Write Error",
 				logger.Value("id", id), logger.Value("on", "runResponseHandler"))
 			for len(sentUid) > 0 {
-				uid := <-uidChan
-				delete(sentUid, uid)
+				select {
+				case uid := <-uidChan:
+					delete(sentUid, uid)
+				case <-ctx.Done():
+					return
+				}
 			}
-			termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, "")
+			select {
+			case termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, ""):
+			case <-ctx.Done():
+				return
+			}
 			return
 		case <-timeout:
 			sentLen := len(sentUid)
 			writeErr := false
 			for sentLen > 0 {
 				select {
+				case <-ctx.Done():
+					return
 				case uid := <-uidChan:
 					delete(sentUid, uid)
 					sentLen--
@@ -96,18 +106,28 @@ func runResponseHandler(
 			if writeErr {
 				log.Warn(ctx, "Term Condition: Write Error",
 					logger.Value("id", id), logger.Value("on", "runResponseHandler"))
-				termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, "")
+				select {
+				case termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, ""):
+				case <-ctx.Done():
+					return
+				}
 				return
 			}
 			log.Info(ctx, "Term Condition: Time",
 				logger.Value("id", id), logger.Value("on", "runResponseHandler"))
-			termChan <- NewTermChanType(matcher.TerminateTypeByTimeout, "")
+			select {
+			case termChan <- NewTermChanType(matcher.TerminateTypeByTimeout, ""):
+			case <-ctx.Done():
+				return
+			}
 			return
 		case <-ctx.Done():
 			sentLen := len(sentUid)
 			writeErr := false
 			for sentLen > 0 {
 				select {
+				case <-ctx.Done():
+					return
 				case uid := <-uidChan:
 					delete(sentUid, uid)
 					sentLen--
@@ -120,12 +140,20 @@ func runResponseHandler(
 			if writeErr {
 				log.Warn(ctx, "Term Condition: Write Error",
 					logger.Value("id", id), logger.Value("on", "runResponseHandler"))
-				termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, "")
+				select {
+				case termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, ""):
+				case <-ctx.Done():
+					return
+				}
 				return
 			}
 			log.Info(ctx, "Term Condition: Context Done",
 				logger.Value("id", id), logger.Value("on", "runResponseHandler"))
-			termChan <- NewTermChanType(matcher.TerminateTypeByContext, "")
+			select {
+			case termChan <- NewTermChanType(matcher.TerminateTypeByContext, ""):
+			case <-ctx.Done():
+				return
+			}
 			return
 		case v := <-resChan:
 			mustWrite := true
@@ -158,6 +186,8 @@ func runResponseHandler(
 				writeErr := false
 				for sentLen > 0 {
 					select {
+					case <-ctx.Done():
+						return
 					case uid := <-uidChan:
 						delete(sentUid, uid)
 						sentLen--
@@ -170,12 +200,20 @@ func runResponseHandler(
 				if writeErr {
 					log.Warn(ctx, "Term Condition: Write Error",
 						logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
-					termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, "")
+					select {
+					case termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, ""):
+					case <-ctx.Done():
+						return
+					}
 					return
 				}
 				log.Info(ctx, "Term Condition: Response Body Write Filter Error",
 					logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
-				termChan <- NewTermChanType(matcher.TerminateTypeByResponseBodyWriteFilterError, matchID)
+				select {
+				case termChan <- NewTermChanType(matcher.TerminateTypeByResponseBodyWriteFilterError, matchID):
+				case <-ctx.Done():
+					return
+				}
 				return
 			}
 			if isMatch {
@@ -198,9 +236,13 @@ func runResponseHandler(
 				}
 				sentUid[uid] = struct{}{}
 				go func() {
-					writeChan <- writeSendData{
+					select {
+					case <-ctx.Done():
+						return
+					case writeChan <- writeSendData{
 						uid:       uid,
 						writeData: writeData,
+					}:
 					}
 				}()
 			}
@@ -209,6 +251,8 @@ func runResponseHandler(
 				sentLen := len(sentUid)
 				for sentLen > 0 {
 					select {
+					case <-ctx.Done():
+						return
 					case uid := <-uidChan:
 						delete(sentUid, uid)
 						sentLen--
@@ -219,7 +263,11 @@ func runResponseHandler(
 				}
 				log.Warn(ctx, "Term Condition: Request Creation Error",
 					logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
-				termChan <- NewTermChanType(matcher.TerminateTypeByCreateRequestError, "")
+				select {
+				case termChan <- NewTermChanType(matcher.TerminateTypeByCreateRequestError, ""):
+				case <-ctx.Done():
+					return
+				}
 				return
 			}
 			if v.HasSystemErr {
@@ -227,6 +275,8 @@ func runResponseHandler(
 					sentLen := len(sentUid)
 					for sentLen > 0 {
 						select {
+						case <-ctx.Done():
+							return
 						case uid := <-uidChan:
 							delete(sentUid, uid)
 							sentLen--
@@ -237,7 +287,11 @@ func runResponseHandler(
 					}
 					log.Warn(ctx, "Term Condition: System Error",
 						logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
-					termChan <- NewTermChanType(matcher.TerminateTypeBySystemError, "")
+					select {
+					case termChan <- NewTermChanType(matcher.TerminateTypeBySystemError, ""):
+					case <-ctx.Done():
+						return
+					}
 					return
 				} else {
 					log.Warn(ctx, "System error occurred",
@@ -249,6 +303,8 @@ func runResponseHandler(
 					sentLen := len(sentUid)
 					for sentLen > 0 {
 						select {
+						case <-ctx.Done():
+							return
 						case uid := <-uidChan:
 							delete(sentUid, uid)
 							sentLen--
@@ -259,7 +315,11 @@ func runResponseHandler(
 					}
 					log.Warn(ctx, "Term Condition: Response Parse Error",
 						logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
-					termChan <- NewTermChanType(matcher.TerminateTypeByParseResponseError, "")
+					select {
+					case termChan <- NewTermChanType(matcher.TerminateTypeByParseResponseError, ""):
+					case <-ctx.Done():
+						return
+					}
 					return
 				} else {
 					log.Warn(ctx, "Parse error occurred",
@@ -271,6 +331,8 @@ func runResponseHandler(
 				writeErr := false
 				for sentLen > 0 {
 					select {
+					case <-ctx.Done():
+						return
 					case uid := <-uidChan:
 						delete(sentUid, uid)
 						sentLen--
@@ -283,13 +345,21 @@ func runResponseHandler(
 				if writeErr {
 					log.Warn(ctx, "Term Condition: Write Error",
 						logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
-					termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, "")
+					select {
+					case termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, ""):
+					case <-ctx.Done():
+						return
+					}
 					return
 				}
 
 				log.Info(ctx, "Term Condition: Count Limit",
 					logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
-				termChan <- NewTermChanType(matcher.TerminateTypeByCount, "")
+				select {
+				case termChan <- NewTermChanType(matcher.TerminateTypeByCount, ""):
+				case <-ctx.Done():
+					return
+				}
 				return
 			}
 			matchID, isMatch, err = request.Break.ResponseBodyMatcher(response)
@@ -300,6 +370,8 @@ func runResponseHandler(
 				writeErr := false
 				for sentLen > 0 {
 					select {
+					case <-ctx.Done():
+						return
 					case uid := <-uidChan:
 						delete(sentUid, uid)
 						sentLen--
@@ -312,13 +384,21 @@ func runResponseHandler(
 				if writeErr {
 					log.Warn(ctx, "Term Condition: Write Error",
 						logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
-					termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, "")
+					select {
+					case termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, ""):
+					case <-ctx.Done():
+						return
+					}
 					return
 				}
 
 				log.Info(ctx, "Term Condition: Response Body Break Filter Error",
 					logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
-				termChan <- NewTermChanType(matcher.TerminateTypeByResponseBodyBreakFilterError, matchID)
+				select {
+				case termChan <- NewTermChanType(matcher.TerminateTypeByResponseBodyBreakFilterError, matchID):
+				case <-ctx.Done():
+					return
+				}
 				return
 			}
 			if isMatch {
@@ -326,6 +406,8 @@ func runResponseHandler(
 				writeErr := false
 				for sentLen > 0 {
 					select {
+					case <-ctx.Done():
+						return
 					case uid := <-uidChan:
 						delete(sentUid, uid)
 						sentLen--
@@ -338,13 +420,21 @@ func runResponseHandler(
 				if writeErr {
 					log.Warn(ctx, "Term Condition: Write Error",
 						logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
-					termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, "")
+					select {
+					case termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, ""):
+					case <-ctx.Done():
+						return
+					}
 					return
 				}
 
 				log.Info(ctx, "Term Condition: Response Body",
 					logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
-				termChan <- NewTermChanType(matcher.TerminateTypeByResponseBody, matchID)
+				select {
+				case termChan <- NewTermChanType(matcher.TerminateTypeByResponseBody, matchID):
+				case <-ctx.Done():
+					return
+				}
 				return
 
 			}
@@ -358,6 +448,8 @@ func runResponseHandler(
 				writeErr := false
 				for sentLen > 0 {
 					select {
+					case <-ctx.Done():
+						return
 					case uid := <-uidChan:
 						delete(sentUid, uid)
 						sentLen--
@@ -370,13 +462,21 @@ func runResponseHandler(
 				if writeErr {
 					log.Warn(ctx, "Term Condition: Write Error",
 						logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
-					termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, "")
+					select {
+					case termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, ""):
+					case <-ctx.Done():
+						return
+					}
 					return
 				}
 
 				log.Info(ctx, "Term Condition: Status Code",
 					logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
-				termChan <- NewTermChanType(matcher.TerminateTypeByStatusCode, matchID)
+				select {
+				case termChan <- NewTermChanType(matcher.TerminateTypeByStatusCode, matchID):
+				case <-ctx.Done():
+					return
+				}
 				return
 			}
 		}
@@ -404,19 +504,35 @@ func RunAsyncProcessing(
 		defer close(writeErrChan)
 		defer close(writeChan)
 		for {
-			d := <-writeChan
-			log.Debug(ctx, "Writing data",
-				logger.Value("id", id), logger.Value("data", d), logger.Value("on", "runAsyncProcessing"))
-			if err := consumer(ctx, log, id, d.writeData); err != nil {
-				log.Error(ctx, "failed to write data",
-					logger.Value("error", err), logger.Value("on", "runAsyncProcessing"))
-				if request.Break.WriteError {
-					writeErrChan <- struct{}{}
-					wroteUidChan <- d.uid
-					continue
+			select {
+			case <-ctx.Done():
+				return
+			case d := <-writeChan:
+				log.Debug(ctx, "Writing data",
+					logger.Value("id", id), logger.Value("data", d), logger.Value("on", "runAsyncProcessing"))
+				if err := consumer(ctx, log, id, d.writeData); err != nil {
+					log.Error(ctx, "failed to write data",
+						logger.Value("error", err), logger.Value("on", "runAsyncProcessing"))
+					if request.Break.WriteError {
+						select {
+						case writeErrChan <- struct{}{}:
+						case <-ctx.Done():
+							return
+						}
+						select {
+						case wroteUidChan <- d.uid:
+						case <-ctx.Done():
+							return
+						}
+						continue
+					}
+				}
+				select {
+				case wroteUidChan <- d.uid:
+				case <-ctx.Done():
+					return
 				}
 			}
-			wroteUidChan <- d.uid
 		}
 	}()
 }
