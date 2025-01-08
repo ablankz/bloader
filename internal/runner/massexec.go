@@ -364,9 +364,7 @@ func (r ValidMassExec) runHTTP(
 ) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-
 	concurrentCount := len(r.Requests)
-
 	threadExecutors := make([]*MassiveExecThreadExecutor, concurrentCount)
 	uniqueName := fmt.Sprintf("%s/%s", outputRoot, utils.GenerateUniqueID())
 
@@ -409,6 +407,7 @@ func (r ValidMassExec) runHTTP(
 			ResponseType: httpexec.ResponseType(request.ResponseType),
 		}
 
+		reqTermChan := make(chan struct{})
 		writers := make([]output.HTTPDataWrite, 0)
 		uName := fmt.Sprintf("%s_%d", uniqueName, i)
 		var writeCloser []output.Close
@@ -450,6 +449,7 @@ func (r ValidMassExec) runHTTP(
 		threadExecutors[i].RequestExecutor = exe
 		threadExecutors[i].TermChan = termChan
 		threadExecutors[i].successBreak = request.SuccessBreak
+		threadExecutors[i].ReqTermChan = reqTermChan
 
 		consumer := func(
 			ctx context.Context,
@@ -477,6 +477,7 @@ func (r ValidMassExec) runHTTP(
 
 		RunAsyncProcessing(
 			ctx,
+			reqTermChan,
 			log,
 			threadExecutors[i].ID,
 			r.Requests[i],
@@ -499,11 +500,11 @@ func (r ValidMassExec) runHTTP(
 				}
 			}()
 			defer wg.Done()
+			defer close(exec.ReqTermChan)
 			if err := exec.Execute(ctx, log, startChan); err != nil {
 				atomicErr.Store(err)
 				log.Error(ctx, "failed to execute",
 					logger.Value("error", err), logger.Value("id", exec.ID))
-				cancel()
 				return
 			}
 		}(executor)
@@ -539,6 +540,7 @@ type MassiveExecThreadExecutor struct {
 	ID              int
 	RequestExecutor httpexec.MassRequestExecutor
 	TermChan        chan termChanType
+	ReqTermChan     chan<- struct{}
 	successBreak    matcher.TerminateTypeAndParamsSlice
 	closer          func() error
 }
@@ -551,7 +553,11 @@ func (e *MassiveExecThreadExecutor) Execute(
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	<-startChan
+	select {
+	case <-ctx.Done():
+		return nil
+	case <-startChan:
+	}
 
 	log.Info(ctx, "Execute Start",
 		logger.Value("ExecutorID", e.ID))

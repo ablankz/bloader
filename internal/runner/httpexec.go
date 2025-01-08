@@ -51,6 +51,7 @@ type ResponseDataConsumer func(
 
 func runResponseHandler(
 	ctx context.Context,
+	reqTermChan <-chan struct{},
 	log logger.Logger,
 	id int,
 	request ValidMassExecRequest,
@@ -77,13 +78,13 @@ func runResponseHandler(
 				select {
 				case uid := <-uidChan:
 					delete(sentUid, uid)
-				case <-ctx.Done():
+				case <-reqTermChan:
 					return
 				}
 			}
 			select {
 			case termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, ""):
-			case <-ctx.Done():
+			case <-reqTermChan:
 				return
 			}
 			return
@@ -92,7 +93,7 @@ func runResponseHandler(
 			writeErr := false
 			for sentLen > 0 {
 				select {
-				case <-ctx.Done():
+				case <-reqTermChan:
 					return
 				case uid := <-uidChan:
 					delete(sentUid, uid)
@@ -108,7 +109,7 @@ func runResponseHandler(
 					logger.Value("id", id), logger.Value("on", "runResponseHandler"))
 				select {
 				case termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, ""):
-				case <-ctx.Done():
+				case <-reqTermChan:
 					return
 				}
 				return
@@ -117,7 +118,7 @@ func runResponseHandler(
 				logger.Value("id", id), logger.Value("on", "runResponseHandler"))
 			select {
 			case termChan <- NewTermChanType(matcher.TerminateTypeByTimeout, ""):
-			case <-ctx.Done():
+			case <-reqTermChan:
 				return
 			}
 			return
@@ -126,7 +127,7 @@ func runResponseHandler(
 			writeErr := false
 			for sentLen > 0 {
 				select {
-				case <-ctx.Done():
+				case <-reqTermChan:
 					return
 				case uid := <-uidChan:
 					delete(sentUid, uid)
@@ -142,7 +143,7 @@ func runResponseHandler(
 					logger.Value("id", id), logger.Value("on", "runResponseHandler"))
 				select {
 				case termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, ""):
-				case <-ctx.Done():
+				case <-reqTermChan:
 					return
 				}
 				return
@@ -151,7 +152,7 @@ func runResponseHandler(
 				logger.Value("id", id), logger.Value("on", "runResponseHandler"))
 			select {
 			case termChan <- NewTermChanType(matcher.TerminateTypeByContext, ""):
-			case <-ctx.Done():
+			case <-reqTermChan:
 				return
 			}
 			return
@@ -186,7 +187,7 @@ func runResponseHandler(
 				writeErr := false
 				for sentLen > 0 {
 					select {
-					case <-ctx.Done():
+					case <-reqTermChan:
 						return
 					case uid := <-uidChan:
 						delete(sentUid, uid)
@@ -202,7 +203,7 @@ func runResponseHandler(
 						logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
 					select {
 					case termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, ""):
-					case <-ctx.Done():
+					case <-reqTermChan:
 						return
 					}
 					return
@@ -211,7 +212,7 @@ func runResponseHandler(
 					logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
 				select {
 				case termChan <- NewTermChanType(matcher.TerminateTypeByResponseBodyWriteFilterError, matchID):
-				case <-ctx.Done():
+				case <-reqTermChan:
 					return
 				}
 				return
@@ -237,7 +238,7 @@ func runResponseHandler(
 				sentUid[uid] = struct{}{}
 				go func() {
 					select {
-					case <-ctx.Done():
+					case <-reqTermChan:
 						return
 					case writeChan <- writeSendData{
 						uid:       uid,
@@ -251,7 +252,7 @@ func runResponseHandler(
 				sentLen := len(sentUid)
 				for sentLen > 0 {
 					select {
-					case <-ctx.Done():
+					case <-reqTermChan:
 						return
 					case uid := <-uidChan:
 						delete(sentUid, uid)
@@ -265,7 +266,7 @@ func runResponseHandler(
 					logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
 				select {
 				case termChan <- NewTermChanType(matcher.TerminateTypeByCreateRequestError, ""):
-				case <-ctx.Done():
+				case <-reqTermChan:
 					return
 				}
 				return
@@ -275,7 +276,7 @@ func runResponseHandler(
 					sentLen := len(sentUid)
 					for sentLen > 0 {
 						select {
-						case <-ctx.Done():
+						case <-reqTermChan:
 							return
 						case uid := <-uidChan:
 							delete(sentUid, uid)
@@ -289,7 +290,7 @@ func runResponseHandler(
 						logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
 					select {
 					case termChan <- NewTermChanType(matcher.TerminateTypeBySystemError, ""):
-					case <-ctx.Done():
+					case <-reqTermChan:
 						return
 					}
 					return
@@ -303,7 +304,7 @@ func runResponseHandler(
 					sentLen := len(sentUid)
 					for sentLen > 0 {
 						select {
-						case <-ctx.Done():
+						case <-reqTermChan:
 							return
 						case uid := <-uidChan:
 							delete(sentUid, uid)
@@ -317,7 +318,7 @@ func runResponseHandler(
 						logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
 					select {
 					case termChan <- NewTermChanType(matcher.TerminateTypeByParseResponseError, ""):
-					case <-ctx.Done():
+					case <-reqTermChan:
 						return
 					}
 					return
@@ -331,7 +332,7 @@ func runResponseHandler(
 				writeErr := false
 				for sentLen > 0 {
 					select {
-					case <-ctx.Done():
+					case <-reqTermChan:
 						return
 					case uid := <-uidChan:
 						delete(sentUid, uid)
@@ -347,7 +348,7 @@ func runResponseHandler(
 						logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
 					select {
 					case termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, ""):
-					case <-ctx.Done():
+					case <-reqTermChan:
 						return
 					}
 					return
@@ -357,7 +358,7 @@ func runResponseHandler(
 					logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
 				select {
 				case termChan <- NewTermChanType(matcher.TerminateTypeByCount, ""):
-				case <-ctx.Done():
+				case <-reqTermChan:
 					return
 				}
 				return
@@ -370,7 +371,7 @@ func runResponseHandler(
 				writeErr := false
 				for sentLen > 0 {
 					select {
-					case <-ctx.Done():
+					case <-reqTermChan:
 						return
 					case uid := <-uidChan:
 						delete(sentUid, uid)
@@ -386,7 +387,7 @@ func runResponseHandler(
 						logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
 					select {
 					case termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, ""):
-					case <-ctx.Done():
+					case <-reqTermChan:
 						return
 					}
 					return
@@ -396,7 +397,7 @@ func runResponseHandler(
 					logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
 				select {
 				case termChan <- NewTermChanType(matcher.TerminateTypeByResponseBodyBreakFilterError, matchID):
-				case <-ctx.Done():
+				case <-reqTermChan:
 					return
 				}
 				return
@@ -406,7 +407,7 @@ func runResponseHandler(
 				writeErr := false
 				for sentLen > 0 {
 					select {
-					case <-ctx.Done():
+					case <-reqTermChan:
 						return
 					case uid := <-uidChan:
 						delete(sentUid, uid)
@@ -422,7 +423,7 @@ func runResponseHandler(
 						logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
 					select {
 					case termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, ""):
-					case <-ctx.Done():
+					case <-reqTermChan:
 						return
 					}
 					return
@@ -432,7 +433,7 @@ func runResponseHandler(
 					logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
 				select {
 				case termChan <- NewTermChanType(matcher.TerminateTypeByResponseBody, matchID):
-				case <-ctx.Done():
+				case <-reqTermChan:
 					return
 				}
 				return
@@ -448,7 +449,7 @@ func runResponseHandler(
 				writeErr := false
 				for sentLen > 0 {
 					select {
-					case <-ctx.Done():
+					case <-reqTermChan:
 						return
 					case uid := <-uidChan:
 						delete(sentUid, uid)
@@ -464,7 +465,7 @@ func runResponseHandler(
 						logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
 					select {
 					case termChan <- NewTermChanType(matcher.TerminateTypeByWriteError, ""):
-					case <-ctx.Done():
+					case <-reqTermChan:
 						return
 					}
 					return
@@ -474,7 +475,7 @@ func runResponseHandler(
 					logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
 				select {
 				case termChan <- NewTermChanType(matcher.TerminateTypeByStatusCode, matchID):
-				case <-ctx.Done():
+				case <-reqTermChan:
 					return
 				}
 				return
@@ -485,6 +486,7 @@ func runResponseHandler(
 
 func RunAsyncProcessing(
 	ctx context.Context,
+	reqTermChan <-chan struct{},
 	log logger.Logger,
 	id int,
 	request ValidMassExecRequest,
@@ -496,7 +498,7 @@ func RunAsyncProcessing(
 	wroteUidChan := make(chan uuid.UUID)
 	writeErrChan := make(chan struct{})
 	go func() {
-		runResponseHandler(ctx, log, id, request, termChan, writeErrChan, wroteUidChan, resChan, writeChan)
+		runResponseHandler(ctx, reqTermChan, log, id, request, termChan, writeErrChan, wroteUidChan, resChan, writeChan)
 	}()
 
 	go func() {
@@ -505,7 +507,7 @@ func RunAsyncProcessing(
 		defer close(writeChan)
 		for {
 			select {
-			case <-ctx.Done():
+			case <-reqTermChan:
 				return
 			case d := <-writeChan:
 				log.Debug(ctx, "Writing data",
@@ -516,12 +518,12 @@ func RunAsyncProcessing(
 					if request.Break.WriteError {
 						select {
 						case writeErrChan <- struct{}{}:
-						case <-ctx.Done():
+						case <-reqTermChan:
 							return
 						}
 						select {
 						case wroteUidChan <- d.uid:
-						case <-ctx.Done():
+						case <-reqTermChan:
 							return
 						}
 						continue
@@ -529,7 +531,7 @@ func RunAsyncProcessing(
 				}
 				select {
 				case wroteUidChan <- d.uid:
-				case <-ctx.Done():
+				case <-reqTermChan:
 					return
 				}
 			}
