@@ -4,16 +4,25 @@ title: "Welcome to Bloader"
 nav_order: 1
 ---
 
-# Welcome to Bloader Documentation 🚀
+# Bloader Documentation 🚀
 
-Bloader is a modern and flexible benchmarking tool designed for easy and powerful load testing. Explore the documentation to learn more.
+Welcome to the official documentation for **Bloader**, the modern benchmarking tool that simplifies load testing. Whether you're a seasoned developer or just starting, Bloader provides flexibility and power for all your testing needs.
 
-- **[Overview](docs/overview.md)**: Understand the core features.
-- **[Installation](docs/installation.md)**: Get started with setup.
-- **[Configuration](docs/configuration/master.md)**: Learn how to configure Bloader.
-- **[Commands](docs/commands.md)**: Explore available commands.
-- **[Examples](docs/examples/master_example.md)**: See real-world examples.
+### 🛠 Features
+- Internal Store for managing requests.
+- **Master-Slave Architecture** with gRPC for distributed testing.
+- YAML-based configuration with **Sprig** template engine.
+
+---
+
+### 📖 Navigation
+- **[Overview](overview.md)**: Understand the tool and its core features.
+- **[Installation](installation.md)**: Step-by-step installation guide.
+- **[Configuration](configuration/index.md)**: Learn how to configure Bloader.
+- **[Commands](commands/index.md)**: Explore all available commands.
+- **[Loaders](loaders/index.md)**: Discover supported loaders and their flexibility.
+- **[Examples](examples/master_example.md)**: See real-world usage.
 
 <div align="center">
-  <a href="https://github.com/yourusername/bloader" class="btn btn-primary">Get Started on GitHub</a>
+  <a href="https://github.com/yourusername/bloader" class="btn btn-primary">View on GitHub</a>
 </div>
