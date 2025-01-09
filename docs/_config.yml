@@ -8,6 +8,8 @@ timezone: "UTC"
 # Theme
 remote_theme: "pmarsceill/just-the-docs"
 
+markdown: kramdown
+
 # Plugins
 plugins:
   - jekyll-feed
