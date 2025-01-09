@@ -1,6 +1,6 @@
 # Site Information
 title: "Bloader"
-description: "A modern and flexible load testing tool for your benchmarking needs.🚀"
+description: "A modern and flexible load testing tool for your benchmarking needs🚀"
 author: "Hayashi Kenta"
 lang: "en"
 timezone: "UTC"
@@ -10,7 +10,6 @@ remote_theme: "pmarsceill/just-the-docs"
 
 # Plugins
 plugins:
-  - jekyll-default-layout
   - jekyll-feed
   - jekyll-seo-tag
   - jekyll-sitemap
