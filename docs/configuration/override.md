@@ -1,18 +1,18 @@
-# Override Settings 🎛️✨
+# Override Settings
 
-The **override feature** enables dynamic configuration changes for different environments, making it more flexible and environment-specific. 🌐 Items can be overridden using **file** or **static** methods, with priority given to the last-defined override. 🔄
+The **override feature** enables dynamic configuration changes for different environments, making it more flexible and environment-specific. Items can be overridden using **file** or **static** methods, with priority given to the last-defined override.
 
 ## Key Features 🔑
-- 🌍 Environment-specific overrides via `enabled_env`.
-- 🗂️ Overrides applied later in the configuration file take precedence.
+- Environment-specific overrides via `enabled_env`.
+- Overrides applied later in the configuration file take precedence.
 - Supported types: **file** and **static**.
 
 ---
 
 ## Override Types 🛠️
 
-### Static 🔧
-Static overrides allow fine-grained control over configuration, such as targeting specific array elements. 📋
+### Static
+Static overrides allow fine-grained control over configuration, such as targeting specific array elements.
 
 ```yaml
 - type: "static"
@@ -23,17 +23,17 @@ Static overrides allow fine-grained control over configuration, such as targetin
 ```
 
 **Key Points:**
-- 🎯 Use `key` to specify the target configuration.
-- 🌐 Apply overrides for specific environments using `enabled_env`.
-- Flexible and suitable for small, specific changes. ✅
+- Use `key` to specify the target configuration.
+- Apply overrides for specific environments using `enabled_env`.
+- Flexible and suitable for small, specific changes.
 
 ---
 
 ### File 📂
-File-based overrides are divided into two patterns: **full file overrides** and **partial file overrides**. 📝
+File-based overrides are divided into two patterns: **full file overrides** and **partial file overrides**. 
 
-#### 1. Full File Override 🌟
-In this method, the entire configuration is replaced with the contents of the specified file. 🗃️
+#### 1. Full File Override
+In this method, the entire configuration is replaced with the contents of the specified file. 
 
 ```yaml
 - type: "file"
@@ -57,14 +57,14 @@ clock:
 ```
 
 **Key Points:**
-- 📝 The file must follow the **Bloader config format**.
-- 🚀 Ideal for replacing entire configurations in bulk.
-- 🔄 Automatically applies for all environments if `enabled_env` is not specified.
+- The file must follow the **Bloader config format**.
+- Ideal for replacing entire configurations in bulk.
+- Automatically applies for all environments if `enabled_env` is not specified.
 
 ---
 
 #### 2. Partial File Override 🧩
-This method updates specific configuration items without requiring the file to follow the full config format. 🎯
+This method updates specific configuration items without requiring the file to follow the full config format.
 
 ```yaml
 - type: "file"
@@ -82,14 +82,10 @@ encrypt_key: "y8sF2gVz4MwqYLn3RtJxNk7P"
 ```
 
 **Key Points:**
-- 🔄 Focuses on specific items, similar to `static`.
-- ✅ Great for small adjustments without needing full config compliance.
-- 📈 Scalable for environments with diverse override requirements.
+- Focuses on specific items, similar to `static`.
+- Great for small adjustments without needing full config compliance.
+- Scalable for environments with diverse override requirements.
 
 ---
-
-## Visual Guide 🖼️
-- **✔️ Required**: Configuration must be defined for the feature to function.
-- **❌ Not Required**: Optional and can be omitted without impacting functionality.
 
 Use override settings to create flexible and efficient configurations tailored to your application’s needs. 🎉

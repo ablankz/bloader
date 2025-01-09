@@ -2,7 +2,6 @@
 layout: default
 title: "Configuration"
 nav_order: 3
-has_children: true
 ---
 
 # Configuration 🎛️
@@ -15,7 +14,7 @@ Bloader's configuration system is designed for simplicity and flexibility, lever
 - Environment variables starting with `BLOADER_` can be overridden. Override is preferred over[Override Mechanism](override.md).
 
 ## Configuration Options
-1. **[Configurable Properties](prop.md)**: Properties that should be set as properties
+1. **[Configurable Properties](prop.html)**: Properties that should be set as properties
 2. **[Override Properties](override.md)**: Overwriting of configuration files by files and constants
 3. **[Sample Configuration](sample.md)**: Indicates a configuration that serves as a configuration sample
 4. **[Communication between Master and Slave](communication.md)**: Notes on communication between Master and Slave
