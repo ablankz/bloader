@@ -117,8 +117,8 @@ const (
 
 // RunnerSleepValue represents the sleep value for a runner
 type RunnerSleepValue struct {
-	Duration *string
-	After    *string
+	Duration *string `yaml:"duration"`
+	After    *string `yaml:"after"`
 }
 
 // ValidRunnerSleepValue represents a valid runner sleep value

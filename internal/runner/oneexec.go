@@ -23,10 +23,10 @@ const (
 
 // OneExec represents the OneExec runner
 type OneExec struct {
-	Type    *string        `yaml:"type"`
-	Output  OneExecOutput  `yaml:"output"`
-	Auth    OneExecAuth    `yaml:"auth"`
-	Request OneExecRequest `yaml:"request"`
+	Type    *string         `yaml:"type"`
+	Output  OneExecOutput   `yaml:"output"`
+	Auth    OneExecAuth     `yaml:"auth"`
+	Request *OneExecRequest `yaml:"request"`
 }
 
 // ValidOneExec represents the valid OneExec runner
@@ -63,6 +63,9 @@ func (r OneExec) Validate(
 	validAuth, err = r.Auth.Validate(ctx, authFactor)
 	if err != nil {
 		return ValidOneExec{}, fmt.Errorf("failed to validate auth: %v", err)
+	}
+	if r.Request == nil {
+		return ValidOneExec{}, fmt.Errorf("request is required")
 	}
 	validRequest, err := r.Request.Validate(ctx, targetFactor)
 	if err != nil {

@@ -180,10 +180,9 @@ func (r HTTPRequest) CreateRequest(ctx context.Context, log logger.Logger, count
 					continue
 				}
 				if arr, ok := value.(map[string]string); ok {
-					fieldName, fieldOk := arr["field_name"]
 					fileName, fileOk := arr["file_name"]
 					filePath, pathOk := arr["file_path"]
-					if !fieldOk || !fileOk || !pathOk {
+					if !fileOk || !pathOk {
 						return nil, fmt.Errorf("invalid multipart body: %v", value)
 					}
 					file, err := os.Open(filePath)
@@ -191,7 +190,7 @@ func (r HTTPRequest) CreateRequest(ctx context.Context, log logger.Logger, count
 						return nil, fmt.Errorf("failed to open file: %w", err)
 					}
 					defer file.Close()
-					part, err := writer.CreateFormFile(fieldName, fileName)
+					part, err := writer.CreateFormFile(key, fileName)
 					if err != nil {
 						return nil, fmt.Errorf("failed to create form file: %w", err)
 					}

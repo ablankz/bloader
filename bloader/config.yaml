@@ -146,7 +146,6 @@ language:
 # The bottom one takes precedence.
 override:
   - type: "file"
-    # The file_type is required to load the file, supported types are `yaml`, `json`.
     file_type: "yaml"
     path: "bloader/static_encrypt.yaml"
     partial: true

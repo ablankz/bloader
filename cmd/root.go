@@ -42,7 +42,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().StringP("config", "c", "", "config file (default is ./bloaderconfig.yaml, $HOME/configs/config.yaml, or /etc/bloader/config.yaml)")
+	rootCmd.PersistentFlags().StringP("config", "c", "", "config file (default is ./bloader/config.yaml, $HOME/bloader/config.yaml, or /etc/bloader/config.yaml)")
 	if err := viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config")); err != nil {
 		fmt.Printf("Error binding flag: %v\n", err)
 		os.Exit(1)
@@ -60,7 +60,7 @@ func initConfig() {
 			os.Exit(1)
 		}
 		viper.AddConfigPath("./bloader")
-		viper.AddConfigPath(homeDir + "/configs")
+		viper.AddConfigPath(homeDir + "/bloader")
 		viper.AddConfigPath("/etc/bloader")
 		viper.SetConfigName("config")
 		// viper.SetConfigType("yaml")
