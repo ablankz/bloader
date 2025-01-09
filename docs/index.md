@@ -24,5 +24,5 @@ Welcome to the official documentation for **Bloader**, the modern benchmarking t
 - **[Examples](examples/master_example.md)**: See real-world usage.
 
 <div align="center">
-  <a href="https://github.com/yourusername/bloader" class="btn btn-primary">View on GitHub</a>
+  <a href="https://github.com/ablankz/bloader" class="btn btn-primary">View on GitHub</a>
 </div>
