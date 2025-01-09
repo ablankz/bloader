@@ -1,8 +1,10 @@
-# Configuration Items
+# Visual Guide 🖼️
+- **✅ Required**: Configuration must be defined for the feature to function.
+- **❌ Not Required**: Optional and can be omitted without impacting functionality.
 
-This page outlines the configuration items and their attributes, making use of clear and modern visuals. 🚀
+# Configuration Props
 
-## General Items 🛠️
+## General Props 🛠️
 | **Item**            | **Description**                                 | **Required**      | **Type**   |
 |---------------------|-----------------------------------------------|------------------|-----------|
 | `type`              | Master or slave configuration role            | ✅               | `string`  |
@@ -149,9 +151,3 @@ This page outlines the configuration items and their attributes, making use of c
 | `override[].vars[].key` | Key to override                                          | ✅ (static) | `string`   |
 | `override[].vars[].value` | Value to assign                                        | ✅ (static) | `string`   |
 | `override[].enabled_env` | List of environments where the override is enabled      | ❌           | `[]string` |
-
----
-
-# Visual Guide 🖼️
-- **✔️ Required**: Configuration must be defined for the feature to function.
-- **❌ Not Required**: Optional and can be omitted without impacting functionality.
