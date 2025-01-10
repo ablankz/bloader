@@ -4,12 +4,13 @@ parent: Configuration
 nav_order: 4
 ---
 
-### Master and Slave Overview
+# Master and Slave Overview
 
-#### Output Handling 📤
+### Output Handling 📤
 - All output operations are handled **entirely on the Master side**. For example, when using an output type such as `type=local`, the output is **not written to the Slave's local file**. Instead, the data is **transmitted to the Master**, where it is written to the **Master's local file system**.
 
-#### Communication Security 🔒
+### Communication Security 🔒
+
 {: .warning }
 > It is recommended to read this section with caution, as it is not only about the bloader, but also about the security of the measurement target.
 

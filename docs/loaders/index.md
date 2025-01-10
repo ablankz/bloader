@@ -144,4 +144,32 @@ requests:
 ```
 {% endraw %}
 
+## Template Variables 📋
+
+Below is the list of variables available for use in templates:
+
+```yaml
+SlaveValues:          # Data from the global memory store
+ThreadValues:         # Data from the thread memory store
+Dynamic:
+  OutputRoot:         # Current output root directory
+  LoopCount:          # Counter incremented for each loop in Flow when `count` is specified
+  CallCount:          # Counter incremented for each nested Flow
+  RequestLoopCount:   # Counter incremented sequentially for each request in MassExecute
+SlaveValues:
+  SlaveID:            # The SlaveID defined in SlaveConnect
+  Index:              # Index of executors in the Slave, incremented from the top
+```
+
+## Load Event
+
+The loader has events, and each loader can start processing or notify the user according to the events issued by the loader.
+
+{: .note }
+> These functions are still developing and many of them are not yet implemented.
+
+This functionality is available through the [Event](. /event.md) section.
+
+---
+
 Explore the individual loader pages for detailed examples and configurations.

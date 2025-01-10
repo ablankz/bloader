@@ -3,22 +3,163 @@ title: Command
 nav_order: 3
 ---
 
-# Configuration 🎛️
+# Available Commands 📤
 
-Bloader's configuration system is designed for simplicity and flexibility, leveraging **YAML** and **Sprig** templates to suit a variety of needs.
+#### Common Options
 
-## Features
-- Any format supported by Viper, such as yaml, json, toml, etc., can be read. 
-- The configuration file for master and slave is different from each other. 
-- Environment variables starting with `BLOADER_` can be overridden. Override is preferred [Override Mechanism](override.md).
+Bloader explores configuration files in the following order by default: `./bloader`, `$HOME/bloader`, `/etc/bloader`. It searches for `config.*` files (supported formats align with Viper's supported formats). To override this behavior, use the `-c` (or `--config`) option:
 
-## Configuration Options
-1. **[Configurable Properties](prop.md)**: Properties that should be set as properties
-2. **[Override Properties](override.md)**: Overwriting of configuration files by files and constants
-3. **[Sample Configuration](sample.md)**: Indicates a configuration that serves as a configuration sample
-4. **[Communication between Master and Slave](communication.md)**: Notes on communication between Master and Slave
+```bash
+bloader {command} -c $HOME/custom/bloader/config.yaml
+```
 
-Explore each section to customize Bloader to your needs.
+You can also display help for any command using the `-h` (or `--help`) option.
+
+---
+
+### Common Commands
+
+#### Display Help
+```bash
+bloader help
+```
+
+#### Generate Completion Scripts
+Generate shell completion scripts for supported shells (`bash`, `zsh`, `fish`, `powershell`):
+```bash
+bloader completion bash
+```
+
+#### View Current Configuration
+Display the current configuration after file and environment variable overrides:
+```bash
+bloader config
+```
+
+---
+
+### Encryption Commands
+
+#### Encrypt (alias: `enc`)
+Perform encryption or decryption using encryption methods defined in the configuration. Specify the `encryptID` with `-i` (or `--id`).
+
+- **Encrypt Data**:
+  ```bash
+  bloader encrypt test -i encryptStaticCBC
+  ```
+  Output:
+  ```bash
+  Encrypted text: bltBHtsdAUUoHxPxRzyTZgN91TPmHP5rSKnIaAxIeM0=
+  ```
+
+- **Decrypt Data**:
+  ```bash
+  bloader encrypt bltBHtsdAUUoHxPxRzyTZgN91TPmHP5rSKnIaAxIeM0= -i encryptStaticCBC -d
+  ```
+  Output:
+  ```bash
+  Decrypted text: test
+  ```
+
+---
+
+### Master-Only Commands
+
+#### Authentication (alias: `auth`)
+Manage authentication for OAuth or JWT-based authentication methods. Tokens are stored in the internal database.
+
+- **Login or Refresh Authentication**:
+  ```bash
+  bloader auth login
+  bloader auth refresh
+  ```
+  Use `-i` (or `--id`) to specify an `authID`. If omitted, the default `auth` is used.
+
+---
+
+#### Store Commands (alias: `st`)
+Operate on the internal database. These commands affect only the database of the current environment.
+
+##### List Buckets (alias: `ls`)
+List all buckets:
+```bash
+bloader store list
+```
+
+##### Manage Objects (alias: `obj`)
+Operate on objects within a specified bucket using `-b` (or `--bucket`).
+
+- **Delete an Object**:
+  ```bash
+  bloader store object delete --bucket $BUCKET_ID objectKey
+  ```
+
+- **Retrieve an Object**:
+  ```bash
+  bloader store object get --bucket $BUCKET_ID objectKey
+  ```
+
+- **List All Keys in a Bucket**:
+  ```bash
+  bloader store object list --bucket $BUCKET_ID
+  ```
+
+- **Store a String Object**:
+  ```bash
+  bloader store object put --bucket $BUCKET_ID objectKey objectValue
+  ```
+
+For `get` and `put`, use `-e` (or `--encrypt`) to specify encryption settings.
+
+##### Clear All Data
+```bash
+bloader store clear
+```
+
+---
+
+#### Output Commands (alias: `out`)
+
+##### Clear Outputs
+Clear specific outputs using `-i` (or `--id`), or clear all outputs using `-A` (or `--all`):
+```bash
+bloader output clear -A
+```
+
+---
+
+#### Run Load Test
+Run load tests using loader files.
+
+- **Interactive File Input**:
+  ```bash
+  bloader run
+  ```
+  You'll be prompted for the file path:
+  ```bash
+  ✔ Enter the file to run the load test:
+  ```
+
+- **Specify File and Data Inline**:
+  ```bash
+  bloader run -f main.yaml -d IntData=10:i -d StrData=test:s
+  ```
+
+---
+
+### Slave-Only Commands
+
+#### Slave Commands (alias: `sl`)
+
+##### Run Slave Server
+Start the gRPC server for the slave:
+```bash
+bloader slave run -c bloader/slave_config.yaml
+```
+
+---
+
+These commands provide a flexible and comprehensive way to manage and execute load testing tasks with Bloader. 
 
 
 
