@@ -1,12 +1,24 @@
+---
+title: Configuration Properties
+parent: Configuration
+nav_order: 1
+---
 # Visual Guide 🖼️
 - **✅ Required**: Configuration must be defined for the feature to function.
 - **❌ Not Required**: Optional and can be omitted without impacting functionality.
 
 # Configuration Props
 
+| head1        | head two          | three |
+|:-------------|:------------------|:------|
+| ok           | good swedish fish | nice  |
+| out of stock | good and plenty   | nice  |
+| ok           | good `oreos`      | hmm   |
+| ok           | good `zoute` drop | yumm  |
+
 ## General Props 🛠️
-| **Item**            | **Description**                                 | **Required**      | **Type**   |
-|---------------------|-----------------------------------------------|------------------|-----------|
+| **Item**            | **Description**                               | **Required**       | **Type**    |
+|:--------------------|:----------------------------------------------|:------------------:|:-----------:|
 | `type`              | Master or slave configuration role            | ✅               | `string`  |
 | `env`               | Environment identifier (user-defined)         | ✅               | `string`  |
 | `loader`            | Loader settings for workload definitions      | ✅ (master) ❌ (slave) | `object`  |

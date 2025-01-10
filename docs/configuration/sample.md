@@ -1,3 +1,8 @@
+---
+title: Configuration Sample
+parent: Configuration
+nav_order: 3
+---
 # Sample Configuration
 
 ## Master Sample Configuration (YAML)

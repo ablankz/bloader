@@ -1,27 +1,3 @@
-<!-- ---
-layout: default
-title: "Welcome to Bloader"
-nav_order: 1
----
-
-# Bloader Documentation 🚀
-
-Welcome to the official documentation for **Bloader**, the modern benchmarking tool that simplifies load testing. Whether you're a seasoned developer or just starting, Bloader provides flexibility and power for all your testing needs.
-
-### 🛠 Features
-- Internal Store for managing requests.
-- **Master-Slave Architecture** with gRPC for distributed testing.
-- YAML-based configuration with **Sprig** template engine.
-
----
-
-
-
-<div align="center">
-  <a href="https://github.com/ablankz/bloader" class="btn btn-primary">View on GitHub</a>
-</div> -->
-
-
 ---
 title: Home
 layout: home
@@ -76,7 +52,7 @@ More specifically, the created site:
 <!-- - uses a gem-based approach, i.e. uses a `Gemfile` and loads the `just-the-docs` gem
 - uses the [GitHub Pages / Actions workflow] to build and publish the site on GitHub Pages -->
 
-Other than that, you're free to customize sites that you create with the template, however you like. You can easily change the versions of `just-the-docs` and Jekyll it uses, as well as adding further plugins.
+<!-- Other than that, you're free to customize sites that you create with the template, however you like. You can easily change the versions of `just-the-docs` and Jekyll it uses, as well as adding further plugins. -->
 
 {: .note }
 See [README][Bloader README] for a brief documentation.

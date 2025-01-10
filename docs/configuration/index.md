@@ -1,8 +1,6 @@
 ---
-layout: default
-title: "Configuration"
-nav_order: 1
-has_children: true
+title: Configuration
+nav_order: 2
 ---
 
 # Configuration 🎛️

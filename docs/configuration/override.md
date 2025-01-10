@@ -1,3 +1,8 @@
+---
+title: Configuration Override
+parent: Configuration
+nav_order: 2
+---
 # Override Settings
 
 The **override feature** enables dynamic configuration changes for different environments, making it more flexible and environment-specific. Items can be overridden using **file** or **static** methods, with priority given to the last-defined override.
