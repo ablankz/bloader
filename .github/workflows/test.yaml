@@ -5,7 +5,10 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+  actions: read
+  checks: write
+  pull-requests: write
 
 jobs:
   test-go:
@@ -13,11 +16,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GOTESTSUM_BIN: "${{ github.workspace }}/.tmp/gotestsum/bin"
-    permissions:
-      contents: write
-      actions: read
-      checks: write
-      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
