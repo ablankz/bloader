@@ -16,6 +16,13 @@ nav_order: 1
 | ok           | good `oreos`      | hmm   |
 | ok           | good `zoute` drop | yumm  |
 
+| Item             | Description                                   | Required             | Type      |
+|:-----------------|:----------------------------------------------|:--------------------:|:---------:|
+| type             | Master or slave configuration role            | /                    | `string`  |
+| env              | Environment identifier (user-defined)         | /                    | `string`  |
+| loader           | Loader settings for workload definitions      | / (master) X (slave) | `object`  |
+| loader.base_path | Base path for the loader                      | / (master) X (slave) | `string`  |
+
 ## General Props 🛠️
 | **Item**            | **Description**                               | **Required**       | **Type**    |
 |:--------------------|:----------------------------------------------|:------------------:|:-----------:|
