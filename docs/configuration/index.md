@@ -1,7 +1,7 @@
 ---
 layout: default
 title: "Configuration"
-nav_order: 2
+nav_order: 1
 has_children: true
 ---
 
@@ -12,7 +12,7 @@ Bloader's configuration system is designed for simplicity and flexibility, lever
 ## Features
 - Any format supported by Viper, such as yaml, json, toml, etc., can be read. 
 - The configuration file for master and slave is different from each other. 
-- Environment variables starting with `BLOADER_` can be overridden. Override is preferred over[Override Mechanism](override.md).
+- Environment variables starting with `BLOADER_` can be overridden. Override is preferred [Override Mechanism](override.md).
 
 ## Configuration Options
 1. **[Configurable Properties](prop.md)**: Properties that should be set as properties
