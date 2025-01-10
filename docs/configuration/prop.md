@@ -14,9 +14,9 @@ nav_order: 1
 | ok           | good swedish fish | nice  |
 | out of stock | good and plenty   | nice  |
 | ok           | good `oreos`      | hmm   |
-| ok           | good `zoute` drop | yumm  |
+| ok           | good `zoute` drop | yumm  | -->
 
-| **Item**               | **Description**                                   | **Required**             | **Type**      |
+<!-- | **Item**               | **Description**                                   | **Required**             | **Type**      |
 |:-----------------------|:--------------------------------------------------|:------------------------:|:------------:|
 | `type`                 | Master or slave configuration role                | ✅                        | `string`      |
 | `env`                  | Environment identifier (user-defined)             | ✅                        | `string`      |
@@ -24,14 +24,16 @@ nav_order: 1
 | `loader.base_path`     | Base path for the loader                          | ✅ (master) ❌ (slave)     | `string`      | -->
 
 ## General Props 🛠️
+
 | **Item**            | **Description**                               | **Required**           | **Type**    |
 |:--------------------|:----------------------------------------------|:----------------------:|:-----------:|
-| `type`              | Master or slave configuration role            | ✅                     | `string`    |
-| `env`               | Environment identifier (user-defined)         | ✅                     | `string`    |
-| `loader`            | Loader settings for workload definitions      | ✅ (master) ❌ (slave) | `object`    |
-| `loader.base_path`  | Base path for the loader                      | ✅ (master) ❌ (slave) | `string`    |
+| `type`              | Master or slave configuration role            | ✅                      | `string`    |
+| `env`               | Environment identifier (user-defined)         | ✅                      | `string`    |
+| `loader`            | Loader settings for workload definitions      | ✅ (master) ❌ (slave)   | `object`    |
+| `loader.base_path`  | Base path for the loader                      | ✅ (master) ❌ (slave)   | `string`    |
 
 ## Targets 🎯
+
 | **Item**                 | **Description**                             | **Required**           | **Type**   |
 |:-------------------------|:--------------------------------------------|:----------------------:|:-----------|
 | `targets`                | Measurement targets                         | ✅ (master) ❌ (slave) | `[]object` |
@@ -42,6 +44,7 @@ nav_order: 1
 | `targets[].values[].url` | Target URL (when `type=http`)               | ✅                     | `string`   |
 
 ## Outputs 📤
+
 | **Item**                       | **Description**                        | **Required**           | **Type**    |
 |:-------------------------------|:---------------------------------------|:----------------------:|:-----------:|
 | `outputs`                      | Output settings                        | ✅ (master) ❌ (slave) | `[]object`  |
@@ -53,6 +56,7 @@ nav_order: 1
 | `outputs[].values[].base_path` | Base path for output files             | ✅                     | `string`    |
 
 ## Store 🗄️
+
 | **Item**             | **Description**                  | **Required**            | **Type**    |
 |:---------------------|:---------------------------------|:-----------------------:|:-----------:|
 | `store`              | Internal database settings       | ✅ (master) ❌ (slave)  | `object`    |
@@ -62,6 +66,7 @@ nav_order: 1
 | `store.buckets`      | List of predefined bucket names  | ✅                      | `[]string`  |
 
 ## Encryption 🔐
+
 | **Item**                              | **Description**                                            | **Required**                 | **Type**    |
 |:--------------------------------------|:-----------------------------------------------------------|:----------------------------:|:-----------:|
 | `encrypts`                            | Encryption settings                                        | ✅                           | `[]object`  |
@@ -76,6 +81,7 @@ nav_order: 1
 | `encrypts[].store.encrypt.encrypt_id` | Encryption ID for key management           
 
 ## Authentication 🔑
+
 | **Item**                                            | **Description**                                                      | **Required**                                      | **Type**    |
 |:----------------------------------------------------|:---------------------------------------------------------------------|:-------------------------------------------------------:|:------------:|
 | `auth`                                              | Authentication settings                                              | ✅ (master) ❌ (slave)                                                   | `[]object`  |
@@ -115,23 +121,26 @@ nav_order: 1
 | `auth[].jwt.credential.store.encrypt.encrypt_id`    | Encryption ID for JWT credential storage                             | ✅ (if `encrypt.enabled=true`)                                            | `string`      |
 
 ## Server Settings ⚙️
-| **Item**                | **Description**                                                   | **Required**           | **Type**  |
-|:-------------------------|:-------------------------------------------------------------------|:-----------------------:|:----------:|
-| `server`                | Server-related configurations                                    | ✅ (master) ❌ (slave) | `object` |
-| `server.port`           | Port for the server                                              | ✅                    | `int`    |
-| `server.redirect_port`  | Port for OAuth redirect (defaults to `server.port` if not set)   | ❌                    | `int`    |
+
+| **Item**                | **Description**                                                  | **Required**           | **Type**  |
+|:------------------------|:-----------------------------------------------------------------|:----------------------:|:---------:|
+| `server`                | Server-related configurations                                    | ✅ (master) ❌ (slave) | `object`  |
+| `server.port`           | Port for the server                                              | ✅                     | `int`     |
+| `server.redirect_port`  | Port for OAuth redirect (defaults to `server.port` if not set)   | ❌                     | `int`     |
 
 ## Slave Settings 🤝
-| **Item**                         | **Description**                                                | **Required**         | **Type**  |
-|:----------------------------------|:--------------------------------------------------------------|:---------------------:|:----------:|
-| `slave_setting`                  | Configuration for slave mode                                  | ❌ (master) ✅ (slave) | `object` |
-| `slave_setting.port`             | gRPC server port for the slave                               | ✅                   | `int`    |
-| `slave_setting.certificate`      | TLS certificate settings for secure communication            | ❌                   | `object` |
-| `slave_setting.certificate.enabled` | Enable TLS communication for the slave                     | ❌                   | `boolean` |
-| `slave_setting.certificate.slave_cert` | Path to the TLS certificate for the slave               | ✅                   | `string` |
-| `slave_setting.certificate.slave_key` | Path to the TLS private key for the slave                | ✅                   | `string` |
+
+| **Item**                               | **Description**                                         | **Required**           | **Type**   |
+|:---------------------------------------|:--------------------------------------------------------|:----------------------:|:----------:|
+| `slave_setting`                        | Configuration for slave mode                            | ❌ (master) ✅ (slave) | `object`   |
+| `slave_setting.port`                   | gRPC server port for the slave                          | ✅                     | `int`      |
+| `slave_setting.certificate`            | TLS certificate settings for secure communication       | ❌                     | `object`   |
+| `slave_setting.certificate.enabled`    | Enable TLS communication for the slave                  | ❌                     | `boolean`  |
+| `slave_setting.certificate.slave_cert` | Path to the TLS certificate for the slave               | ✅                     | `string`   |
+| `slave_setting.certificate.slave_key`  | Path to the TLS private key for the slave               | ✅                     | `string`   |
 
 ## Logging 📋
+
 | **Item**                    | **Description**                                                   | **Required**  | **Type**    |
 |:-----------------------------|:-------------------------------------------------------------------|:--------------:|:------------:|
 | `logging`                   | Logging-related configurations                                   | ✅           | `object`   |
@@ -144,6 +153,7 @@ nav_order: 1
 | `logging.output[].address`  | Address for log output (required if `type=tcp`)                 | ✅ (if tcp)  | `string`   |
 
 ## Clock Settings ⏰
+
 | **Item**                    | **Description**                                                   | **Required**  | **Type**    |
 |:-----------------------------|:-------------------------------------------------------------------|:--------------:|:------------:|
 | `clock`                     | Clock-related configurations (currently unused)                  | ✅           | `object`   |
@@ -153,12 +163,14 @@ nav_order: 1
 | `clock.format`              | Format for displaying time (default: `2006-01-02T15:04:05Z`)    | ✅           | `string`   |
 
 ## Language 🌐
+
 | **Item**           | **Description**                              | **Required** | **Type**  |
 |:--------------------|:----------------------------------------------|:-------------:|:----------:|
 | `language`         | Language-related configurations (currently unused) | ✅         | `object` |
 | `language.default` | Default language                            | ✅          | `string` |
 
 ## Overrides 🔄
+
 | **Item**            | **Description**                                               | **Required** | **Type**    |
 |:---------------------|:-------------------------------------------------------------|:-------------:|:------------:|
 | `override`          | Override settings                                            | ✅           | `[]object` |
