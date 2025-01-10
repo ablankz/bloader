@@ -4,18 +4,17 @@ on:
   workflow_call:
   workflow_dispatch:
 
-permissions:
-  contents: write
-  actions: read
-  checks: write
-  pull-requests: write
-
 jobs:
   test-go:
     name: Test go files
     runs-on: ubuntu-latest
     env:
       GOTESTSUM_BIN: "${{ github.workspace }}/.tmp/gotestsum/bin"
+    permissions:
+      contents: write
+      actions: read
+      checks: write
+      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
