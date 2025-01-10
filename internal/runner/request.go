@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"text/template"
@@ -70,14 +71,18 @@ func (r HTTPRequest) CreateRequest(ctx context.Context, log logger.Logger, count
 		replaceData := make(map[string]any)
 		dynamicData := make(map[string]any)
 		r.ReplaceData.Range(func(key, value any) bool {
-			if key.(string) == "Dynamic" {
+			keyStr, ok := key.(string)
+			if !ok {
+				return true
+			}
+			if keyStr == "Dynamic" {
 				if mapV, ok := value.(map[string]any); ok {
 					for k, v := range mapV {
 						dynamicData[k] = v
 					}
 				}
 			} else {
-				replaceData[key.(string)] = value
+				replaceData[keyStr] = value
 			}
 			return true
 		})
@@ -118,8 +123,8 @@ func (r HTTPRequest) CreateRequest(ctx context.Context, log logger.Logger, count
 		r.Body = request.Body
 	}
 
-	reqUrl := solvePathVariables(r.URL, r.PathVariables)
-	fullURL, err := url.Parse(reqUrl)
+	reqURL := solvePathVariables(r.URL, r.PathVariables)
+	fullURL, err := url.Parse(reqURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to construct URL: %w", err)
 	}
@@ -137,8 +142,8 @@ func (r HTTPRequest) CreateRequest(ctx context.Context, log logger.Logger, count
 	log.Debug(ctx, "GET request to file objects endpoint URL created",
 		logger.Value("url", fullURL.String()), logger.Value("on", "GetFileObjectsReq.CreateRequest"))
 
-	var body io.Reader = nil
-	var header = http.Header{}
+	var body io.Reader
+	header := http.Header{}
 	switch r.BodyType {
 	case HTTPRequestBodyTypeJSON:
 		if r.Body == nil {
@@ -176,7 +181,9 @@ func (r HTTPRequest) CreateRequest(ctx context.Context, log logger.Logger, count
 		if arr, ok := r.Body.(map[string]any); ok {
 			for key, value := range arr {
 				if str, ok := value.(string); ok {
-					writer.WriteField(key, str)
+					if err := writer.WriteField(key, str); err != nil {
+						return nil, fmt.Errorf("failed to write field: %w", err)
+					}
 					continue
 				}
 				if arr, ok := value.(map[string]string); ok {
@@ -185,7 +192,7 @@ func (r HTTPRequest) CreateRequest(ctx context.Context, log logger.Logger, count
 					if !fileOk || !pathOk {
 						return nil, fmt.Errorf("invalid multipart body: %v", value)
 					}
-					file, err := os.Open(filePath)
+					file, err := os.Open(filepath.Clean(filePath))
 					if err != nil {
 						return nil, fmt.Errorf("failed to open file: %w", err)
 					}
@@ -203,7 +210,9 @@ func (r HTTPRequest) CreateRequest(ctx context.Context, log logger.Logger, count
 		}
 		body = &buf
 		header.Set("Content-Type", writer.FormDataContentType())
-		writer.Close()
+		if err := writer.Close(); err != nil {
+			return nil, fmt.Errorf("failed to close writer: %w", err)
+		}
 	}
 
 	req, err := http.NewRequest(r.Method, fullURL.String(), body)

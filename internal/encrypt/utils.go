@@ -11,7 +11,7 @@ import (
 )
 
 // Encrypt encrypts plaintext using the specified encryption method with the given key and IV.
-func Encrypt(plaintext, key []byte, encryptMethod EncryptType) (string, error) {
+func Encrypt(plaintext, key []byte, encryptMethod Type) (string, error) {
 	var ciphertext []byte
 	var iv []byte
 
@@ -20,11 +20,11 @@ func Encrypt(plaintext, key []byte, encryptMethod EncryptType) (string, error) {
 	case EncryptTypeCBC:
 		block, err := aes.NewCipher(key)
 		if err != nil {
-			return "", fmt.Errorf("failed to create cipher block: %v", err)
+			return "", fmt.Errorf("failed to create cipher block: %w", err)
 		}
 		iv, err = utils.GenerateRandomBytes(aes.BlockSize)
 		if err != nil {
-			return "", fmt.Errorf("failed to generate IV: %v", err)
+			return "", fmt.Errorf("failed to generate IV: %w", err)
 		}
 		plaintext = PKCS7Padding(plaintext, aes.BlockSize)
 		ciphertext = make([]byte, len(plaintext))
@@ -33,11 +33,11 @@ func Encrypt(plaintext, key []byte, encryptMethod EncryptType) (string, error) {
 	case EncryptTypeCFB:
 		block, err := aes.NewCipher(key)
 		if err != nil {
-			return "", fmt.Errorf("failed to create cipher block: %v", err)
+			return "", fmt.Errorf("failed to create cipher block: %w", err)
 		}
 		iv, err = utils.GenerateRandomBytes(aes.BlockSize)
 		if err != nil {
-			return "", fmt.Errorf("failed to generate IV: %v", err)
+			return "", fmt.Errorf("failed to generate IV: %w", err)
 		}
 		ciphertext = make([]byte, len(plaintext))
 		stream := cipher.NewCFBEncrypter(block, iv)
@@ -45,11 +45,11 @@ func Encrypt(plaintext, key []byte, encryptMethod EncryptType) (string, error) {
 	case EncryptTypeCTR:
 		block, err := aes.NewCipher(key)
 		if err != nil {
-			return "", fmt.Errorf("failed to create cipher block: %v", err)
+			return "", fmt.Errorf("failed to create cipher block: %w", err)
 		}
 		iv, err = utils.GenerateRandomBytes(aes.BlockSize)
 		if err != nil {
-			return "", fmt.Errorf("failed to generate IV: %v", err)
+			return "", fmt.Errorf("failed to generate IV: %w", err)
 		}
 		ciphertext = make([]byte, len(plaintext))
 		stream := cipher.NewCTR(block, iv)
@@ -64,10 +64,10 @@ func Encrypt(plaintext, key []byte, encryptMethod EncryptType) (string, error) {
 }
 
 // Decrypt decrypts ciphertext using the specified encryption method with the given key.
-func Decrypt(ciphertextBase64 string, key []byte, encryptMethod EncryptType) ([]byte, error) {
+func Decrypt(ciphertextBase64 string, key []byte, encryptMethod Type) ([]byte, error) {
 	combined, err := base64.StdEncoding.DecodeString(ciphertextBase64)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode base64 ciphertext: %v", err)
+		return nil, fmt.Errorf("failed to decode base64 ciphertext: %w", err)
 	}
 
 	var plaintext []byte
@@ -91,7 +91,7 @@ func Decrypt(ciphertextBase64 string, key []byte, encryptMethod EncryptType) ([]
 	case EncryptTypeCBC:
 		block, err := aes.NewCipher(key)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create cipher block: %v", err)
+			return nil, fmt.Errorf("failed to create cipher block: %w", err)
 		}
 		plaintext = make([]byte, len(ciphertext))
 		mode := cipher.NewCBCDecrypter(block, iv)
@@ -100,7 +100,7 @@ func Decrypt(ciphertextBase64 string, key []byte, encryptMethod EncryptType) ([]
 	case EncryptTypeCFB:
 		block, err := aes.NewCipher(key)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create cipher block: %v", err)
+			return nil, fmt.Errorf("failed to create cipher block: %w", err)
 		}
 		plaintext = make([]byte, len(ciphertext))
 		stream := cipher.NewCFBDecrypter(block, iv)
@@ -108,7 +108,7 @@ func Decrypt(ciphertextBase64 string, key []byte, encryptMethod EncryptType) ([]
 	case EncryptTypeCTR:
 		block, err := aes.NewCipher(key)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create cipher block: %v", err)
+			return nil, fmt.Errorf("failed to create cipher block: %w", err)
 		}
 		plaintext = make([]byte, len(ciphertext))
 		stream := cipher.NewCTR(block, iv)

@@ -2,6 +2,7 @@ package slave
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ablankz/bloader/internal/encrypt"
 	"google.golang.org/grpc"
@@ -9,14 +10,14 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// UnaryClientEncryptInterceptor is a client-side interceptor that encrypts the request and decrypts the response.
+// UnaryServerEncryptInterceptor is a server-side interceptor that encrypts the request and decrypts the response.
 func UnaryServerEncryptInterceptor(encrypter encrypt.Encrypter) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
 		req any,
-		info *grpc.UnaryServerInfo,
+		_ *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
-	) (interface{}, error) {
+	) (any, error) {
 		if encryptedReq, ok := req.(string); ok {
 			plainReq, err := encrypter.Decrypt(encryptedReq)
 			if err != nil {
@@ -42,12 +43,12 @@ func UnaryServerEncryptInterceptor(encrypter encrypt.Encrypter) grpc.UnaryServer
 	}
 }
 
-// StreamClientInterceptor is a client-side interceptor that encrypts the request and decrypts the response.
+// StreamServerInterceptor is a server-side interceptor that encrypts the request and decrypts the response.
 func StreamServerInterceptor(encrypter encrypt.Encrypter) grpc.StreamServerInterceptor {
 	return func(
-		srv interface{},
+		srv any,
 		ss grpc.ServerStream,
-		info *grpc.StreamServerInfo,
+		_ *grpc.StreamServerInfo,
 		handler grpc.StreamHandler,
 	) error {
 		wrappedStream := &wrappedServerStream{
@@ -64,21 +65,25 @@ type wrappedServerStream struct {
 }
 
 // RecvMsg implements the grpc.ServerStream interface.
-func (w *wrappedServerStream) RecvMsg(m interface{}) error {
+func (w *wrappedServerStream) RecvMsg(m any) error {
 	var encryptedMsg []byte
 	if err := w.ServerStream.RecvMsg(&encryptedMsg); err != nil {
-		return err
+		return fmt.Errorf("failed to receive message: %w", err)
 	}
 	descryptedMsg, err := w.encrypter.Decrypt(string(encryptedMsg))
 	if err != nil {
 		return status.Errorf(codes.Internal, "failed to decrypt request: %v", err)
 	}
-	*m.(*[]byte) = descryptedMsg
-	return nil
+	if byteMsg, ok := m.(*[]byte); ok {
+		*byteMsg = descryptedMsg
+		return nil
+	}
+
+	return fmt.Errorf("failed to cast message to byte")
 }
 
 // SendMsg implements the grpc.ServerStream interface.
-func (w *wrappedServerStream) SendMsg(m interface{}) error {
+func (w *wrappedServerStream) SendMsg(m any) error {
 	if plainMsg, ok := m.([]byte); ok {
 		encryptedMsg, err := w.encrypter.Encrypt(plainMsg)
 		if err != nil {
@@ -86,5 +91,8 @@ func (w *wrappedServerStream) SendMsg(m interface{}) error {
 		}
 		m = encryptedMsg
 	}
-	return w.ServerStream.SendMsg(m)
+	if err := w.ServerStream.SendMsg(m); err != nil {
+		return fmt.Errorf("failed to send message: %w", err)
+	}
+	return nil
 }

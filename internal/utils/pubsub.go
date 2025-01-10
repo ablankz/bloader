@@ -56,7 +56,6 @@ func (b *Broadcaster[T]) Broadcast(value T) <-chan struct{} {
 		for range b.subscribers {
 			<-doneAny
 		}
-
 	}()
 
 	for ch := range b.subscribers {

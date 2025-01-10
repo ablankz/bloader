@@ -5,36 +5,36 @@ import (
 	"time"
 )
 
-// RunnerKind represents the kind of runner
-type RunnerKind string
+// Kind represents the kind of runner
+type Kind string
 
 const (
 	// RunnerKindStoreValue represents the store value runner
-	RunnerKindStoreValue RunnerKind = "StoreValue"
+	RunnerKindStoreValue Kind = "StoreValue"
 	// RunnerKindMemoryValue represents the memory store value runner
-	RunnerKindMemoryValue RunnerKind = "MemoryValue"
+	RunnerKindMemoryValue Kind = "MemoryValue"
 	// RunnerKindStoreImport represents the store import runner
-	RunnerKindStoreImport RunnerKind = "StoreImport"
+	RunnerKindStoreImport Kind = "StoreImport"
 	// RunnerKindOneExecute represents execute one request runner
-	RunnerKindOneExecute RunnerKind = "OneExecute"
+	RunnerKindOneExecute Kind = "OneExecute"
 	// RunnerKindMassExecute represents execute multiple requests runner
-	RunnerKindMassExecute RunnerKind = "MassExecute"
+	RunnerKindMassExecute Kind = "MassExecute"
 	// RunnerKindFlow represents the flow runner
-	RunnerKindFlow RunnerKind = "Flow"
+	RunnerKindFlow Kind = "Flow"
 	// RunnerKindSlaveConnect represents the slave connect runner
-	RunnerKindSlaveConnect RunnerKind = "SlaveConnect"
+	RunnerKindSlaveConnect Kind = "SlaveConnect"
 )
 
 // Runner represents a runner
 type Runner struct {
-	Kind        *string           `yaml:"kind"`
-	Sleep       RunnerSleep       `yaml:"sleep"`
-	StoreImport RunnerStoreImport `yaml:"store_import"`
+	Kind        *string        `yaml:"kind"`
+	Sleep       Sleep          `yaml:"sleep"`
+	StoreImport RunStoreImport `yaml:"store_import"`
 }
 
 // ValidRunner represents a valid runner
 type ValidRunner struct {
-	Kind        RunnerKind
+	Kind        Kind
 	Sleep       ValidRunnerSleep
 	StoreImport ValidRunnerStoreImport
 }
@@ -44,8 +44,8 @@ func (r Runner) Validate() (ValidRunner, error) {
 	if r.Kind == nil {
 		return ValidRunner{}, fmt.Errorf("kind is required")
 	}
-	var kind RunnerKind
-	switch RunnerKind(*r.Kind) {
+	var kind Kind
+	switch Kind(*r.Kind) {
 	case RunnerKindStoreValue,
 		RunnerKindMemoryValue,
 		RunnerKindStoreImport,
@@ -53,17 +53,17 @@ func (r Runner) Validate() (ValidRunner, error) {
 		RunnerKindMassExecute,
 		RunnerKindFlow,
 		RunnerKindSlaveConnect:
-		kind = RunnerKind(*r.Kind)
+		kind = Kind(*r.Kind)
 	default:
 		return ValidRunner{}, fmt.Errorf("invalid kind value: %s", *r.Kind)
 	}
 	validSleep, err := r.Sleep.Validate()
 	if err != nil {
-		return ValidRunner{}, fmt.Errorf("failed to validate sleep: %v", err)
+		return ValidRunner{}, fmt.Errorf("failed to validate sleep: %w", err)
 	}
 	validStoreImport, err := r.StoreImport.Validate()
 	if err != nil {
-		return ValidRunner{}, fmt.Errorf("failed to validate store import: %v", err)
+		return ValidRunner{}, fmt.Errorf("failed to validate store import: %w", err)
 	}
 	return ValidRunner{
 		Kind:        kind,
@@ -72,10 +72,10 @@ func (r Runner) Validate() (ValidRunner, error) {
 	}, nil
 }
 
-// RunnerSleep represents the sleep configuration for a runner
-type RunnerSleep struct {
-	Enabled bool               `yaml:"enabled"`
-	Values  []RunnerSleepValue `yaml:"values"`
+// Sleep represents the sleep configuration for a runner
+type Sleep struct {
+	Enabled bool         `yaml:"enabled"`
+	Values  []SleepValue `yaml:"values"`
 }
 
 // ValidRunnerSleep represents a valid runner sleep configuration
@@ -85,7 +85,7 @@ type ValidRunnerSleep struct {
 }
 
 // Validate validates a runnerSleep
-func (r RunnerSleep) Validate() (ValidRunnerSleep, error) {
+func (r Sleep) Validate() (ValidRunnerSleep, error) {
 	if !r.Enabled {
 		return ValidRunnerSleep{}, nil
 	}
@@ -93,7 +93,7 @@ func (r RunnerSleep) Validate() (ValidRunnerSleep, error) {
 	for _, v := range r.Values {
 		valid, err := v.Validate()
 		if err != nil {
-			return ValidRunnerSleep{}, fmt.Errorf("failed to validate sleep value: %v", err)
+			return ValidRunnerSleep{}, fmt.Errorf("failed to validate sleep value: %w", err)
 		}
 		values = append(values, valid)
 	}
@@ -103,20 +103,20 @@ func (r RunnerSleep) Validate() (ValidRunnerSleep, error) {
 	}, nil
 }
 
-// RunnerSleepValueAfter represents the after value for a runner sleep value
-type RunnerSleepValueAfter string
+// SleepValueAfter represents the after value for a runner sleep value
+type SleepValueAfter string
 
 const (
 	// RunnerSleepValueAfterInit represents the init after value for a runner sleep value
-	RunnerSleepValueAfterInit RunnerSleepValueAfter = "init"
+	RunnerSleepValueAfterInit SleepValueAfter = "init"
 	// RunnerSleepValueAfterExec represents the success after value for a runner sleep value
-	RunnerSleepValueAfterExec RunnerSleepValueAfter = "exec"
+	RunnerSleepValueAfterExec SleepValueAfter = "exec"
 	// RunnerSleepValueAfterFailedExec represents the failed after value for a runner sleep value
-	RunnerSleepValueAfterFailedExec RunnerSleepValueAfter = "failedExec"
+	RunnerSleepValueAfterFailedExec SleepValueAfter = "failedExec"
 )
 
-// RunnerSleepValue represents the sleep value for a runner
-type RunnerSleepValue struct {
+// SleepValue represents the sleep value for a runner
+type SleepValue struct {
 	Duration *string `yaml:"duration"`
 	After    *string `yaml:"after"`
 }
@@ -124,11 +124,11 @@ type RunnerSleepValue struct {
 // ValidRunnerSleepValue represents a valid runner sleep value
 type ValidRunnerSleepValue struct {
 	Duration time.Duration
-	After    RunnerSleepValueAfter
+	After    SleepValueAfter
 }
 
 // Validate validates a runner
-func (r RunnerSleepValue) Validate() (ValidRunnerSleepValue, error) {
+func (r SleepValue) Validate() (ValidRunnerSleepValue, error) {
 	if r.Duration == nil {
 		return ValidRunnerSleepValue{}, fmt.Errorf("duration is required")
 	}
@@ -137,12 +137,12 @@ func (r RunnerSleepValue) Validate() (ValidRunnerSleepValue, error) {
 	}
 	d, err := time.ParseDuration(*r.Duration)
 	if err != nil {
-		return ValidRunnerSleepValue{}, fmt.Errorf("failed to parse duration: %v", err)
+		return ValidRunnerSleepValue{}, fmt.Errorf("failed to parse duration: %w", err)
 	}
-	var after RunnerSleepValueAfter
-	switch RunnerSleepValueAfter(*r.After) {
+	var after SleepValueAfter
+	switch SleepValueAfter(*r.After) {
 	case RunnerSleepValueAfterInit, RunnerSleepValueAfterExec, RunnerSleepValueAfterFailedExec:
-		after = RunnerSleepValueAfter(*r.After)
+		after = SleepValueAfter(*r.After)
 	default:
 		return ValidRunnerSleepValue{}, fmt.Errorf("invalid after value: %s", *r.After)
 	}
@@ -153,7 +153,7 @@ func (r RunnerSleepValue) Validate() (ValidRunnerSleepValue, error) {
 }
 
 // RetrieveSleepValue retrieves the sleep value for a runner
-func (r ValidRunner) RetrieveSleepValue(after RunnerSleepValueAfter) (time.Duration, bool) {
+func (r ValidRunner) RetrieveSleepValue(after SleepValueAfter) (time.Duration, bool) {
 	for _, v := range r.Sleep.Values {
 		if v.After == after {
 			return v.Duration, true
@@ -162,8 +162,8 @@ func (r ValidRunner) RetrieveSleepValue(after RunnerSleepValueAfter) (time.Durat
 	return time.Duration(0), false
 }
 
-// RunnerStoreImport represents the StoreImport runner
-type RunnerStoreImport struct {
+// RunStoreImport represents the StoreImport runner
+type RunStoreImport struct {
 	Enabled bool              `yaml:"enabled"`
 	Data    []StoreImportData `yaml:"data"`
 }
@@ -175,7 +175,7 @@ type ValidRunnerStoreImport struct {
 }
 
 // Validate validates the RunnerStoreImport
-func (r RunnerStoreImport) Validate() (ValidRunnerStoreImport, error) {
+func (r RunStoreImport) Validate() (ValidRunnerStoreImport, error) {
 	if !r.Enabled {
 		return ValidRunnerStoreImport{}, nil
 	}
@@ -183,7 +183,7 @@ func (r RunnerStoreImport) Validate() (ValidRunnerStoreImport, error) {
 	for i, d := range r.Data {
 		valid, err := d.Validate()
 		if err != nil {
-			return ValidRunnerStoreImport{}, fmt.Errorf("failed to validate data at index %d: %v", i, err)
+			return ValidRunnerStoreImport{}, fmt.Errorf("failed to validate data at index %d: %w", i, err)
 		}
 		validData = append(validData, valid)
 	}

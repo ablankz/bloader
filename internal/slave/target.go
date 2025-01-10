@@ -9,8 +9,8 @@ import (
 	"github.com/ablankz/bloader/internal/target"
 )
 
-// SlaveTargetFactor represents the factory for the slave target
-type SlaveTargetFactor struct {
+// TargetFactor represents the factory for the slave target
+type TargetFactor struct {
 	target                        *slcontainer.Target
 	connectionID                  string
 	receiveChanelRequestContainer *slcontainer.ReceiveChanelRequestContainer
@@ -18,7 +18,7 @@ type SlaveTargetFactor struct {
 }
 
 // Factorize returns the factorized target
-func (s *SlaveTargetFactor) Factorize(ctx context.Context, targetID string) (target.Target, error) {
+func (s *TargetFactor) Factorize(ctx context.Context, targetID string) (target.Target, error) {
 	t, ok := s.target.Find(targetID)
 	if ok {
 		return t, nil
@@ -49,4 +49,4 @@ func (s *SlaveTargetFactor) Factorize(ctx context.Context, targetID string) (tar
 	return t, nil
 }
 
-var _ runner.TargetFactor = &SlaveTargetFactor{}
+var _ runner.TargetFactor = &TargetFactor{}

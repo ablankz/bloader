@@ -17,8 +17,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var runnerFile string
-var runnerData []string
+var (
+	runnerFile string
+	runnerData []string
+)
 
 const (
 	runnerDataTypesInt         = "i"

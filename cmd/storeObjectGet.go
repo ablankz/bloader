@@ -33,7 +33,7 @@ bloader store object get --bucket 1234 objectKey`,
 		objKey := args[0]
 		objVal, err := ctr.Store.GetObject(bucketID, objKey)
 		if err != nil {
-			color.Red("Failed to get object: %v", err)
+			color.Red("Failed to get object: %w", err)
 			return
 		}
 		if len(objVal) == 0 {
@@ -48,7 +48,7 @@ bloader store object get --bucket 1234 objectKey`,
 			}
 			b, err := encryper.Decrypt(string(objVal))
 			if err != nil {
-				color.Red("Failed to encrypt: %v", err)
+				color.Red("Failed to encrypt: %w", err)
 				return
 			}
 			objVal = b
@@ -61,5 +61,12 @@ bloader store object get --bucket 1234 objectKey`,
 func init() {
 	storeObjectCmd.AddCommand(storeObjectGetCmd)
 
-	storeObjectGetCmd.PersistentFlags().StringVarP(&storeObjectEncrypt, "encrypt", "e", "", `ID of the encryption setting. This is optional.`)
+	storeObjectGetCmd.PersistentFlags().
+		StringVarP(
+			&storeObjectEncrypt,
+			"encrypt",
+			"e",
+			"",
+			`ID of the encryption setting. This is optional.`,
+		)
 }

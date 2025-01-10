@@ -8,7 +8,8 @@ import (
 	"github.com/ablankz/bloader/internal/slave/slcontainer"
 )
 
-type SlaveTmplFactor struct {
+// TmplFactor represents the slave template factor
+type TmplFactor struct {
 	loader                        *slcontainer.Loader
 	connectionID                  string
 	receiveChanelRequestContainer *slcontainer.ReceiveChanelRequestContainer
@@ -16,7 +17,7 @@ type SlaveTmplFactor struct {
 }
 
 // TmplFactorize is a function that factorizes the template
-func (s *SlaveTmplFactor) TmplFactorize(ctx context.Context, path string) (string, error) {
+func (s *TmplFactor) TmplFactorize(ctx context.Context, path string) (string, error) {
 	l, ok := s.loader.GetLoader(path)
 	if ok {
 		return l, nil
@@ -47,4 +48,4 @@ func (s *SlaveTmplFactor) TmplFactorize(ctx context.Context, path string) (strin
 	return "", fmt.Errorf("failed to factorize the template")
 }
 
-var _ runner.TmplFactor = &SlaveTmplFactor{}
+var _ runner.TmplFactor = &TmplFactor{}

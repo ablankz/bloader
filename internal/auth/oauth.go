@@ -40,14 +40,21 @@ type oauthGrantType int
 
 const (
 	_ oauthGrantType = iota
+	// AuthOAuth2GrantTypeAuthorizationCode is the OAuth2 grant type Authorization Code
 	AuthOAuth2GrantTypeAuthorizationCode
+	// AuthOAuth2GrantTypeClientCredentials is the OAuth2 grant type Client Credentials
 	AuthOAuth2GrantTypeClientCredentials
+	// AuthOAuth2GrantTypePassword is the OAuth2 grant type Password
 	AuthOAuth2GrantTypePassword
 )
 
 // NewOAuthAuthenticator creates a new OAuthAuthenticator
-func NewOAuthAuthenticator(str store.Store, redirectPort int, conf config.ValidAuthOAuth2Config) (Authenticator, error) {
-	var authenticator *OAuthAuthenticator = &OAuthAuthenticator{}
+func NewOAuthAuthenticator(
+	str store.Store,
+	redirectPort int,
+	conf config.ValidAuthOAuth2Config,
+) (Authenticator, error) {
+	authenticator := &OAuthAuthenticator{}
 	switch conf.GrantType {
 	case config.AuthOAuth2GrantTypeAuthorizationCode:
 		authenticator.grantType = AuthOAuth2GrantTypeAuthorizationCode
@@ -109,7 +116,7 @@ type OAuthToken struct {
 }
 
 // SetOnRequest sets the authentication information on the request
-func (t *OAuthToken) SetOnRequest(ctx context.Context, r *http.Request) {
+func (t *OAuthToken) SetOnRequest(_ context.Context, r *http.Request) {
 	r.Header.Set("Authorization", t.TokenType+" "+t.AccessToken)
 }
 
@@ -164,7 +171,8 @@ func (a *OAuthAuthenticator) Authenticate(ctx context.Context, str store.Store) 
 		fmt.Printf("\n+-----------------------------------------------------------+\n\n")
 		forceTimeout := make(chan bool, 1)
 		server := &http.Server{
-			Addr: fmt.Sprintf(":%d", a.redirectPort),
+			Addr:              fmt.Sprintf(":%d", a.redirectPort),
+			ReadHeaderTimeout: 10 * time.Second,
 		}
 		http.HandleFunc(oauthRedirectPath, handlerCallbackFactory(ctx, a.oauthConf, func(token *oauth2.Token) {
 			fmt.Println("Received token from OAuth server.")
@@ -193,7 +201,7 @@ func (a *OAuthAuthenticator) Authenticate(ctx context.Context, str store.Store) 
 		}
 
 		if err := server.Shutdown(ctx); err != nil {
-			return fmt.Errorf("failed to shutdown server: %v", err)
+			return fmt.Errorf("failed to shutdown server: %w", err)
 		}
 		if !ok {
 			return fmt.Errorf("authentication failed")
@@ -215,7 +223,12 @@ func (a *OAuthAuthenticator) Authenticate(ctx context.Context, str store.Store) 
 	return nil
 }
 
-func credentialSet(t *OAuthToken, token *oauth2.Token, str store.Store, credentialConf config.ValidAuthCredentialConfig) error {
+func credentialSet(
+	t *OAuthToken,
+	token *oauth2.Token,
+	str store.Store,
+	credentialConf config.ValidAuthCredentialConfig,
+) error {
 	authToken := OAuthToken{
 		AccessToken:  token.AccessToken,
 		TokenType:    token.TokenType,
@@ -271,7 +284,7 @@ func (a *OAuthAuthenticator) GetAuthValue() *pb.Auth {
 }
 
 // IsExpired checks if the authentication information is expired
-func (a *OAuthAuthenticator) IsExpired(ctx context.Context, str store.Store) bool {
+func (a *OAuthAuthenticator) IsExpired(_ context.Context, _ store.Store) bool {
 	return a.authToken.isExpired()
 }
 
@@ -325,6 +338,8 @@ func handlerCallbackFactory(
 	}
 }
 
-var _ SetAuthor = &OAuthToken{}
-var _ SetAuthor = &OAuthAuthenticator{}
-var _ Authenticator = &OAuthAuthenticator{}
+var (
+	_ SetAuthor     = &OAuthToken{}
+	_ SetAuthor     = &OAuthAuthenticator{}
+	_ Authenticator = &OAuthAuthenticator{}
+)

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="3" failures="0" errors="0" time="1.522933">
+	<testsuite tests="0" failures="0" time="0.003000" name="github.com/ablankz/bloader" timestamp="2025-01-11T04:06:06+09:00">
+		<properties>
+			<property name="go.version" value="go1.23.3 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.004000" name="github.com/ablankz/bloader/cmd" timestamp="2025-01-11T04:06:06+09:00">
+		<properties>
+			<property name="go.version" value="go1.23.3 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.005000" name="github.com/ablankz/bloader/internal/agerror" timestamp="2025-01-11T04:06:06+09:00">
+		<properties>
+			<property name="go.version" value="go1.23.3 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.004000" name="github.com/ablankz/bloader/internal/auth" timestamp="2025-01-11T04:06:06+09:00">
+		<properties>
+			<property name="go.version" value="go1.23.3 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.004000" name="github.com/ablankz/bloader/internal/clock" timestamp="2025-01-11T04:06:06+09:00">
+		<properties>
+			<property name="go.version" value="go1.23.3 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="3" failures="0" time="1.008000" name="github.com/ablankz/bloader/internal/clock/fakeclock" timestamp="2025-01-11T04:06:06+09:00">
+		<properties>
+			<property name="go.version" value="go1.23.3 linux/amd64"></property>
+		</properties>
+		<testcase classname="github.com/ablankz/bloader/internal/clock/fakeclock" name="TestClock/Now" time="0.000000"></testcase>
+		<testcase classname="github.com/ablankz/bloader/internal/clock/fakeclock" name="TestClock/SetTime" time="0.000000"></testcase>
+		<testcase classname="github.com/ablankz/bloader/internal/clock/fakeclock" name="TestClock" time="0.000000"></testcase>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.004000" name="github.com/ablankz/bloader/internal/config" timestamp="2025-01-11T04:06:06+09:00">
+		<properties>
+			<property name="go.version" value="go1.23.3 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.006000" name="github.com/ablankz/bloader/internal/container" timestamp="2025-01-11T04:06:06+09:00">
+		<properties>
+			<property name="go.version" value="go1.23.3 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.007000" name="github.com/ablankz/bloader/internal/encrypt" timestamp="2025-01-11T04:06:06+09:00">
+		<properties>
+			<property name="go.version" value="go1.23.3 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.008000" name="github.com/ablankz/bloader/internal/executor/httpexec" timestamp="2025-01-11T04:06:06+09:00">
+		<properties>
+			<property name="go.version" value="go1.23.3 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.008000" name="github.com/ablankz/bloader/internal/i18n" timestamp="2025-01-11T04:06:06+09:00">
+		<properties>
+			<property name="go.version" value="go1.23.3 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.005000" name="github.com/ablankz/bloader/internal/logger" timestamp="2025-01-11T04:06:06+09:00">
+		<properties>
+			<property name="go.version" value="go1.23.3 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.004000" name="github.com/ablankz/bloader/internal/master" timestamp="2025-01-11T04:06:06+09:00">
+		<properties>
+			<property name="go.version" value="go1.23.3 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.005000" name="github.com/ablankz/bloader/internal/output" timestamp="2025-01-11T04:06:06+09:00">
+		<properties>
+			<property name="go.version" value="go1.23.3 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.003000" name="github.com/ablankz/bloader/internal/prompt" timestamp="2025-01-11T04:06:06+09:00">
+		<properties>
+			<property name="go.version" value="go1.23.3 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.008000" name="github.com/ablankz/bloader/internal/runner" timestamp="2025-01-11T04:06:06+09:00">
+		<properties>
+			<property name="go.version" value="go1.23.3 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.006000" name="github.com/ablankz/bloader/internal/runner/matcher" timestamp="2025-01-11T04:06:06+09:00">
+		<properties>
+			<property name="go.version" value="go1.23.3 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.008000" name="github.com/ablankz/bloader/internal/slave" timestamp="2025-01-11T04:06:06+09:00">
+		<properties>
+			<property name="go.version" value="go1.23.3 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.005000" name="github.com/ablankz/bloader/internal/slave/slcontainer" timestamp="2025-01-11T04:06:06+09:00">
+		<properties>
+			<property name="go.version" value="go1.23.3 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.007000" name="github.com/ablankz/bloader/internal/store" timestamp="2025-01-11T04:06:06+09:00">
+		<properties>
+			<property name="go.version" value="go1.23.3 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.006000" name="github.com/ablankz/bloader/internal/target" timestamp="2025-01-11T04:06:06+09:00">
+		<properties>
+			<property name="go.version" value="go1.23.3 linux/amd64"></property>
+		</properties>
+	</testsuite>
+	<testsuite tests="0" failures="0" time="0.006000" name="github.com/ablankz/bloader/internal/utils" timestamp="2025-01-11T04:06:06+09:00">
+		<properties>
+			<property name="go.version" value="go1.23.3 linux/amd64"></property>
+		</properties>
+	</testsuite>
+</testsuites>

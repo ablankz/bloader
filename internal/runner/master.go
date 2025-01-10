@@ -77,7 +77,7 @@ func (c *ConnectionContainer) Connect(
 	ctx context.Context,
 	log logger.Logger,
 	env string,
-	encryptCtr encrypt.EncrypterContainer,
+	encryptCtr encrypt.Container,
 	conInfo ValidSlaveConnect,
 	eventCaster EventCaster,
 ) error {
@@ -85,7 +85,7 @@ func (c *ConnectionContainer) Connect(
 	defer c.mu.Unlock()
 
 	if err := eventCaster.CastEvent(ctx, SlaveConnectRunnerEventConnecting); err != nil {
-		return fmt.Errorf("failed to cast event: %v", err)
+		return fmt.Errorf("failed to cast event: %w", err)
 	}
 	defer func() {
 		if err := eventCaster.CastEvent(ctx, SlaveConnectRunnerEventConnected); err != nil {
@@ -101,14 +101,15 @@ func (c *ConnectionContainer) Connect(
 		if slave.Certificate.Enabled {
 			b, err := os.ReadFile(slave.Certificate.CACert)
 			if err != nil {
-				return fmt.Errorf("credentials: failed to read CA certificate: %v", err)
+				return fmt.Errorf("credentials: failed to read CA certificate: %w", err)
 			}
 			cp := x509.NewCertPool()
 			if !cp.AppendCertsFromPEM(b) {
 				return fmt.Errorf("credentials: failed to append certificates")
 			}
 			creds := credentials.NewTLS(&tls.Config{
-				ServerName:         slave.Certificate.ServerNameOverride,
+				ServerName: slave.Certificate.ServerNameOverride,
+				//nolint:gosec
 				InsecureSkipVerify: slave.Certificate.InsecureSkipVerify,
 				RootCAs:            cp,
 			})
@@ -131,7 +132,7 @@ func (c *ConnectionContainer) Connect(
 
 		conn, err := grpc.NewClient(slave.URI, grpcDialOptions...)
 		if err != nil {
-			return fmt.Errorf("failed to connect to slave: %v", err)
+			return fmt.Errorf("failed to connect to slave: %w", err)
 		}
 
 		cli := rpc.NewBloaderSlaveServiceClient(conn)
@@ -142,7 +143,7 @@ func (c *ConnectionContainer) Connect(
 
 		res, err := cli.Connect(ctx, conReq)
 		if err != nil {
-			return fmt.Errorf("failed to connect to slave: %v", err)
+			return fmt.Errorf("failed to connect to slave: %w", err)
 		}
 
 		receiveStream, err := cli.ReceiveChanelConnect(
@@ -152,7 +153,7 @@ func (c *ConnectionContainer) Connect(
 			},
 		)
 		if err != nil {
-			return fmt.Errorf("failed to receive channel connect: %v", err)
+			return fmt.Errorf("failed to receive channel connect: %w", err)
 		}
 
 		reqChan := make(chan *pb.ReceiveChanelConnectResponse)
@@ -257,10 +258,10 @@ func (c *ConnectionContainer) disconnect(slaveID string) error {
 
 	_, err := conn.Cli.Disconnect(context.Background(), disReq)
 	if err != nil {
-		return fmt.Errorf("failed to disconnect from slave: %v", err)
+		return fmt.Errorf("failed to disconnect from slave: %w", err)
 	}
 	if err := conn.conn.Close(); err != nil {
-		return fmt.Errorf("failed to close connection: %v", err)
+		return fmt.Errorf("failed to close connection: %w", err)
 	}
 	delete(c.conMap, slaveID)
 
@@ -268,13 +269,13 @@ func (c *ConnectionContainer) disconnect(slaveID string) error {
 }
 
 // AllDisconnect removes all connections from the map.
-func (c *ConnectionContainer) AllDisconnect(ctx context.Context) error {
+func (c *ConnectionContainer) AllDisconnect(_ context.Context) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	for slaveID := range c.conMap {
 		if err := c.disconnect(slaveID); err != nil {
-			return fmt.Errorf("failed to disconnect from slave: %v", err)
+			return fmt.Errorf("failed to disconnect from slave: %w", err)
 		}
 	}
 

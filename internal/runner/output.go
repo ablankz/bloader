@@ -15,18 +15,18 @@ type OutputFactor interface {
 
 // LocalOutputFactor represents the local output factor
 type LocalOutputFactor struct {
-	outputCtr output.OutputContainer
+	outputCtr output.Container
 }
 
 // NewLocalOutputFactor creates a new LocalOutputFactor
-func NewLocalOutputFactor(outputCtr output.OutputContainer) LocalOutputFactor {
+func NewLocalOutputFactor(outputCtr output.Container) LocalOutputFactor {
 	return LocalOutputFactor{
 		outputCtr: outputCtr,
 	}
 }
 
 // Factorize returns the factorized output
-func (f LocalOutputFactor) Factorize(ctx context.Context, outputID string) (output.Output, error) {
+func (f LocalOutputFactor) Factorize(_ context.Context, outputID string) (output.Output, error) {
 	o, ok := f.outputCtr[outputID]
 	if !ok {
 		return nil, fmt.Errorf("output not found: %s", outputID)

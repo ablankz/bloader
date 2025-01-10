@@ -22,7 +22,7 @@ func (r MemoryValue) Validate() (ValidMemoryValue, error) {
 	for i, d := range r.Data {
 		valid, err := d.Validate()
 		if err != nil {
-			return ValidMemoryValue{}, fmt.Errorf("failed to validate data at index %d: %v", i, err)
+			return ValidMemoryValue{}, fmt.Errorf("failed to validate data at index %d: %w", i, err)
 		}
 		validData = append(validData, valid)
 	}
@@ -58,7 +58,7 @@ func (d MemoryValueData) Validate() (ValidMemoryValueData, error) {
 }
 
 // Run runs the MemoryValue runner
-func (r ValidMemoryValue) Run(ctx context.Context, store *sync.Map) error {
+func (r ValidMemoryValue) Run(_ context.Context, store *sync.Map) error {
 	for _, d := range r.Data {
 		store.Store(d.Key, d.Value)
 	}

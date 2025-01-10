@@ -38,7 +38,7 @@ type AuthenticatorContainer struct {
 
 // NewAuthenticatorContainerFromConfig creates a new AuthenticatorContainer from the configuration
 func NewAuthenticatorContainerFromConfig(str store.Store, conf config.ValidConfig) (AuthenticatorContainer, error) {
-	var ctr AuthenticatorContainer = AuthenticatorContainer{
+	ctr := AuthenticatorContainer{
 		Container: make(map[string]*Authenticator),
 	}
 
@@ -67,6 +67,8 @@ func NewAuthenticatorContainerFromConfig(str store.Store, conf config.ValidConfi
 			if err != nil {
 				return AuthenticatorContainer{}, err
 			}
+		case config.AuthTypePrivateKey:
+			// TODO: Implement PrivateKeyAuthenticator
 		case config.AuthTypeJWT:
 			authenticator, err = NewJWTAuthenticator(authConf.JWT)
 			if err != nil {

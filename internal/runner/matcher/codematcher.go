@@ -55,7 +55,10 @@ type statusCodeBetweenVal struct {
 type StatusCodeConditionMatcher func(statusCode int) bool
 
 // MatcherGenerate generates the status code matcher
-func (scc StatusCodeCondition) MatcherGenerate(ctx context.Context, log logger.Logger) (StatusCodeConditionMatcher, error) {
+func (scc StatusCodeCondition) MatcherGenerate(
+	ctx context.Context,
+	log logger.Logger,
+) (StatusCodeConditionMatcher, error) {
 	if scc.ID == nil {
 		return nil, fmt.Errorf("id is required")
 	}
@@ -64,7 +67,7 @@ func (scc StatusCodeCondition) MatcherGenerate(ctx context.Context, log logger.L
 	}
 	switch (StatusCodeOperator)(*scc.Op) {
 	case StatusCodeOperatorNone:
-		return func(statusCode int) bool {
+		return func(_ int) bool {
 			return false
 		}, nil
 	case StatusCodeOperatorEqual:
@@ -229,7 +232,10 @@ type StatusCodeConditions []StatusCodeCondition
 type StatusCodeConditionsMatcher func(statusCode int) (string, bool)
 
 // MatcherGenerate generates the status code conditions matcher
-func (sccs StatusCodeConditions) MatcherGenerate(ctx context.Context, log logger.Logger) (StatusCodeConditionsMatcher, error) {
+func (sccs StatusCodeConditions) MatcherGenerate(
+	ctx context.Context,
+	log logger.Logger,
+) (StatusCodeConditionsMatcher, error) {
 	matchers := make([]StatusCodeConditionMatcher, 0, len(sccs))
 	for _, scc := range sccs {
 		matcher, err := scc.MatcherGenerate(ctx, log)

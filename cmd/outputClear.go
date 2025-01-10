@@ -38,7 +38,7 @@ It removes all the output file.`,
 			for _, v := range o.Values {
 				if v.Env == ctr.Config.Env {
 					if err := os.RemoveAll(v.BasePath); err != nil {
-						color.Red("Failed to clear the output: %v", err)
+						color.Red("Failed to clear the output: %w", err)
 						return
 					}
 				}

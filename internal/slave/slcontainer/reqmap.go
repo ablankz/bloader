@@ -26,7 +26,11 @@ func (r *RequestConnectionMapper) RegisterRequestConnection(reqID, connectionID 
 	r.requestKeyConnectionID.Store(reqID, connectionID)
 	currentReqIDs, ok := r.connectionKeyRequestID.Load(connectionID)
 	if ok {
-		r.connectionKeyRequestID.Store(connectionID, append(currentReqIDs.([]string), reqID))
+		strIDs, ok := currentReqIDs.([]string)
+		if !ok {
+			return
+		}
+		r.connectionKeyRequestID.Store(connectionID, append(strIDs, reqID))
 	} else {
 		r.connectionKeyRequestID.Store(connectionID, []string{reqID})
 	}
@@ -38,7 +42,11 @@ func (r *RequestConnectionMapper) GetConnectionID(reqID string) (string, bool) {
 	defer r.mu.RUnlock()
 
 	if connectionID, ok := r.requestKeyConnectionID.Load(reqID); ok {
-		return connectionID.(string), true
+		strID, ok := connectionID.(string)
+		if !ok {
+			return "", false
+		}
+		return strID, true
 	}
 	return "", false
 }
@@ -49,7 +57,11 @@ func (r *RequestConnectionMapper) GetRequestID(connectionID string) ([]string, b
 	defer r.mu.RUnlock()
 
 	if reqIDs, ok := r.connectionKeyRequestID.Load(connectionID); ok {
-		return reqIDs.([]string), true
+		strIDs, ok := reqIDs.([]string)
+		if !ok {
+			return nil, false
+		}
+		return strIDs, true
 	}
 	return nil, false
 }
@@ -60,7 +72,11 @@ func (r *RequestConnectionMapper) DeleteRequestConnection(connectionID string) {
 	defer r.mu.Unlock()
 
 	if reqIDs, ok := r.connectionKeyRequestID.Load(connectionID); ok {
-		for _, reqID := range reqIDs.([]string) {
+		strIDs, ok := reqIDs.([]string)
+		if !ok {
+			return
+		}
+		for _, reqID := range strIDs {
 			r.requestKeyConnectionID.Delete(reqID)
 		}
 	}
@@ -75,7 +91,11 @@ func (r *RequestConnectionMapper) DeleteRequest(reqID string) {
 	if connectionID, ok := r.requestKeyConnectionID.Load(reqID); ok {
 		if reqIDs, ok := r.connectionKeyRequestID.Load(connectionID); ok {
 			var newReqIDs []string
-			for _, id := range reqIDs.([]string) {
+			strIDs, ok := reqIDs.([]string)
+			if !ok {
+				return
+			}
+			for _, id := range strIDs {
 				if id != reqID {
 					newReqIDs = append(newReqIDs, id)
 				}

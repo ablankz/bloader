@@ -57,7 +57,7 @@ func (d DataExtractor) Validate() (ValidDataExtractor, error) {
 		}
 		jPath, err := jmespath.Compile(*d.JMESPath)
 		if err != nil {
-			return ValidDataExtractor{}, fmt.Errorf("failed to compile jmesPath: %v", err)
+			return ValidDataExtractor{}, fmt.Errorf("failed to compile jmesPath: %w", err)
 		}
 		valid.JMESPath = jPath
 		if d.OnNil == nil {
@@ -82,7 +82,7 @@ func (d ValidDataExtractor) Extract(data any) (any, error) {
 	case DataExtractorTypeJMESPath:
 		result, err := d.JMESPath.Search(data)
 		if err != nil {
-			return nil, fmt.Errorf("failed to search jmesPath: %v", err)
+			return nil, fmt.Errorf("failed to search jmesPath: %w", err)
 		}
 		if result == nil {
 			switch d.OnNil {

@@ -37,7 +37,7 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 ) error {
 	go func() {
 		// defer close(q.ResChan) // TODO: close channel
-		var waitForResponse = q.ResponseWait
+		waitForResponse := q.ResponseWait
 		var count int
 		var countLimitOver bool
 		chanForWait := make(chan struct{})
@@ -109,12 +109,18 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 					}
 
 					log.Debug(ctx, "sending request",
-						logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL), logger.Value("count", countInternal))
+						logger.Value("on", "RequestContent.QueryExecute"),
+						logger.Value("url", req.URL),
+						logger.Value("count", countInternal),
+					)
 					startTime := time.Now()
 					resp, err := client.Do(req)
 					endTime := time.Now()
 					log.Debug(ctx, "received response",
-						logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL), logger.Value("count", countInternal))
+						logger.Value("on", "RequestContent.QueryExecute"),
+						logger.Value("url", req.URL),
+						logger.Value("count", countInternal),
+					)
 					if err != nil {
 						log.Error(ctx, "response error",
 							logger.Value("error", err), logger.Value("on", "RequestContent.QueryExecute"), logger.Value("url", req.URL))

@@ -64,11 +64,11 @@ func (r MassExec) Validate(
 	var validAuth auth.SetAuthor
 	validOutput, err := r.Output.Validate(ctx, outFactor)
 	if err != nil {
-		return ValidMassExec{}, fmt.Errorf("failed to validate output: %v", err)
+		return ValidMassExec{}, fmt.Errorf("failed to validate output: %w", err)
 	}
 	validAuth, err = r.Auth.Validate(ctx, authFactor)
 	if err != nil {
-		return ValidMassExec{}, fmt.Errorf("failed to validate auth: %v", err)
+		return ValidMassExec{}, fmt.Errorf("failed to validate auth: %w", err)
 	}
 	var validRequests []ValidMassExecRequest
 	for i, req := range r.Requests {
@@ -80,7 +80,7 @@ func (r MassExec) Validate(
 			replaceData,
 		)
 		if err != nil {
-			return ValidMassExec{}, fmt.Errorf("failed to validate request[%d]: %v", i, err)
+			return ValidMassExec{}, fmt.Errorf("failed to validate request[%d]: %w", i, err)
 		}
 		validRequests = append(validRequests, validRequest)
 	}
@@ -105,11 +105,11 @@ func (o MassExecOutput) Validate(ctx context.Context, outFactor OutputFactor) ([
 	}
 	var outputs []output.Output
 	for _, id := range o.IDs {
-		if output, err := outFactor.Factorize(ctx, id); err != nil {
-			return nil, fmt.Errorf("failed to factorize output: %v", err)
-		} else {
-			outputs = append(outputs, output)
+		output, err := outFactor.Factorize(ctx, id)
+		if err != nil {
+			return nil, fmt.Errorf("failed to factorize output: %w", err)
 		}
+		outputs = append(outputs, output)
 	}
 	return outputs, nil
 }
@@ -132,15 +132,16 @@ func (a MassExecAuth) Validate(ctx context.Context, authFactor AuthenticatorFact
 	} else {
 		authID = *a.AuthID
 	}
-	if auth, err := authFactor.Factorize(
+	auth, err := authFactor.Factorize(
 		ctx,
 		authID,
 		isDefault,
-	); err != nil {
-		return nil, fmt.Errorf("failed to factorize auth: %v", err)
-	} else {
-		return auth, nil
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to factorize auth: %w", err)
 	}
+
+	return auth, nil
 }
 
 // MassExecRequestBreak represents the break configuration for the MassExec runner
@@ -175,7 +176,7 @@ func (b MassExecRequestBreak) Validate(ctx context.Context, log logger.Logger) (
 	if b.Time != nil {
 		duration, err := time.ParseDuration(*b.Time)
 		if err != nil {
-			return ValidMassExecRequestBreak{}, fmt.Errorf("failed to parse time: %v", err)
+			return ValidMassExecRequestBreak{}, fmt.Errorf("failed to parse time: %w", err)
 		}
 		valid.Time.Enabled = true
 		valid.Time.Time = duration
@@ -188,10 +189,10 @@ func (b MassExecRequestBreak) Validate(ctx context.Context, log logger.Logger) (
 	valid.ParseError = b.ParseError
 	valid.WriteError = b.WriteError
 	if valid.StatusCodeMatcher, err = b.StatusCode.MatcherGenerate(ctx, log); err != nil {
-		return ValidMassExecRequestBreak{}, fmt.Errorf("failed to generate status code matcher: %v", err)
+		return ValidMassExecRequestBreak{}, fmt.Errorf("failed to generate status code matcher: %w", err)
 	}
 	if valid.ResponseBodyMatcher, err = b.ResponseBody.MatcherGenerate(ctx, log); err != nil {
-		return ValidMassExecRequestBreak{}, fmt.Errorf("failed to generate response body matcher: %v", err)
+		return ValidMassExecRequestBreak{}, fmt.Errorf("failed to generate response body matcher: %w", err)
 	}
 	return valid, nil
 }
@@ -203,7 +204,8 @@ type MassExecRequestRecordExcludeFilter struct {
 	ResponseBody matcher.BodyConditions       `yaml:"response_body"`
 }
 
-// ValidMassExecRequestRecordExcludeFilter represents the valid record exclude filter configuration for the MassExec runner
+// ValidMassExecRequestRecordExcludeFilter represents the valid record exclude
+// filter configuration for the MassExec runner
 type ValidMassExecRequestRecordExcludeFilter struct {
 	CountFilter        matcher.CountConditionsMatcher
 	StatusCodeFilter   matcher.StatusCodeConditionsMatcher
@@ -211,17 +213,20 @@ type ValidMassExecRequestRecordExcludeFilter struct {
 }
 
 // Validate validates the MassExecRequestRecordExcludeFilter
-func (f MassExecRequestRecordExcludeFilter) Validate(ctx context.Context, log logger.Logger) (ValidMassExecRequestRecordExcludeFilter, error) {
+func (f MassExecRequestRecordExcludeFilter) Validate(
+	ctx context.Context,
+	log logger.Logger,
+) (ValidMassExecRequestRecordExcludeFilter, error) {
 	var valid ValidMassExecRequestRecordExcludeFilter
 	var err error
 	if valid.CountFilter, err = f.Count.MatcherGenerate(ctx, log); err != nil {
-		return ValidMassExecRequestRecordExcludeFilter{}, fmt.Errorf("failed to generate count filter: %v", err)
+		return ValidMassExecRequestRecordExcludeFilter{}, fmt.Errorf("failed to generate count filter: %w", err)
 	}
 	if valid.StatusCodeFilter, err = f.StatusCode.MatcherGenerate(ctx, log); err != nil {
-		return ValidMassExecRequestRecordExcludeFilter{}, fmt.Errorf("failed to generate status code filter: %v", err)
+		return ValidMassExecRequestRecordExcludeFilter{}, fmt.Errorf("failed to generate status code filter: %w", err)
 	}
 	if valid.ResponseBodyFilter, err = f.ResponseBody.MatcherGenerate(ctx, log); err != nil {
-		return ValidMassExecRequestRecordExcludeFilter{}, fmt.Errorf("failed to generate response body filter: %v", err)
+		return ValidMassExecRequestRecordExcludeFilter{}, fmt.Errorf("failed to generate response body filter: %w", err)
 	}
 	return valid, nil
 }
@@ -284,7 +289,7 @@ func (r MassExecRequest) Validate(
 	var urlRoot string
 	tg, err := targetFactor.Factorize(ctx, *r.TargetID)
 	if err != nil {
-		return ValidMassExecRequest{}, fmt.Errorf("failed to factorize target: %v", err)
+		return ValidMassExecRequest{}, fmt.Errorf("failed to factorize target: %w", err)
 	}
 	urlRoot = tg.URL
 	valid.URL = fmt.Sprintf("%s%s", urlRoot, *r.Endpoint)
@@ -313,7 +318,7 @@ func (r MassExecRequest) Validate(
 	for i, d := range r.Data {
 		validData, err := d.Validate()
 		if err != nil {
-			return ValidMassExecRequest{}, fmt.Errorf("failed to validate data[%d]: %v", i, err)
+			return ValidMassExecRequest{}, fmt.Errorf("failed to validate data[%d]: %w", i, err)
 		}
 		valid.Data = append(valid.Data, validData)
 	}
@@ -321,17 +326,17 @@ func (r MassExecRequest) Validate(
 		return ValidMassExecRequest{}, fmt.Errorf("interval is required")
 	}
 	if valid.Interval, err = time.ParseDuration(*r.Interval); err != nil {
-		return ValidMassExecRequest{}, fmt.Errorf("failed to parse interval: %v", err)
+		return ValidMassExecRequest{}, fmt.Errorf("failed to parse interval: %w", err)
 	}
 	valid.AwaitPrevResp = r.AwaitPrevResp
 	if valid.SuccessBreak, err = matcher.NewTerminateTypeAndParamsSliceFromStringSlice(r.SuccessBreak); err != nil {
-		return ValidMassExecRequest{}, fmt.Errorf("failed to parse success break: %v", err)
+		return ValidMassExecRequest{}, fmt.Errorf("failed to parse success break: %w", err)
 	}
 	if valid.Break, err = r.Break.Validate(ctx, log); err != nil {
-		return ValidMassExecRequest{}, fmt.Errorf("failed to validate break: %v", err)
+		return ValidMassExecRequest{}, fmt.Errorf("failed to validate break: %w", err)
 	}
 	if valid.RecordExcludeFilter, err = r.RecordExcludeFilter.Validate(ctx, log); err != nil {
-		return ValidMassExecRequest{}, fmt.Errorf("failed to validate record exclude filter: %v", err)
+		return ValidMassExecRequest{}, fmt.Errorf("failed to validate record exclude filter: %w", err)
 	}
 	valid.TmplStr = tmplStr
 	valid.ReplaceData = utils.NewSyncMapFromMap(replaceData)
@@ -412,7 +417,7 @@ func (r ValidMassExec) runHTTP(
 		uName := fmt.Sprintf("%s_%d", uniqueName, i)
 		var writeCloser []output.Close
 		for _, o := range r.Output {
-			writer, close, err := o.HTTPDataWriteFactory(
+			writer, closer, err := o.HTTPDataWriteFactory(
 				ctx,
 				log,
 				true,
@@ -430,20 +435,22 @@ func (r ValidMassExec) runHTTP(
 				),
 			)
 			if err != nil {
-				return fmt.Errorf("failed to create writer: %v", err)
+				return fmt.Errorf("failed to create writer: %w", err)
 			}
-			writeCloser = append(writeCloser, close)
+			writeCloser = append(writeCloser, closer)
 			writers = append(writers, writer)
 		}
 
 		closer := func() error {
 			for _, c := range writeCloser {
-				c()
+				if err := c(); err != nil {
+					return fmt.Errorf("failed to close writer: %w", err)
+				}
 			}
 			return nil
 		}
 
-		termChan := make(chan termChanType)
+		termChan := make(chan TermChanType)
 
 		threadExecutors[i].closer = closer
 		threadExecutors[i].RequestExecutor = exe
@@ -454,21 +461,21 @@ func (r ValidMassExec) runHTTP(
 		consumer := func(
 			ctx context.Context,
 			log logger.Logger,
-			id int,
+			_ int,
 			data WriteData,
 		) error {
 			var additionalData []string
 			for _, d := range request.Data {
 				result, err := d.Extractor.Extract(data.RawData)
 				if err != nil {
-					return fmt.Errorf("failed to extract data: %v", err)
+					return fmt.Errorf("failed to extract data: %w", err)
 				}
 				additionalData = append(additionalData, fmt.Sprint(result))
 			}
 
 			for _, w := range writers {
 				if err := w(ctx, log, append(data.ToSlice(), additionalData...)); err != nil {
-					return fmt.Errorf("failed to write data: %v", err)
+					return fmt.Errorf("failed to write data: %w", err)
 				}
 			}
 
@@ -489,7 +496,7 @@ func (r ValidMassExec) runHTTP(
 
 	var wg sync.WaitGroup
 	atomicErr := atomic.Value{}
-	var startChan = make(chan struct{})
+	startChan := make(chan struct{})
 	for _, executor := range threadExecutors {
 		wg.Add(1)
 		go func(exec *MassiveExecThreadExecutor) {
@@ -513,23 +520,28 @@ func (r ValidMassExec) runHTTP(
 	wg.Wait()
 
 	if err := atomicErr.Load(); err != nil {
-		log.Error(ctx, "failed to find error",
-			logger.Value("error", err.(error)), logger.Value("on", "MassExecuteBatch"))
-		return err.(error)
+		if e, ok := err.(error); ok {
+			log.Error(ctx, "failed to find error",
+				logger.Value("error", e), logger.Value("on", "MassExecuteBatch"))
+			return e
+		}
+		log.Error(ctx, "failed to find unknown error")
+
+		return fmt.Errorf("failed to find error")
 	}
 
 	return nil
 }
 
-// termChanType represents the type of termChan
-type termChanType struct {
+// TermChanType represents the type of termChan
+type TermChanType struct {
 	termType matcher.TerminateType
 	param    string
 }
 
 // NewTermChanType creates a new termChanType
-func NewTermChanType(termType matcher.TerminateType, param string) termChanType {
-	return termChanType{
+func NewTermChanType(termType matcher.TerminateType, param string) TermChanType {
+	return TermChanType{
 		termType: termType,
 		param:    param,
 	}
@@ -539,12 +551,13 @@ func NewTermChanType(termType matcher.TerminateType, param string) termChanType 
 type MassiveExecThreadExecutor struct {
 	ID              int
 	RequestExecutor httpexec.MassRequestExecutor
-	TermChan        chan termChanType
+	TermChan        chan TermChanType
 	ReqTermChan     chan<- struct{}
 	successBreak    matcher.TerminateTypeAndParamsSlice
 	closer          func() error
 }
 
+// Execute executes the MassiveExecThreadExecutor
 func (e *MassiveExecThreadExecutor) Execute(
 	ctx context.Context,
 	log logger.Logger,
@@ -563,7 +576,7 @@ func (e *MassiveExecThreadExecutor) Execute(
 		logger.Value("ExecutorID", e.ID))
 	err := e.RequestExecutor.MassRequestExecute(ctx, log)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to execute: %w", err)
 	}
 
 	termType := <-e.TermChan
@@ -581,7 +594,8 @@ func (e *MassiveExecThreadExecutor) Execute(
 	return fmt.Errorf("execute End For Fail Break: %v(%v)", termType.termType, termType.param)
 }
 
-func (e *MassiveExecThreadExecutor) Close(ctx context.Context) error {
+// Close closes the MassiveExecThreadExecutor
+func (e *MassiveExecThreadExecutor) Close(_ context.Context) error {
 	if e.closer != nil {
 		return e.closer()
 	}

@@ -9,8 +9,8 @@ import (
 	"github.com/ablankz/bloader/internal/slave/slcontainer"
 )
 
-// SlaveStore represents the store for the slave node
-type SlaveStore struct {
+// Store represents the store for the slave node
+type Store struct {
 	store                         *slcontainer.Store
 	connectionID                  string
 	receiveChanelRequestContainer *slcontainer.ReceiveChanelRequestContainer
@@ -18,16 +18,16 @@ type SlaveStore struct {
 }
 
 // Store stores the data
-func (s *SlaveStore) Store(ctx context.Context, data []runner.ValidStoreValueData, cb runner.StoreCallback) error {
+func (s *Store) Store(ctx context.Context, data []runner.ValidStoreValueData, cb runner.StoreCallback) error {
 	strData := make([]slcontainer.StoreData, len(data))
 	for i, d := range data {
 		valBytes, err := json.Marshal(d.Value)
 		if err != nil {
-			return fmt.Errorf("failed to marshal data: %v", err)
+			return fmt.Errorf("failed to marshal data: %w", err)
 		}
 		if cb != nil {
 			if err := cb(ctx, d, valBytes); err != nil {
-				return fmt.Errorf("failed to store data: %v", err)
+				return fmt.Errorf("failed to store data: %w", err)
 			}
 		}
 		strData[i] = slcontainer.StoreData{
@@ -47,7 +47,7 @@ func (s *SlaveStore) Store(ctx context.Context, data []runner.ValidStoreValueDat
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("failed to send store data request: %v", err)
+		return fmt.Errorf("failed to send store data request: %w", err)
 	}
 
 	select {
@@ -60,20 +60,25 @@ func (s *SlaveStore) Store(ctx context.Context, data []runner.ValidStoreValueDat
 }
 
 // StoreWithExtractor stores the data with extractor
-func (s *SlaveStore) StoreWithExtractor(ctx context.Context, res interface{}, data []runner.ValidExecRequestStoreData, cb runner.StoreWithExtractorCallback) error {
+func (s *Store) StoreWithExtractor(
+	ctx context.Context,
+	res any,
+	data []runner.ValidExecRequestStoreData,
+	cb runner.StoreWithExtractorCallback,
+) error {
 	strData := make([]slcontainer.StoreData, len(data))
 	for i, d := range data {
 		result, err := d.Extractor.Extract(res)
 		if err != nil {
-			return fmt.Errorf("failed to extract store data: %v", err)
+			return fmt.Errorf("failed to extract store data: %w", err)
 		}
 		valBytes, err := json.Marshal(result)
 		if err != nil {
-			return fmt.Errorf("failed to marshal store data: %v", err)
+			return fmt.Errorf("failed to marshal store data: %w", err)
 		}
 		if cb != nil {
 			if err := cb(ctx, d, valBytes); err != nil {
-				return fmt.Errorf("failed to store data: %v", err)
+				return fmt.Errorf("failed to store data: %w", err)
 			}
 		}
 		strData[i] = slcontainer.StoreData{
@@ -92,9 +97,8 @@ func (s *SlaveStore) StoreWithExtractor(ctx context.Context, res interface{}, da
 			StoreData: strData,
 		},
 	)
-
 	if err != nil {
-		return fmt.Errorf("failed to send store data request: %v", err)
+		return fmt.Errorf("failed to send store data request: %w", err)
 	}
 
 	select {
@@ -107,7 +111,7 @@ func (s *SlaveStore) StoreWithExtractor(ctx context.Context, res interface{}, da
 }
 
 // Import loads the data
-func (s *SlaveStore) Import(ctx context.Context, data []runner.ValidStoreImportData, cb runner.ImportCallback) error {
+func (s *Store) Import(ctx context.Context, data []runner.ValidStoreImportData, cb runner.ImportCallback) error {
 	shortageData := make([]slcontainer.StoreRespectiveRequest, 0, len(data))
 	for _, d := range data {
 		ok := s.store.ExistData(d.BucketID, d.StoreKey)
@@ -129,7 +133,7 @@ func (s *SlaveStore) Import(ctx context.Context, data []runner.ValidStoreImportD
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("failed to send store resource request: %v", err)
+		return fmt.Errorf("failed to send store resource request: %w", err)
 	}
 
 	select {
@@ -145,7 +149,7 @@ func (s *SlaveStore) Import(ctx context.Context, data []runner.ValidStoreImportD
 		}
 		if cb != nil {
 			if err := cb(ctx, d, val, nil); err != nil {
-				return fmt.Errorf("failed to import data: %v", err)
+				return fmt.Errorf("failed to import data: %w", err)
 			}
 		}
 	}
@@ -153,4 +157,4 @@ func (s *SlaveStore) Import(ctx context.Context, data []runner.ValidStoreImportD
 	return nil
 }
 
-var _ runner.Store = &SlaveStore{}
+var _ runner.Store = &Store{}

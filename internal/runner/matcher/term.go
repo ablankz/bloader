@@ -15,9 +15,9 @@ const (
 	TerminateTypeByCount TerminateType = "count"
 	// TerminateTypeBySystemError represents the system error type
 	TerminateTypeBySystemError TerminateType = "sysError"
-	// TerminateTypeByCreateRequestErr represents the create request error type
+	// TerminateTypeByCreateRequestError represents the create request error type
 	TerminateTypeByCreateRequestError TerminateType = "createRequestError"
-	// TerminateTypeByParseResponseErr represents the parse response error type
+	// TerminateTypeByParseResponseError represents the parse response error type
 	TerminateTypeByParseResponseError TerminateType = "parseError"
 	// TerminateTypeByWriteError represents the write error type
 	TerminateTypeByWriteError TerminateType = "writeError"
@@ -57,6 +57,7 @@ func NewTerminateTypeAndParams(t TerminateType, p []string) TerminateTypeAndPara
 	}
 }
 
+// NewTerminateTypeFromString creates a new TerminateTypeAndParams from a string
 func NewTerminateTypeFromString(s string) (TerminateTypeAndParams, error) {
 	strs := strings.Split(s, "/")
 	var params []string

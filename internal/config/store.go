@@ -41,7 +41,7 @@ func (c StoreConfig) Validate() (ValidStoreConfig, error) {
 		validFile.Path = *f.Path
 		valid.File = append(valid.File, validFile)
 	}
-	var bucketIDSet = make(map[string]struct{})
+	bucketIDSet := make(map[string]struct{})
 	for i, b := range c.Buckets {
 		if _, ok := bucketIDSet[b]; ok {
 			return ValidStoreConfig{}, fmt.Errorf("store.buckets[%d]: %w", i, ErrStoreBucketIDDuplicate)

@@ -6,9 +6,9 @@ import (
 
 const (
 	// SlaveConnectRunnerEventConnecting represents the connecting event
-	SlaveConnectRunnerEventConnecting RunnerEvent = "slaveConnect:connecting"
+	SlaveConnectRunnerEventConnecting Event = "slaveConnect:connecting"
 	// SlaveConnectRunnerEventConnected represents the connected event
-	SlaveConnectRunnerEventConnected RunnerEvent = "slaveConnect:connected"
+	SlaveConnectRunnerEventConnected Event = "slaveConnect:connected"
 )
 
 // SlaveConnect represents the SlaveConnect runner
@@ -22,7 +22,7 @@ func (r SlaveConnect) Validate() (ValidSlaveConnect, error) {
 	for i, d := range r.Slaves {
 		valid, err := d.Validate()
 		if err != nil {
-			return ValidSlaveConnect{}, fmt.Errorf("failed to validate data at index %d: %v", i, err)
+			return ValidSlaveConnect{}, fmt.Errorf("failed to validate data at index %d: %w", i, err)
 		}
 		validSlaves = append(validSlaves, valid)
 	}
@@ -52,12 +52,12 @@ func (d SlaveConnectData) Validate() (ValidSlaveConnectData, error) {
 	valid.URI = *d.URI
 	validCertificate, err := d.Certificate.Validate()
 	if err != nil {
-		return ValidSlaveConnectData{}, fmt.Errorf("failed to validate certificate: %v", err)
+		return ValidSlaveConnectData{}, fmt.Errorf("failed to validate certificate: %w", err)
 	}
 	valid.Certificate = validCertificate
 	validEncrypt, err := d.Encrypt.Validate()
 	if err != nil {
-		return ValidSlaveConnectData{}, fmt.Errorf("failed to validate encrypt: %v", err)
+		return ValidSlaveConnectData{}, fmt.Errorf("failed to validate encrypt: %w", err)
 	}
 	valid.Encrypt = ValidCredentialEncryptConfig(validEncrypt)
 	return valid, nil

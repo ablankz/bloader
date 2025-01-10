@@ -32,7 +32,7 @@ It sends a request to the authorization server to get an access token.`,
 		color.Green("Logging in with %s", target)
 		if v, ok := ctr.AuthenticatorContainer.Container[target]; ok {
 			if err := (*v).Authenticate(ctr.Ctx, ctr.Store); err != nil {
-				color.Red("Failed to login: %v", err)
+				color.Red("Failed to login: %w", err)
 				return
 			}
 		} else {

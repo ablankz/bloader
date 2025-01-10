@@ -1,4 +1,4 @@
-// prompt package provides a set of functions to prompt the user to enter a value.
+// Package prompt provides a set of functions to prompt the user to enter a value.
 package prompt
 
 import (
@@ -22,39 +22,40 @@ var (
 	ErrorNumberFormat = fmt.Errorf("invalid number format")
 )
 
-// PromptAgainCallback is a callback function that is called when the user needs to be prompted again.
-type PromptAgainCallback func(error) bool
+// AgainCallback is a callback function that is called when the user
+// needs to be prompted again.
+type AgainCallback func(error) bool
 
 type timeUnit string
 
 const (
-	// Nanosecond
+	// Nanosecond timeUnit = "ns"
 	Nanosecond timeUnit = "ns"
-	// Microsecond
+	// Microsecond timeUnit = "us"
 	Microsecond timeUnit = "us"
-	// Millisecond
+	// Millisecond timeUnit = "ms"
 	Millisecond timeUnit = "ms"
-	// Second
+	// Second timeUnit = "s"
 	Second timeUnit = "s"
-	// Minute
+	// Minute timeUnit = "m"
 	Minute timeUnit = "m"
-	// Hour
+	// Hour timeUnit = "h"
 	Hour timeUnit = "h"
-	// Day
+	// Day timeUnit = "d"
 	Day timeUnit = "d"
-	// Week
+	// Week timeUnit = "w"
 	Week timeUnit = "w"
-	// Month
+	// Month timeUnit = "M"
 	Month timeUnit = "M"
-	// Year
+	// Year timeUnit = "y"
 	Year timeUnit = "y"
 )
 
-// PromptNumber prompts the user to enter a number.
-func PromptNumber(
+// Number prompts the user to enter a number.
+func Number(
 	label string,
 	maxAttempts int,
-	promptAgainCallback PromptAgainCallback,
+	promptAgainCallback AgainCallback,
 	isConfirm bool,
 ) (int, error) {
 	prompt := promptui.Prompt{
@@ -66,7 +67,7 @@ func PromptNumber(
 	for i := 0; i < maxAttempts; i++ {
 		result, err := prompt.Run()
 		if err != nil {
-			return 0, err
+			return 0, fmt.Errorf("prompt number: %w", err)
 		}
 		value, err = strconv.Atoi(result)
 		if err != nil {
@@ -83,8 +84,8 @@ func PromptNumber(
 	return value, nil
 }
 
-// PromptSelect prompts the user to select an item from a list.
-func PromptSelect(
+// Select prompts the user to select an item from a list.
+func Select(
 	label string,
 	items []string,
 ) (string, error) {
@@ -94,17 +95,17 @@ func PromptSelect(
 	}
 	index, _, err := prompt.Run()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("prompt select: %w", err)
 	}
 	return items[index], nil
 }
 
-// PromptDuration prompts the user to enter a duration.
-func PromptDuration(
+// Duration prompts the user to enter a duration.
+func Duration(
 	label string,
 	timeUnit timeUnit,
 	maxAttempts int,
-	promptAgainCallback PromptAgainCallback,
+	promptAgainCallback AgainCallback,
 	isConfirm bool,
 ) (time.Duration, error) {
 	prompt := promptui.Prompt{
@@ -116,7 +117,7 @@ func PromptDuration(
 	for i := 0; i < maxAttempts; i++ {
 		result, err := prompt.Run()
 		if err != nil {
-			return 0, err
+			return 0, fmt.Errorf("prompt duration: %w", err)
 		}
 		value, err = time.ParseDuration(result + string(timeUnit))
 		if err != nil {
@@ -133,25 +134,25 @@ func PromptDuration(
 	return value, nil
 }
 
-// PromptBool prompts the user to enter a boolean value.
-func PromptBool(label string) (bool, error) {
+// Bool prompts the user to enter a boolean value.
+func Bool(label string) (bool, error) {
 	prompt := promptui.Select{
 		Label: label,
 		Items: []string{"yes", "no"},
 	}
 	_, result, err := prompt.Run()
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("prompt bool: %w", err)
 	}
 	return result == "Yes", nil
 }
 
-// PromptPassword prompts the user to enter a password.
-func PromptPassword(
+// Password prompts the user to enter a password.
+func Password(
 	label string,
 	confirmLabel string,
 	maxAttempts int,
-	promptAgainCallback PromptAgainCallback,
+	promptAgainCallback AgainCallback,
 	isConfirm bool,
 ) (string, error) {
 	prompt := promptui.Prompt{
@@ -167,13 +168,13 @@ func PromptPassword(
 	for i := 0; i < maxAttempts; i++ {
 		result, err := prompt.Run()
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("prompt password: %w", err)
 		}
 		value = result
 		if isConfirm {
 			confirmValue, err := confirmPrompt.Run()
 			if err != nil {
-				return "", err
+				return "", fmt.Errorf("prompt password: %w", err)
 			}
 			if value != confirmValue {
 				if pass := promptAgainCallback(ErrorPasswordMismatch); !pass {
@@ -190,8 +191,8 @@ func PromptPassword(
 	return value, nil
 }
 
-// PromptText prompts the user to enter a text.
-func PromptText(
+// Text prompts the user to enter a text.
+func Text(
 	label string,
 	isConfirm bool,
 ) (string, error) {
@@ -201,17 +202,17 @@ func PromptText(
 	}
 	result, err := prompt.Run()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("prompt text: %w", err)
 	}
 	return result, nil
 }
 
-// PromptTime prompts the user to enter a time.
-func PromptTime(
+// Time prompts the user to enter a time.
+func Time(
 	label string,
 	layout string,
 	maxAttempts int,
-	promptAgainCallback PromptAgainCallback,
+	promptAgainCallback AgainCallback,
 	isConfirm bool,
 ) (time.Time, error) {
 	prompt := promptui.Prompt{
@@ -223,7 +224,7 @@ func PromptTime(
 	for i := 0; i < maxAttempts; i++ {
 		result, err := prompt.Run()
 		if err != nil {
-			return time.Time{}, err
+			return time.Time{}, fmt.Errorf("prompt time: %w", err)
 		}
 		value, err = time.Parse(layout, result)
 		if err != nil {

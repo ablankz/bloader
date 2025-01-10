@@ -6,34 +6,34 @@ import (
 	"github.com/ablankz/bloader/internal/utils"
 )
 
-// RunnerEvent represents the flow step flow depends on event
-type RunnerEvent string
+// Event represents the flow step flow depends on event
+type Event string
 
 const (
 	// RunnerEventStart represents the event start
-	RunnerEventStart RunnerEvent = "sys:start"
+	RunnerEventStart Event = "sys:start"
 	// RunnerEventStoreImporting represents the event store importing
-	RunnerEventStoreImporting RunnerEvent = "sys:store:importing"
+	RunnerEventStoreImporting Event = "sys:store:importing"
 	// RunnerEventStoreImported represents the event store imported
-	RunnerEventStoreImported RunnerEvent = "sys:store:imported"
+	RunnerEventStoreImported Event = "sys:store:imported"
 	// RunnerEventValidating represents the event validating
-	RunnerEventValidating RunnerEvent = "sys:validating"
+	RunnerEventValidating Event = "sys:validating"
 	// RunnerEventValidated represents the event validated
-	RunnerEventValidated RunnerEvent = "sys:validated"
+	RunnerEventValidated Event = "sys:validated"
 	// RunnerEventTerminated represents the event terminated
-	RunnerEventTerminated RunnerEvent = "sys:terminated"
+	RunnerEventTerminated Event = "sys:terminated"
 )
 
 // EventCaster is an interface for casting event
 type EventCaster interface {
 	// CastEvent casts the event
-	CastEvent(ctx context.Context, event RunnerEvent) error
+	CastEvent(ctx context.Context, event Event) error
 	// CastEventWithWait casts the event with wait
-	CastEventWithWait(ctx context.Context, event RunnerEvent) error
+	CastEventWithWait(ctx context.Context, event Event) error
 	// Subscribe subscribes to the event
 	Subscribe(ctx context.Context) error
 	// Unsubscribe unsubscribes to the event
-	Unsubscribe(ctx context.Context, ch chan RunnerEvent) error
+	Unsubscribe(ctx context.Context, ch chan Event) error
 	// Close closes the event caster
 	Close(ctx context.Context) error
 }
@@ -41,31 +41,31 @@ type EventCaster interface {
 // DefaultEventCaster is a struct that holds the event caster information
 type DefaultEventCaster struct {
 	// Caster is an event caster
-	Caster *utils.Broadcaster[RunnerEvent]
+	Caster *utils.Broadcaster[Event]
 }
 
 // NewDefaultEventCaster creates a new DefaultEventCaster
 func NewDefaultEventCaster() *DefaultEventCaster {
 	return &DefaultEventCaster{
-		Caster: utils.NewBroadcaster[RunnerEvent](),
+		Caster: utils.NewBroadcaster[Event](),
 	}
 }
 
 // NewDefaultEventCasterWithBroadcaster creates a new DefaultEventCaster with broadcaster
-func NewDefaultEventCasterWithBroadcaster(broadcaster *utils.Broadcaster[RunnerEvent]) *DefaultEventCaster {
+func NewDefaultEventCasterWithBroadcaster(broadcaster *utils.Broadcaster[Event]) *DefaultEventCaster {
 	return &DefaultEventCaster{
 		Caster: broadcaster,
 	}
 }
 
 // CastEvent casts the event
-func (ec *DefaultEventCaster) CastEvent(ctx context.Context, event RunnerEvent) error {
+func (ec *DefaultEventCaster) CastEvent(_ context.Context, event Event) error {
 	ec.Caster.Broadcast(event)
 	return nil
 }
 
 // CastEventWithWait casts the event with wait
-func (ec *DefaultEventCaster) CastEventWithWait(ctx context.Context, event RunnerEvent) error {
+func (ec *DefaultEventCaster) CastEventWithWait(ctx context.Context, event Event) error {
 	waitChan := ec.Caster.Broadcast(event)
 	select {
 	case <-waitChan:
@@ -75,19 +75,19 @@ func (ec *DefaultEventCaster) CastEventWithWait(ctx context.Context, event Runne
 }
 
 // Subscribe subscribes to the event
-func (ec *DefaultEventCaster) Subscribe(ctx context.Context) error {
+func (ec *DefaultEventCaster) Subscribe(_ context.Context) error {
 	ec.Caster.Subscribe()
 	return nil
 }
 
 // Unsubscribe unsubscribes to the event
-func (ec *DefaultEventCaster) Unsubscribe(ctx context.Context, ch chan RunnerEvent) error {
+func (ec *DefaultEventCaster) Unsubscribe(_ context.Context, ch chan Event) error {
 	ec.Caster.Unsubscribe(ch)
 	return nil
 }
 
 // Close closes the event caster
-func (ec *DefaultEventCaster) Close(ctx context.Context) error {
+func (ec *DefaultEventCaster) Close(_ context.Context) error {
 	ec.Caster.Close()
 	return nil
 }

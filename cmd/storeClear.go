@@ -22,7 +22,7 @@ It removes all the data from the store.`,
 		}
 
 		if err := ctr.Store.Clear(); err != nil {
-			color.Red("Failed to clear the store: %v", err)
+			color.Red("Failed to clear the store: %w", err)
 			return
 		}
 		color.Green("Store cleared successfully")

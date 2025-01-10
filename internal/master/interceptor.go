@@ -2,6 +2,7 @@ package master
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ablankz/bloader/internal/encrypt"
 	"google.golang.org/grpc"
@@ -20,7 +21,7 @@ func UnaryClientEncryptInterceptor(encrypter encrypt.Encrypter) grpc.UnaryClient
 		if plainReq, ok := req.([]byte); ok {
 			encryptedReq, err := encrypter.Encrypt(plainReq)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to encrypt request: %w", err)
 			}
 			req = encryptedReq
 		}
@@ -33,9 +34,11 @@ func UnaryClientEncryptInterceptor(encrypter encrypt.Encrypter) grpc.UnaryClient
 		if encryptedResp, ok := reply.(string); ok {
 			plainResp, err := encrypter.Decrypt(encryptedResp)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to decrypt response: %w", err)
 			}
-			*reply.(*[]byte) = plainResp
+			if byteResp, ok := reply.(*[]byte); ok {
+				*byteResp = plainResp
+			}
 		}
 
 		return nil
@@ -54,7 +57,7 @@ func StreamClientInterceptor(encrypter encrypt.Encrypter) grpc.StreamClientInter
 	) (grpc.ClientStream, error) {
 		stream, err := streamer(ctx, desc, cc, method, opts...)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to create client stream: %w", err)
 		}
 		return &wrappedClientStream{ClientStream: stream, encrypter: encrypter}, nil
 	}
@@ -70,23 +73,32 @@ func (w *wrappedClientStream) SendMsg(m any) error {
 	if plainMsg, ok := m.([]byte); ok {
 		encryptedMsg, err := w.encrypter.Encrypt(plainMsg)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to encrypt message: %w", err)
 		}
-		return w.ClientStream.SendMsg(encryptedMsg)
+		if err := w.ClientStream.SendMsg(encryptedMsg); err != nil {
+			return fmt.Errorf("failed to send message: %w", err)
+		}
 	}
-	return w.ClientStream.SendMsg(m)
+	if err := w.ClientStream.SendMsg(m); err != nil {
+		return fmt.Errorf("failed to send message: %w", err)
+	}
+
+	return nil
 }
 
 // RecvMsg decrypts the message after receiving it.
 func (w *wrappedClientStream) RecvMsg(m any) error {
 	var encryptedMsg []byte
 	if err := w.ClientStream.RecvMsg(&encryptedMsg); err != nil {
-		return err
+		return fmt.Errorf("failed to receive message: %w", err)
 	}
 	decryptedMsg, err := w.encrypter.Decrypt(string(encryptedMsg))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to decrypt message: %w", err)
 	}
-	*m.(*[]byte) = decryptedMsg
-	return nil
+	if byteMsg, ok := m.(*[]byte); ok {
+		*byteMsg = decryptedMsg
+		return nil
+	}
+	return fmt.Errorf("failed to convert message to byte slice")
 }

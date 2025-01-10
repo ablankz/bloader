@@ -62,6 +62,8 @@ func (a Auth) AddFromProto(id string, pbAuth *pb.Auth) error {
 			Password: pbAuth.GetBasic().Password,
 		}
 		a.Add(id, auth)
+	case pb.AuthType_AUTH_TYPE_PRIVATE_KEY:
+		// TODO: Implement private key auth
 	case pb.AuthType_AUTH_TYPE_API_KEY:
 		auth := &auth.APIKeyAuthenticator{
 			APIKey:     pbAuth.GetApiKey().ApiKey,
@@ -71,6 +73,8 @@ func (a Auth) AddFromProto(id string, pbAuth *pb.Auth) error {
 	case pb.AuthType_AUTH_TYPE_JWT:
 		auth := &auth.JWTAuthenticator{}
 		a.Add(id, auth)
+	case pb.AuthType_AUTH_TYPE_UNSPECIFIED:
+		return ErrInvalidAuthType
 	default:
 		return ErrInvalidAuthType
 	}

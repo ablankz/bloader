@@ -40,7 +40,7 @@ func GenerateRandomStringWithCharset(length int, charset string) string {
 func GenerateRandomBytes(size int) ([]byte, error) {
 	bytes := make([]byte, size)
 	if _, err := io.ReadFull(cryptorand.Reader, bytes); err != nil {
-		return nil, fmt.Errorf("failed to generate random bytes: %v", err)
+		return nil, fmt.Errorf("failed to generate random bytes: %w", err)
 	}
 	return bytes, nil
 }
@@ -56,7 +56,7 @@ func Contains[T comparable](slice []T, elem T) bool {
 }
 
 // AnyContains checks if any of the slices contains a specific element
-func AnyContains[T comparable](slices1 []T, slices2 []T) bool {
+func AnyContains[T comparable](slices1, slices2 []T) bool {
 	for _, e1 := range slices1 {
 		for _, e2 := range slices2 {
 			if e1 == e2 {
@@ -68,7 +68,7 @@ func AnyContains[T comparable](slices1 []T, slices2 []T) bool {
 }
 
 // AllContains checks if all of the slices contain a specific element
-func AllContains[T comparable](slices1 []T, slices2 []T) bool {
+func AllContains[T comparable](slices1, slices2 []T) bool {
 	for _, e2 := range slices2 {
 		found := false
 		for _, e1 := range slices1 {

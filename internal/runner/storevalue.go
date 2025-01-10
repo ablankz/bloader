@@ -21,7 +21,7 @@ func (r StoreValue) Validate() (ValidStoreValue, error) {
 	for i, d := range r.Data {
 		valid, err := d.Validate()
 		if err != nil {
-			return ValidStoreValue{}, fmt.Errorf("failed to validate data at index %d: %v", i, err)
+			return ValidStoreValue{}, fmt.Errorf("failed to validate data at index %d: %w", i, err)
 		}
 		validData = append(validData, valid)
 	}
@@ -59,7 +59,7 @@ func (d StoreValueData) Validate() (ValidStoreValueData, error) {
 	}
 	validEncrypt, err := d.Encrypt.Validate()
 	if err != nil {
-		return ValidStoreValueData{}, fmt.Errorf("failed to validate encrypt: %v", err)
+		return ValidStoreValueData{}, fmt.Errorf("failed to validate encrypt: %w", err)
 	}
 	return ValidStoreValueData{
 		BucketID: *d.BucketID,
@@ -72,7 +72,7 @@ func (d StoreValueData) Validate() (ValidStoreValueData, error) {
 // Run runs the StoreValue runner
 func (r ValidStoreValue) Run(ctx context.Context, str Store) error {
 	if err := str.Store(ctx, r.Data, nil); err != nil {
-		return fmt.Errorf("failed to store data: %v", err)
+		return fmt.Errorf("failed to store data: %w", err)
 	}
 	return nil
 }

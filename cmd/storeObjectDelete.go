@@ -33,7 +33,7 @@ bloader store object delete --bucket 1234 objectKey`,
 		}
 		objKey := args[0]
 		if err := ctr.Store.DeleteObject(bucketID, objKey); err != nil {
-			color.Red("Failed to delete object: %v", err)
+			color.Red("Failed to delete object: %w", err)
 			return
 		}
 		green := color.New(color.FgGreen).SprintFunc()

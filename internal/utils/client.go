@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -15,5 +16,10 @@ type DelayedTransport struct {
 func (d *DelayedTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	time.Sleep(d.Delay)
 
-	return d.Transport.RoundTrip(req)
+	res, err := d.Transport.RoundTrip(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute HTTP request: %w", err)
+	}
+
+	return res, nil
 }

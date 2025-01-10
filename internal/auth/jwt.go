@@ -15,7 +15,7 @@ type JWTAuthenticator struct {
 	credentialConf config.ValidAuthCredentialConfig
 }
 
-// Authenticate authenticates the user
+// NewJWTAuthenticator creates a new JWTAuthenticator
 func NewJWTAuthenticator(conf config.ValidAuthJWTConfig) (Authenticator, error) {
 	return &JWTAuthenticator{
 		credentialConf: conf.Credential,
@@ -23,12 +23,12 @@ func NewJWTAuthenticator(conf config.ValidAuthJWTConfig) (Authenticator, error) 
 }
 
 // Authenticate authenticates the user
-func (a *JWTAuthenticator) Authenticate(ctx context.Context, str store.Store) error {
+func (a *JWTAuthenticator) Authenticate(_ context.Context, _ store.Store) error {
 	return nil
 }
 
 // SetOnRequest sets the authentication information on the request
-func (a *JWTAuthenticator) SetOnRequest(ctx context.Context, r *http.Request) {
+func (a *JWTAuthenticator) SetOnRequest(_ context.Context, _ *http.Request) {
 }
 
 // GetAuthValue returns the authentication value
@@ -44,14 +44,16 @@ func (a *JWTAuthenticator) GetAuthValue() *pb.Auth {
 }
 
 // IsExpired checks if the authentication information is expired
-func (a *JWTAuthenticator) IsExpired(ctx context.Context, str store.Store) bool {
+func (a *JWTAuthenticator) IsExpired(_ context.Context, _ store.Store) bool {
 	return false
 }
 
 // Refresh refreshes the authentication information
-func (a *JWTAuthenticator) Refresh(ctx context.Context, str store.Store) error {
+func (a *JWTAuthenticator) Refresh(_ context.Context, _ store.Store) error {
 	return nil
 }
 
-var _ Authenticator = &JWTAuthenticator{}
-var _ SetAuthor = &JWTAuthenticator{}
+var (
+	_ Authenticator = &JWTAuthenticator{}
+	_ SetAuthor     = &JWTAuthenticator{}
+)

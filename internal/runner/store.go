@@ -31,12 +31,12 @@ type Store interface {
 
 // LocalStore represents the local store
 type LocalStore struct {
-	encCtr encrypt.EncrypterContainer
+	encCtr encrypt.Container
 	str    store.Store
 }
 
 // NewLocalStore creates a new local store
-func NewLocalStore(encCtr encrypt.EncrypterContainer, str store.Store) *LocalStore {
+func NewLocalStore(encCtr encrypt.Container, str store.Store) *LocalStore {
 	return &LocalStore{
 		encCtr: encCtr,
 		str:    str,
@@ -48,7 +48,7 @@ func (l LocalStore) Store(ctx context.Context, data []ValidStoreValueData, cb St
 	for _, d := range data {
 		valBytes, err := json.Marshal(d.Value)
 		if err != nil {
-			return fmt.Errorf("failed to marshal store data: %v", err)
+			return fmt.Errorf("failed to marshal store data: %w", err)
 		}
 		if d.Encrypt.Enabled {
 			encrypter, ok := l.encCtr[d.Encrypt.EncryptID]
@@ -57,32 +57,37 @@ func (l LocalStore) Store(ctx context.Context, data []ValidStoreValueData, cb St
 			}
 			encryptedVal, err := encrypter.Encrypt(valBytes)
 			if err != nil {
-				return fmt.Errorf("failed to encrypt value: %v", err)
+				return fmt.Errorf("failed to encrypt value: %w", err)
 			}
 			valBytes = []byte(encryptedVal)
 		}
 		if cb != nil {
 			if err := cb(ctx, d, valBytes); err != nil {
-				return fmt.Errorf("failed to store data: %v", err)
+				return fmt.Errorf("failed to store data: %w", err)
 			}
 		}
 		if err := l.str.PutObject(d.BucketID, d.Key, valBytes); err != nil {
-			return fmt.Errorf("failed to put object: %v", err)
+			return fmt.Errorf("failed to put object: %w", err)
 		}
 	}
 	return nil
 }
 
 // StoreWithExtractor stores the data with extractor
-func (l LocalStore) StoreWithExtractor(ctx context.Context, res any, data []ValidExecRequestStoreData, cb StoreWithExtractorCallback) error {
+func (l LocalStore) StoreWithExtractor(
+	ctx context.Context,
+	res any,
+	data []ValidExecRequestStoreData,
+	cb StoreWithExtractorCallback,
+) error {
 	for _, d := range data {
 		result, err := d.Extractor.Extract(res)
 		if err != nil {
-			return fmt.Errorf("failed to extract store data: %v", err)
+			return fmt.Errorf("failed to extract store data: %w", err)
 		}
 		valBytes, err := json.Marshal(result)
 		if err != nil {
-			return fmt.Errorf("failed to marshal store data: %v", err)
+			return fmt.Errorf("failed to marshal store data: %w", err)
 		}
 		if d.Encrypt.Enabled {
 			encrypter, ok := l.encCtr[d.Encrypt.EncryptID]
@@ -91,17 +96,17 @@ func (l LocalStore) StoreWithExtractor(ctx context.Context, res any, data []Vali
 			}
 			encryptedVal, err := encrypter.Encrypt(valBytes)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to encrypt value: %w", err)
 			}
 			valBytes = []byte(encryptedVal)
 		}
 		if cb != nil {
 			if err := cb(ctx, d, valBytes); err != nil {
-				return fmt.Errorf("failed to store data: %v", err)
+				return fmt.Errorf("failed to store data: %w", err)
 			}
 		}
 		if err := l.str.PutObject(d.BucketID, d.StoreKey, valBytes); err != nil {
-			return err
+			return fmt.Errorf("failed to put object: %w", err)
 		}
 	}
 	return nil
@@ -112,7 +117,7 @@ func (l LocalStore) Import(ctx context.Context, data []ValidStoreImportData, cb 
 	for _, d := range data {
 		valBytes, err := l.str.GetObject(d.BucketID, d.StoreKey)
 		if err != nil {
-			return fmt.Errorf("failed to get object: %v", err)
+			return fmt.Errorf("failed to get object: %w", err)
 		}
 		if len(valBytes) == 0 {
 			return fmt.Errorf("object not found: %s in bucket: %s", d.StoreKey, d.BucketID)
@@ -124,17 +129,17 @@ func (l LocalStore) Import(ctx context.Context, data []ValidStoreImportData, cb 
 			}
 			decryptedVal, err := encrypter.Decrypt(string(valBytes))
 			if err != nil {
-				return fmt.Errorf("failed to decrypt value: %v", err)
+				return fmt.Errorf("failed to decrypt value: %w", err)
 			}
 			valBytes = []byte(decryptedVal)
 		}
 		var val any
 		if err := json.Unmarshal(valBytes, &val); err != nil {
-			return fmt.Errorf("failed to unmarshal value: %v", err)
+			return fmt.Errorf("failed to unmarshal value: %w", err)
 		}
 		if cb != nil {
 			if err := cb(ctx, d, val, valBytes); err != nil {
-				return fmt.Errorf("failed to import data: %v", err)
+				return fmt.Errorf("failed to import data: %w", err)
 			}
 		}
 	}

@@ -5,14 +5,17 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/ablankz/bloader/internal/config"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
-var decrypt bool
-var encryptID string
+var (
+	decrypt   bool
+	encryptID string
+)
 
 // encryptCmd represents the encrypt command
 var encryptCmd = &cobra.Command{
@@ -41,7 +44,7 @@ It encrypts the text using the encryption key.`,
 		if decrypt {
 			b, err := encryper.Decrypt(target)
 			if err != nil {
-				color.Red("Failed to decrypt: %v", err)
+				color.Red("Failed to decrypt: %w", err)
 				return
 			}
 			green := color.New(color.FgGreen).SprintFunc()
@@ -50,7 +53,7 @@ It encrypts the text using the encryption key.`,
 		} else {
 			s, err := encryper.Encrypt([]byte(target))
 			if err != nil {
-				color.Red("Failed to encrypt: %v", err)
+				color.Red("Failed to encrypt: %w", err)
 				return
 			}
 			green := color.New(color.FgGreen).SprintFunc()
@@ -65,5 +68,8 @@ func init() {
 
 	encryptCmd.Flags().BoolVarP(&decrypt, "decrypt", "d", false, "Switch to decrypt mode")
 	encryptCmd.Flags().StringVarP(&encryptID, "id", "i", "", `ID of the encrypt setting. This is required.`)
-	encryptCmd.MarkFlagRequired("id")
+	if err := encryptCmd.MarkFlagRequired("id"); err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
 }

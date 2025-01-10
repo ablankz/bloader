@@ -1,17 +1,20 @@
 package config
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/spf13/viper"
 )
 
+// GetNestedValueFromMap gets a nested value from a map
 func GetNestedValueFromMap(data map[string]any, key string) any {
 	keys := strings.Split(key, ".")
 	return parseMap(data, keys)
 }
 
+//nolint:forcetypeassert
 func parseMap(currentMap map[string]any, keys []string) any {
 	if len(keys) == 0 {
 		return currentMap
@@ -35,9 +38,8 @@ func parseMap(currentMap map[string]any, keys []string) any {
 				if len(slice.([]any)) > index {
 					if v, ok := slice.([]any)[index].(map[string]any); ok {
 						return parseMap(v, remainKeys)
-					} else {
-						return currentMap[preKey].([]any)[index]
 					}
+					return currentMap[preKey].([]any)[index]
 				}
 			}
 		}
@@ -45,27 +47,31 @@ func parseMap(currentMap map[string]any, keys []string) any {
 		if v, ok := currentMap[k]; ok {
 			if mapV, ok := v.(map[string]any); ok {
 				return parseMap(mapV, remainKeys)
-			} else if _, ok := v.([]any); ok {
-				return currentMap
-			} else {
-				return currentMap[k]
 			}
-		} else {
-			return currentMap
+			if _, ok := v.([]any); ok {
+				return currentMap
+			}
+			return currentMap[k]
 		}
+		return currentMap
 	}
 
 	return currentMap
 }
 
-func SetNestedValue(v *viper.Viper, key string, value any) {
+// SetNestedValue sets a nested value in a viper instance
+func SetNestedValue(v *viper.Viper, key string, value any) error {
 	keys := strings.Split(key, ".")
 	data := v.AllSettings()
 	nestedMap := data
 	newMap := parse(nestedMap, keys, value)
-	v.MergeConfigMap(newMap)
+	if err := v.MergeConfigMap(newMap); err != nil {
+		return fmt.Errorf("failed to set nested value: %w", err)
+	}
+	return nil
 }
 
+//nolint:forcetypeassert
 func parse(currentMap map[string]any, keys []string, value any) map[string]any {
 	if len(keys) == 0 {
 		return currentMap
@@ -91,10 +97,9 @@ func parse(currentMap map[string]any, keys []string, value any) map[string]any {
 						slice.([]any)[index] = parse(v, remainKeys, value)
 						currentMap[preKey] = slice
 						return currentMap
-					} else {
-						currentMap[preKey].([]any)[index] = value
-						return currentMap
 					}
+					currentMap[preKey].([]any)[index] = value
+					return currentMap
 				}
 			}
 		}
@@ -103,15 +108,15 @@ func parse(currentMap map[string]any, keys []string, value any) map[string]any {
 			if mapV, ok := v.(map[string]any); ok {
 				currentMap[k] = parse(mapV, remainKeys, value)
 				return currentMap
-			} else if _, ok := v.([]any); ok {
-				return currentMap
-			} else {
-				currentMap[k] = value
+			}
+			_, ok := v.([]any)
+			if ok {
 				return currentMap
 			}
-		} else {
+			currentMap[k] = value
 			return currentMap
 		}
+		return currentMap
 	}
 
 	return currentMap

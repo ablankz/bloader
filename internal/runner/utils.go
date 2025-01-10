@@ -8,11 +8,12 @@ import (
 	"github.com/ablankz/bloader/internal/logger"
 )
 
+//nolint:unparam
 func wait(
 	ctx context.Context,
 	log logger.Logger,
 	conf ValidRunner,
-	after RunnerSleepValueAfter,
+	after SleepValueAfter,
 	filename string,
 ) error {
 	if v, wait := conf.RetrieveSleepValue(after); wait {
@@ -38,13 +39,13 @@ func validate(
 	validateFunc func() error,
 ) error {
 	if err := eventCaster.CastEvent(ctx, RunnerEventValidating); err != nil {
-		return fmt.Errorf("failed to cast event: %v", err)
+		return fmt.Errorf("failed to cast event: %w", err)
 	}
 	if err := validateFunc(); err != nil {
 		return err
 	}
 	if err := eventCaster.CastEvent(ctx, RunnerEventValidated); err != nil {
-		return fmt.Errorf("failed to cast event: %v", err)
+		return fmt.Errorf("failed to cast event: %w", err)
 	}
 
 	return nil

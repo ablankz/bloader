@@ -68,7 +68,7 @@ func (scc CountCondition) MatcherGenerate(ctx context.Context, log logger.Logger
 	}
 	switch (CountOperator)(*scc.Op) {
 	case CountOperatorNone:
-		return func(count int) bool {
+		return func(_ int) bool {
 			return false
 		}, nil
 	case CountOperatorEqual:

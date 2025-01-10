@@ -33,7 +33,7 @@ func (s *Store) AddData(bucketID, storeKey string, data []byte) error {
 
 	var v any
 	if err := json.Unmarshal(data, &v); err != nil {
-		return fmt.Errorf("failed to unmarshal data: %v", err)
+		return fmt.Errorf("failed to unmarshal data: %w", err)
 	}
 
 	s.data[StoreDataKey{BucketID: bucketID, StoreKey: storeKey}] = v

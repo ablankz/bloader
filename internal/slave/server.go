@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"sync"
@@ -28,7 +29,7 @@ type commandTermData struct {
 type Server struct {
 	globalCtx   context.Context
 	mu          *sync.RWMutex
-	encryptCtr  encrypt.EncrypterContainer
+	encryptCtr  encrypt.Container
 	env         string
 	log         logger.Logger
 	slaveConCtr *runner.ConnectionContainer
@@ -53,7 +54,7 @@ func NewServer(ctr *container.Container, slaveConCtr *runner.ConnectionContainer
 }
 
 // Connect handles the connection request from the master node
-func (s *Server) Connect(ctx context.Context, req *pb.ConnectRequest) (*pb.ConnectResponse, error) {
+func (s *Server) Connect(_ context.Context, req *pb.ConnectRequest) (*pb.ConnectResponse, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -69,7 +70,7 @@ func (s *Server) Connect(ctx context.Context, req *pb.ConnectRequest) (*pb.Conne
 }
 
 // Disconnect handles the disconnection request from the master node
-func (s *Server) Disconnect(ctx context.Context, req *pb.DisconnectRequest) (*pb.DisconnectResponse, error) {
+func (s *Server) Disconnect(_ context.Context, req *pb.DisconnectRequest) (*pb.DisconnectResponse, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -122,8 +123,12 @@ func (s *Server) SlaveCommand(ctx context.Context, req *pb.SlaveCommandRequest) 
 }
 
 // SlaveCommandDefaultStore handles the command default store request from the master node
-func (s *Server) SlaveCommandDefaultStore(stream grpc.ClientStreamingServer[pb.SlaveCommandDefaultStoreRequest, pb.SlaveCommandDefaultStoreResponse]) error {
-
+func (s *Server) SlaveCommandDefaultStore(
+	stream grpc.ClientStreamingServer[
+		pb.SlaveCommandDefaultStoreRequest,
+		pb.SlaveCommandDefaultStoreResponse,
+	],
+) error {
 	var strBuffer bytes.Buffer
 	var threadOnlyStrBuffer bytes.Buffer
 	var slaveValuesBuffer bytes.Buffer
@@ -133,10 +138,10 @@ func (s *Server) SlaveCommandDefaultStore(stream grpc.ClientStreamingServer[pb.S
 	var flag int
 	for {
 		chunk, err := stream.Recv()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			return nil
 		} else if err != nil {
-			return fmt.Errorf("failed to receive a chunk: %v", err)
+			return fmt.Errorf("failed to receive a chunk: %w", err)
 		}
 		s.mu.Lock()
 		slCtr, ok := s.slCtrMap[chunk.ConnectionId]
@@ -146,57 +151,61 @@ func (s *Server) SlaveCommandDefaultStore(stream grpc.ClientStreamingServer[pb.S
 		switch chunk.StoreType {
 		case pb.SlaveCommandDefaultStoreType_SLAVE_COMMAND_DEFAULT_STORE_TYPE_STORE:
 			if _, err := strBuffer.Write(chunk.DefaultStore); err != nil {
-				return fmt.Errorf("failed to write to buffer: %v", err)
+				return fmt.Errorf("failed to write to buffer: %w", err)
 			}
 			if chunk.IsLastChunk {
 				finalData := strBuffer.Bytes()
 				decoder := json.NewDecoder(bytes.NewReader(finalData))
 				mapData := make(map[string]any)
 				if err := decoder.Decode(&mapData); err != nil {
-					return fmt.Errorf("failed to decode json: %v", err)
+					return fmt.Errorf("failed to decode json: %w", err)
 				}
 				if err := slCtr.SetStrMap(chunk.CommandId, mapData); err != nil {
-					return fmt.Errorf("failed to set str map: %v", err)
+					return fmt.Errorf("failed to set str map: %w", err)
 				}
 				flag |= strOkFlag
 			}
 		case pb.SlaveCommandDefaultStoreType_SLAVE_COMMAND_DEFAULT_STORE_TYPE_THREAD_ONLY_STORE:
 			if _, err := threadOnlyStrBuffer.Write(chunk.DefaultStore); err != nil {
-				return fmt.Errorf("failed to write to buffer: %v", err)
+				return fmt.Errorf("failed to write to buffer: %w", err)
 			}
 			if chunk.IsLastChunk {
 				finalData := threadOnlyStrBuffer.Bytes()
 				decoder := json.NewDecoder(bytes.NewReader(finalData))
 				mapData := make(map[string]any)
 				if err := decoder.Decode(&mapData); err != nil {
-					return fmt.Errorf("failed to decode json: %v", err)
+					return fmt.Errorf("failed to decode json: %w", err)
 				}
 				if err := slCtr.SetThreadOnlyStrMap(chunk.CommandId, mapData); err != nil {
-					return fmt.Errorf("failed to set thread only str map: %v", err)
+					return fmt.Errorf("failed to set thread only str map: %w", err)
 				}
 				flag |= threadOnlyStrOkFlag
 			}
 		case pb.SlaveCommandDefaultStoreType_SLAVE_COMMAND_DEFAULT_STORE_TYPE_SLAVE_VALUES:
 			if _, err := slaveValuesBuffer.Write(chunk.DefaultStore); err != nil {
-				return fmt.Errorf("failed to write to buffer: %v", err)
+				return fmt.Errorf("failed to write to buffer: %w", err)
 			}
 			if chunk.IsLastChunk {
 				finalData := slaveValuesBuffer.Bytes()
 				decoder := json.NewDecoder(bytes.NewReader(finalData))
 				mapData := make(map[string]any)
 				if err := decoder.Decode(&mapData); err != nil {
-					return fmt.Errorf("failed to decode json: %v", err)
+					return fmt.Errorf("failed to decode json: %w", err)
 				}
 				if err := slCtr.SetSlaveValues(chunk.CommandId, mapData); err != nil {
-					return fmt.Errorf("failed to set slave values: %v", err)
+					return fmt.Errorf("failed to set slave values: %w", err)
 				}
 				flag |= slaveValuesOkFlag
 			}
+		case pb.SlaveCommandDefaultStoreType_SLAVE_COMMAND_DEFAULT_STORE_TYPE_UNSPECIFIED:
+			return fmt.Errorf("store type is unspecified: %v", chunk.StoreType)
 		}
 		s.mu.Unlock()
 		if flag == strOkFlag|threadOnlyStrOkFlag|slaveValuesOkFlag {
 			// Stream is done
-			return stream.SendAndClose(&pb.SlaveCommandDefaultStoreResponse{})
+			if err := stream.SendAndClose(&pb.SlaveCommandDefaultStoreResponse{}); err != nil {
+				return fmt.Errorf("failed to send a response: %w", err)
+			}
 		}
 	}
 }
@@ -239,25 +248,25 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 
 		close(cmdTerm)
 	}()
-	tmplFactor := &SlaveTmplFactor{
+	tmplFactor := &TmplFactor{
 		loader:                        slCtr.Loader,
 		connectionID:                  req.ConnectionId,
 		receiveChanelRequestContainer: slCtr.ReceiveChanelRequestContainer,
 		mapper:                        s.reqConMap,
 	}
-	targetFactor := &SlaveTargetFactor{
+	targetFactor := &TargetFactor{
 		target:                        slCtr.Target,
 		connectionID:                  req.ConnectionId,
 		receiveChanelRequestContainer: slCtr.ReceiveChanelRequestContainer,
 		mapper:                        s.reqConMap,
 	}
-	authFactor := &SlaveAuthenticatorFactor{
+	authFactor := &AuthenticatorFactor{
 		auth:                          slCtr.Auth,
 		connectionID:                  req.ConnectionId,
 		receiveChanelRequestContainer: slCtr.ReceiveChanelRequestContainer,
 		mapper:                        s.reqConMap,
 	}
-	store := &SlaveStore{
+	store := &Store{
 		store:                         slCtr.Store,
 		connectionID:                  req.ConnectionId,
 		receiveChanelRequestContainer: slCtr.ReceiveChanelRequestContainer,
@@ -265,7 +274,7 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 	}
 
 	outputChan := make(chan *pb.CallExecResponse)
-	outputFactor := &SlaveOutputFactor{
+	outputFactor := &OutputFactor{
 		outputChan: outputChan,
 	}
 
@@ -311,14 +320,17 @@ func (s *Server) CallExec(req *pb.CallExecRequest, stream grpc.ServerStreamingSe
 		data.SlaveValues,
 		runner.NewDefaultEventCaster(),
 	); err != nil {
-		return fmt.Errorf("failed to execute: %v", err)
+		return fmt.Errorf("failed to execute: %w", err)
 	}
 
 	return nil
 }
 
 // ReceiveChanelConnect handles the channel connection request from the master node
-func (s *Server) ReceiveChanelConnect(req *pb.ReceiveChanelConnectRequest, stream grpc.ServerStreamingServer[pb.ReceiveChanelConnectResponse]) error {
+func (s *Server) ReceiveChanelConnect(
+	req *pb.ReceiveChanelConnectRequest,
+	stream grpc.ServerStreamingServer[pb.ReceiveChanelConnectResponse],
+) error {
 	s.mu.RLock()
 	slCtr, ok := s.slCtrMap[req.ConnectionId]
 	s.mu.RUnlock()
@@ -330,16 +342,16 @@ func (s *Server) ReceiveChanelConnect(req *pb.ReceiveChanelConnectRequest, strea
 		select {
 		case res := <-slCtr.ReceiveChanelRequestContainer.ReqChan:
 			if err := stream.Send(res); err != nil {
-				return fmt.Errorf("failed to send a response: %v", err)
+				return fmt.Errorf("failed to send a response: %w", err)
 			}
 		case <-s.globalCtx.Done():
 			s.log.Debug(s.globalCtx, "global context done",
 				logger.Value("ConnectionID", req.ConnectionId), logger.Value("Error", s.globalCtx.Err()))
-			return fmt.Errorf("context done: %v", s.globalCtx.Err())
+			return fmt.Errorf("context done: %w", s.globalCtx.Err())
 		case <-stream.Context().Done():
 			s.log.Debug(stream.Context(), "stream context done",
 				logger.Value("ConnectionID", req.ConnectionId), logger.Value("Error", stream.Context().Err()))
-			return fmt.Errorf("context done: %v", stream.Context().Err())
+			return fmt.Errorf("context done: %w", stream.Context().Err())
 		}
 	}
 }
@@ -348,34 +360,38 @@ func (s *Server) ReceiveChanelConnect(req *pb.ReceiveChanelConnectRequest, strea
 func (s *Server) SendLoader(stream grpc.ClientStreamingServer[pb.SendLoaderRequest, pb.SendLoaderResponse]) error {
 	for {
 		chunk, err := stream.Recv()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			return nil
 		} else if err != nil {
-			return fmt.Errorf("failed to receive a chunk: %v", err)
+			return fmt.Errorf("failed to receive a chunk: %w", err)
 		}
-		conId, ok := s.reqConMap.GetConnectionID(chunk.RequestId)
+		conID, ok := s.reqConMap.GetConnectionID(chunk.RequestId)
 		if !ok {
 			return ErrRequestNotFound
 		}
 		s.mu.RLock()
-		slCtr, ok := s.slCtrMap[conId]
+		slCtr, ok := s.slCtrMap[conID]
 		s.mu.RUnlock()
 		if !ok {
 			return ErrRequestNotFound
 		}
-		slCtr.Loader.WriteString(chunk.LoaderId, string(chunk.Content))
+		if err := slCtr.Loader.WriteString(chunk.LoaderId, string(chunk.Content)); err != nil {
+			return fmt.Errorf("failed to write string: %w", err)
+		}
 		if chunk.IsLastChunk {
 			// Stream is done
 			slCtr.Loader.Build(chunk.LoaderId)
 			slCtr.ReceiveChanelRequestContainer.Cast(chunk.RequestId)
 			s.reqConMap.DeleteRequest(chunk.RequestId)
-			return stream.SendAndClose(&pb.SendLoaderResponse{})
+			if err := stream.SendAndClose(&pb.SendLoaderResponse{}); err != nil {
+				return fmt.Errorf("failed to send a response: %w", err)
+			}
 		}
 	}
 }
 
 // SendAuth handles the auth request from the master node
-func (s *Server) SendAuth(ctx context.Context, req *pb.SendAuthRequest) (*pb.SendAuthResponse, error) {
+func (s *Server) SendAuth(_ context.Context, req *pb.SendAuthRequest) (*pb.SendAuthResponse, error) {
 	conID, ok := s.reqConMap.GetConnectionID(req.RequestId)
 	if !ok {
 		return nil, ErrRequestNotFound
@@ -387,7 +403,7 @@ func (s *Server) SendAuth(ctx context.Context, req *pb.SendAuthRequest) (*pb.Sen
 		return nil, ErrRequestNotFound
 	}
 	if err := slCtr.Auth.AddFromProto(req.AuthId, req.Auth); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to add auth: %w", err)
 	}
 	if req.IsDefault {
 		slCtr.Auth.DefaultAuthenticator = req.AuthId
@@ -399,49 +415,53 @@ func (s *Server) SendAuth(ctx context.Context, req *pb.SendAuthRequest) (*pb.Sen
 }
 
 // SendStoreData handles the store data request from the master node
-func (s *Server) SendStoreData(stream grpc.ClientStreamingServer[pb.SendStoreDataRequest, pb.SendStoreDataResponse]) error {
+func (s *Server) SendStoreData(
+	stream grpc.ClientStreamingServer[pb.SendStoreDataRequest, pb.SendStoreDataResponse],
+) error {
 	buffer := &bytes.Buffer{}
 	for {
 		chunk, err := stream.Recv()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			return nil
 		} else if err != nil {
-			return fmt.Errorf("failed to receive a chunk: %v", err)
+			return fmt.Errorf("failed to receive a chunk: %w", err)
 		}
-		conId, ok := s.reqConMap.GetConnectionID(chunk.RequestId)
+		conID, ok := s.reqConMap.GetConnectionID(chunk.RequestId)
 		if !ok {
 			return ErrRequestNotFound
 		}
 		s.mu.RLock()
-		slCtr, ok := s.slCtrMap[conId]
+		slCtr, ok := s.slCtrMap[conID]
 		s.mu.RUnlock()
 		if !ok {
 			return ErrRequestNotFound
 		}
 		if _, err := buffer.Write(chunk.Data); err != nil {
-			return fmt.Errorf("failed to write to buffer: %v", err)
+			return fmt.Errorf("failed to write to buffer: %w", err)
 		}
 		if chunk.IsLastChunk {
 			// Stream is done
 			totalData := buffer.Bytes()
 			var storeData pb.StoreExportDataList
 			if err := proto.Unmarshal(totalData, &storeData); err != nil {
-				return fmt.Errorf("failed to unmarshal store data: %v", err)
+				return fmt.Errorf("failed to unmarshal store data: %w", err)
 			}
 			for _, data := range storeData.Data {
 				if err := slCtr.Store.AddData(data.BucketId, data.StoreKey, data.Data); err != nil {
-					return fmt.Errorf("failed to add data: %v", err)
+					return fmt.Errorf("failed to add data: %w", err)
 				}
 			}
 			slCtr.ReceiveChanelRequestContainer.Cast(chunk.RequestId)
 			s.reqConMap.DeleteRequest(chunk.RequestId)
-			return stream.SendAndClose(&pb.SendStoreDataResponse{})
+			if err := stream.SendAndClose(&pb.SendStoreDataResponse{}); err != nil {
+				return fmt.Errorf("failed to send a response: %w", err)
+			}
 		}
 	}
 }
 
 // SendStoreOk handles the store ok request from the master node
-func (s *Server) SendStoreOk(ctx context.Context, req *pb.SendStoreOkRequest) (*pb.SendStoreOkResponse, error) {
+func (s *Server) SendStoreOk(_ context.Context, req *pb.SendStoreOkRequest) (*pb.SendStoreOkResponse, error) {
 	conID, ok := s.reqConMap.GetConnectionID(req.RequestId)
 	if !ok {
 		return nil, ErrRequestNotFound
@@ -459,7 +479,7 @@ func (s *Server) SendStoreOk(ctx context.Context, req *pb.SendStoreOkRequest) (*
 }
 
 // SendTarget handles the target request from the master node
-func (s *Server) SendTarget(ctx context.Context, req *pb.SendTargetRequest) (*pb.SendTargetResponse, error) {
+func (s *Server) SendTarget(_ context.Context, req *pb.SendTargetRequest) (*pb.SendTargetResponse, error) {
 	conID, ok := s.reqConMap.GetConnectionID(req.RequestId)
 	if !ok {
 		return nil, ErrRequestNotFound
@@ -471,7 +491,7 @@ func (s *Server) SendTarget(ctx context.Context, req *pb.SendTargetRequest) (*pb
 		return nil, ErrRequestNotFound
 	}
 	if err := slCtr.Target.AddFromProto(req.TargetId, req.Target); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to add target: %w", err)
 	}
 	slCtr.ReceiveChanelRequestContainer.Cast(req.RequestId)
 	s.reqConMap.DeleteRequest(req.RequestId)
@@ -480,7 +500,10 @@ func (s *Server) SendTarget(ctx context.Context, req *pb.SendTargetRequest) (*pb
 }
 
 // ReceiveLoadTermChannel handles the load term channel request from the master node
-func (s *Server) ReceiveLoadTermChannel(ctx context.Context, req *pb.ReceiveLoadTermChannelRequest) (*pb.ReceiveLoadTermChannelResponse, error) {
+func (s *Server) ReceiveLoadTermChannel(
+	ctx context.Context,
+	req *pb.ReceiveLoadTermChannelRequest,
+) (*pb.ReceiveLoadTermChannelResponse, error) {
 	s.mu.RLock()
 	cmdTermChan, ok := s.cmdTermMap[req.CommandId]
 	s.mu.RUnlock()

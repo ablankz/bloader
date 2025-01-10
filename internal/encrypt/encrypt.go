@@ -1,3 +1,4 @@
+// Package encrypt provides the encrypter for the application.
 package encrypt
 
 import (
@@ -5,16 +6,16 @@ import (
 	"github.com/ablankz/bloader/internal/store"
 )
 
-// EncryptType is the type of the encrypt.
-type EncryptType string
+// Type is the type of the encrypt.
+type Type string
 
 const (
 	// EncryptTypeCBC is the type of the cbc.
-	EncryptTypeCBC EncryptType = "CBC"
+	EncryptTypeCBC Type = "CBC"
 	// EncryptTypeCFB is the type of the cfb.
-	EncryptTypeCFB EncryptType = "CFB"
+	EncryptTypeCFB Type = "CFB"
 	// EncryptTypeCTR is the type of the ctr.
-	EncryptTypeCTR EncryptType = "CTR"
+	EncryptTypeCTR Type = "CTR"
 )
 
 // Encrypter is the interface for the encrypter.
@@ -23,12 +24,12 @@ type Encrypter interface {
 	Decrypt(ciphertextBase64 string) ([]byte, error)
 }
 
-// EncrypterContainer is the container for the encrypter.
-type EncrypterContainer map[string]Encrypter
+// Container is the container for the encrypter.
+type Container map[string]Encrypter
 
-// NewEncrypterContainer creates a new encrypter container.
-func NewEncrypterContainerFromConfig(str store.Store, conf config.ValidEncryptConfig) (EncrypterContainer, error) {
-	ec := make(EncrypterContainer)
+// NewContainerFromConfig creates a new encrypter container.
+func NewContainerFromConfig(str store.Store, conf config.ValidEncryptConfig) (Container, error) {
+	ec := make(Container)
 	var err error
 	for _, e := range conf {
 		var encrypter Encrypter

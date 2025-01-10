@@ -16,7 +16,7 @@ type APIKeyAuthenticator struct {
 	HeaderName string
 }
 
-// Authenticate authenticates the user
+// NewAPIKeyAuthenticator creates a new APIKeyAuthenticator
 func NewAPIKeyAuthenticator(conf config.ValidAuthAPIKeyConfig) (Authenticator, error) {
 	return &APIKeyAuthenticator{
 		APIKey:     conf.Key,
@@ -25,12 +25,12 @@ func NewAPIKeyAuthenticator(conf config.ValidAuthAPIKeyConfig) (Authenticator, e
 }
 
 // Authenticate authenticates the user
-func (a *APIKeyAuthenticator) Authenticate(ctx context.Context, str store.Store) error {
+func (a *APIKeyAuthenticator) Authenticate(_ context.Context, _ store.Store) error {
 	return nil
 }
 
 // SetOnRequest sets the authentication information on the request
-func (a *APIKeyAuthenticator) SetOnRequest(ctx context.Context, r *http.Request) {
+func (a *APIKeyAuthenticator) SetOnRequest(_ context.Context, r *http.Request) {
 	r.Header.Set(a.HeaderName, a.APIKey)
 }
 
@@ -48,14 +48,16 @@ func (a *APIKeyAuthenticator) GetAuthValue() *pb.Auth {
 }
 
 // IsExpired checks if the authentication information is expired
-func (a *APIKeyAuthenticator) IsExpired(ctx context.Context, str store.Store) bool {
+func (a *APIKeyAuthenticator) IsExpired(_ context.Context, _ store.Store) bool {
 	return false
 }
 
 // Refresh refreshes the authentication information
-func (a *APIKeyAuthenticator) Refresh(ctx context.Context, str store.Store) error {
+func (a *APIKeyAuthenticator) Refresh(_ context.Context, _ store.Store) error {
 	return nil
 }
 
-var _ Authenticator = &APIKeyAuthenticator{}
-var _ SetAuthor = &APIKeyAuthenticator{}
+var (
+	_ Authenticator = &APIKeyAuthenticator{}
+	_ SetAuthor     = &APIKeyAuthenticator{}
+)

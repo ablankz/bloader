@@ -1,3 +1,4 @@
+// Package store provides the store logic for the application
 package store
 
 import (
@@ -6,6 +7,7 @@ import (
 	"github.com/ablankz/bloader/internal/config"
 )
 
+// Store is the interface for a store
 type Store interface {
 	SetupStore(env string, conf config.ValidStoreConfig) error
 	CreateBuckets(conf config.ValidStoreConfig) error
@@ -21,6 +23,7 @@ type Store interface {
 	Close() error
 }
 
-func NewStoreFromConfig(conf config.ValidStoreConfig) (Store, error) {
+// NewStoreFromConfig creates a new store from the configuration
+func NewStoreFromConfig(_ config.ValidStoreConfig) (Store, error) {
 	return &BoltStore{}, nil
 }

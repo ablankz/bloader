@@ -9,8 +9,8 @@ import (
 	"github.com/ablankz/bloader/internal/slave/slcontainer"
 )
 
-// SlaveAuthenticatorFactor represents the slave authenticator factor
-type SlaveAuthenticatorFactor struct {
+// AuthenticatorFactor represents the slave authenticator factor
+type AuthenticatorFactor struct {
 	auth                          *slcontainer.Auth
 	connectionID                  string
 	receiveChanelRequestContainer *slcontainer.ReceiveChanelRequestContainer
@@ -18,7 +18,7 @@ type SlaveAuthenticatorFactor struct {
 }
 
 // Factorize returns the factorized authenticator
-func (s *SlaveAuthenticatorFactor) Factorize(
+func (s *AuthenticatorFactor) Factorize(
 	ctx context.Context,
 	authID string,
 	isDefault bool,
@@ -76,8 +76,8 @@ func (s *SlaveAuthenticatorFactor) Factorize(
 }
 
 // IsDefault returns if the authenticator is the default authenticator
-func (s *SlaveAuthenticatorFactor) IsDefault(authID string) bool {
+func (s *AuthenticatorFactor) IsDefault(authID string) bool {
 	return s.auth.DefaultAuthenticator == authID
 }
 
-var _ runner.AuthenticatorFactor = &SlaveAuthenticatorFactor{}
+var _ runner.AuthenticatorFactor = &AuthenticatorFactor{}

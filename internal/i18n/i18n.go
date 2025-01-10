@@ -155,7 +155,7 @@ func (t *Translator) TranslateWithOpts(id string, opts Options) string {
 	})
 }
 
-// Translate translates a message with the given ID to the given locale.
+// TranslateWithLocale translates a message with the given ID to the given locale.
 func (t *Translator) TranslateWithLocale(locale Locale, id string) string {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
@@ -165,7 +165,7 @@ func (t *Translator) TranslateWithLocale(locale Locale, id string) string {
 	})
 }
 
-// TranslateWithOpts translates a message with the given ID to the given locale
+// TranslateWithLocaleAndOpts translates a message with the given ID to the given locale.
 func (t *Translator) TranslateWithLocaleAndOpts(locale Locale, id string, opts Options) string {
 	t.mu.RLock()
 	defer t.mu.RUnlock()

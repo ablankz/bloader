@@ -41,14 +41,14 @@ bloader store object put --bucket 1234 objectKey objectValue`,
 			}
 			b, err := encryper.Encrypt([]byte(objVal))
 			if err != nil {
-				color.Red("Failed to encrypt: %v", err)
+				color.Red("Failed to encrypt: %w", err)
 				return
 			}
 			objVal = string(b)
 		}
 
 		if err := ctr.Store.PutObject(bucketID, objKey, []byte(objVal)); err != nil {
-			color.Red("Failed to put object: %v", err)
+			color.Red("Failed to put object: %w", err)
 			return
 		}
 		green := color.New(color.FgGreen).SprintFunc()
@@ -59,5 +59,12 @@ bloader store object put --bucket 1234 objectKey objectValue`,
 func init() {
 	storeObjectCmd.AddCommand(storeObjectPutCmd)
 
-	storeObjectPutCmd.PersistentFlags().StringVarP(&storeObjectEncrypt, "encrypt", "e", "", `ID of the encryption setting. This is optional.`)
+	storeObjectGetCmd.PersistentFlags().
+		StringVarP(
+			&storeObjectEncrypt,
+			"encrypt",
+			"e",
+			"",
+			`ID of the encryption setting. This is optional.`,
+		)
 }

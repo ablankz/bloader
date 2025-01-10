@@ -1,3 +1,4 @@
+// Package runner provides the logic for running the load test
 package runner
 
 import (
@@ -11,13 +12,14 @@ import (
 	"github.com/ablankz/bloader/internal/prompt"
 )
 
+// Run runs the load test
 func Run(ctr *container.Container, filename string, data map[string]any) error {
 	ctx, cancel := context.WithCancel(ctr.Ctx)
 	defer cancel()
 
 	var err error
 	if filename == "" {
-		filename, err = prompt.PromptText(
+		filename, err = prompt.Text(
 			"Enter the file to run the load test",
 			false,
 		)
@@ -29,7 +31,7 @@ func Run(ctr *container.Container, filename string, data map[string]any) error {
 	globalStore := sync.Map{}
 	threadOnlyStore := sync.Map{}
 	slaveValues := make(map[string]any)
-	outputCtr := output.NewOutputContainer(ctr.Config.Env, ctr.Config.Outputs)
+	outputCtr := output.NewContainer(ctr.Config.Env, ctr.Config.Outputs)
 
 	outputRoot := time.Now().Format("20060102_150405")
 

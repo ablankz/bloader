@@ -1,3 +1,4 @@
+// Package slave provides the slave node of the bloader.
 package slave
 
 import (
@@ -13,7 +14,8 @@ import (
 	"github.com/ablankz/bloader/internal/runner"
 )
 
-func SlaveRun(ctr *container.Container) error {
+// Run runs the slave node
+func Run(ctr *container.Container) error {
 	var grpcServerOptions []grpc.ServerOption
 	if ctr.Config.SlaveSetting.Certificate.Enabled {
 		creds, err := credentials.NewServerTLSFromFile(
@@ -21,7 +23,7 @@ func SlaveRun(ctr *container.Container) error {
 			ctr.Config.SlaveSetting.Certificate.SlaveKey,
 		)
 		if err != nil {
-			return fmt.Errorf("failed to load certificate: %v", err)
+			return fmt.Errorf("failed to load certificate: %w", err)
 		}
 		grpcServerOptions = append(grpcServerOptions, grpc.Creds(creds))
 	}
@@ -46,7 +48,7 @@ func SlaveRun(ctr *container.Container) error {
 	rpc.RegisterBloaderSlaveServiceServer(grpcServer, NewServer(ctr, slCtr))
 	lister, err := net.Listen("tcp", fmt.Sprintf(":%d", ctr.Config.SlaveSetting.Port))
 	if err != nil {
-		return fmt.Errorf("failed to listen: %v", err)
+		return fmt.Errorf("failed to listen: %w", err)
 	}
 
 	ctr.Logger.Info(ctr.Ctx, "Starting the worker node",
@@ -59,7 +61,7 @@ func SlaveRun(ctr *container.Container) error {
 	}()
 
 	if err := grpcServer.Serve(lister); err != nil {
-		return fmt.Errorf("failed to serve: %v", err)
+		return fmt.Errorf("failed to serve: %w", err)
 	}
 
 	return nil

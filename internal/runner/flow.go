@@ -3,6 +3,7 @@ package runner
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"sync"
@@ -68,7 +69,7 @@ func (r FlowStep) Validate() (ValidFlowStep, error) {
 		validFlowStepFlow.ID = *flow.ID
 		err := flow.Validate(&validFlowStepFlow, idSet)
 		if err != nil {
-			return ValidFlowStep{}, fmt.Errorf("failed to validate flow[%d]: %v", i, err)
+			return ValidFlowStep{}, fmt.Errorf("failed to validate flow[%d]: %w", i, err)
 		}
 		validFlowStep.Flows = append(validFlowStep.Flows, validFlowStepFlow)
 	}
@@ -96,7 +97,7 @@ type FlowStepFlowDependsOn struct {
 // ValidFlowStepFlowDependsOn represents a valid flow step flow depends on
 type ValidFlowStepFlowDependsOn struct {
 	Flow  string
-	Event RunnerEvent
+	Event Event
 }
 
 // Validate validates a flow step flow depends on
@@ -109,7 +110,7 @@ func (r FlowStepFlowDependsOn) Validate() (ValidFlowStepFlowDependsOn, error) {
 	if r.Event == nil {
 		return ValidFlowStepFlowDependsOn{}, fmt.Errorf("event is required")
 	}
-	validFlowStepFlowDependsOn.Event = RunnerEvent(*r.Event)
+	validFlowStepFlowDependsOn.Event = Event(*r.Event)
 	return validFlowStepFlowDependsOn, nil
 }
 
@@ -197,23 +198,26 @@ func (r FlowStepFlowExecutor) Validate() (ValidFlowStepFlowExecutor, error) {
 	validFlowStepFlowExecutor.SlaveID = *r.SlaveID
 	validOutput, err := r.Output.Validate()
 	if err != nil {
-		return ValidFlowStepFlowExecutor{}, fmt.Errorf("failed to validate output: %v", err)
+		return ValidFlowStepFlowExecutor{}, fmt.Errorf("failed to validate output: %w", err)
 	}
 	validFlowStepFlowExecutor.Output = validOutput
 	validFlowStepFlowExecutor.InheritValues = r.InheritValues
 	for i, value := range r.AdditionalValues {
 		valValue, err := value.Validate()
 		if err != nil {
-			return ValidFlowStepFlowExecutor{}, fmt.Errorf("failed to validate additional value[%d]: %v", i, err)
+			return ValidFlowStepFlowExecutor{}, fmt.Errorf("failed to validate additional value[%d]: %w", i, err)
 		}
 		validFlowStepFlowExecutor.AdditionalValues = append(validFlowStepFlowExecutor.AdditionalValues, valValue)
 	}
 	for i, value := range r.AdditionalThreadOnlyValues {
 		valValue, err := value.Validate()
 		if err != nil {
-			return ValidFlowStepFlowExecutor{}, fmt.Errorf("failed to validate additional thread only value[%d]: %v", i, err)
+			return ValidFlowStepFlowExecutor{}, fmt.Errorf("failed to validate additional thread only value[%d]: %w", i, err)
 		}
-		validFlowStepFlowExecutor.AdditionalThreadOnlyValues = append(validFlowStepFlowExecutor.AdditionalThreadOnlyValues, valValue)
+		validFlowStepFlowExecutor.AdditionalThreadOnlyValues = append(
+			validFlowStepFlowExecutor.AdditionalThreadOnlyValues,
+			valValue,
+		)
 	}
 	return validFlowStepFlowExecutor, nil
 }
@@ -250,21 +254,21 @@ func (f FlowStepFlow) Validate(valid *ValidFlowStepFlow, idSet map[string]struct
 	for i, dep := range f.DependsOn {
 		validDep, err := dep.Validate()
 		if err != nil {
-			return fmt.Errorf("failed to validate depends_on[%d]: %v", i, err)
+			return fmt.Errorf("failed to validate depends_on[%d]: %w", i, err)
 		}
 		valid.DependsOn = append(valid.DependsOn, validDep)
 	}
 	for i, value := range f.Values {
 		valValue, err := value.Validate()
 		if err != nil {
-			return fmt.Errorf("failed to validate flow value[%d]: %v", i, err)
+			return fmt.Errorf("failed to validate flow value[%d]: %w", i, err)
 		}
 		valid.Values = append(valid.Values, valValue)
 	}
 	for i, value := range f.ThreadOnlyValues {
 		valValue, err := value.Validate()
 		if err != nil {
-			return fmt.Errorf("failed to validate flow thread only value[%d]: %v", i, err)
+			return fmt.Errorf("failed to validate flow thread only value[%d]: %w", i, err)
 		}
 		valid.ThreadOnlyValues = append(valid.ThreadOnlyValues, valValue)
 	}
@@ -295,7 +299,7 @@ func (f FlowStepFlow) Validate(valid *ValidFlowStepFlow, idSet map[string]struct
 		for i, e := range f.Executors {
 			validExecutor, err := e.Validate()
 			if err != nil {
-				return fmt.Errorf("failed to validate executor[%d]: %v", i, err)
+				return fmt.Errorf("failed to validate executor[%d]: %w", i, err)
 			}
 			valid.Executors = append(valid.Executors, validExecutor)
 		}
@@ -318,7 +322,7 @@ func (f FlowStepFlow) Validate(valid *ValidFlowStepFlow, idSet map[string]struct
 			subValid.ID = *f.ID
 			err := f.Validate(&subValid, idSet)
 			if err != nil {
-				return fmt.Errorf("failed to validate flow[%d]: %v", i, err)
+				return fmt.Errorf("failed to validate flow[%d]: %w", i, err)
 			}
 			valid.Flows = append(valid.Flows, subValid)
 		}
@@ -341,21 +345,21 @@ type flowExecutor struct {
 	loopCount       int
 	waitFunc        func(ctx context.Context) error
 	castFunc        func(ctx context.Context) error
-	eventCaster     *utils.Broadcaster[RunnerEvent]
+	eventCaster     *utils.Broadcaster[Event]
 }
 
 type closer func() error
 
 func createBroadCastMap(
 	flows []ValidFlowStepFlow,
-	broadCastMap map[string]*utils.Broadcaster[RunnerEvent],
+	broadCastMap map[string]*utils.Broadcaster[Event],
 ) ([]closer, error) {
 	closeFuncs := make([]closer, 0)
 	for _, flow := range flows {
 		if _, ok := broadCastMap[flow.ID]; ok {
 			return nil, fmt.Errorf("id %s is duplicated", flow.ID)
 		}
-		broadCastMap[flow.ID] = utils.NewBroadcaster[RunnerEvent]()
+		broadCastMap[flow.ID] = utils.NewBroadcaster[Event]()
 		if len(flow.Flows) > 0 {
 			cl, err := createBroadCastMap(flow.Flows, broadCastMap)
 			if err != nil {
@@ -369,7 +373,7 @@ func createBroadCastMap(
 
 func attachWaitChan(
 	flows []ValidFlowStepFlow,
-	broadCastMap map[string]*utils.Broadcaster[RunnerEvent],
+	broadCastMap map[string]*utils.Broadcaster[Event],
 ) error {
 	for i, flow := range flows {
 		if len(flow.Flows) > 0 {
@@ -377,10 +381,10 @@ func attachWaitChan(
 				return err
 			}
 		}
-		flowEventMap := make(map[string][]RunnerEvent)
+		flowEventMap := make(map[string][]Event)
 		for _, dep := range flow.DependsOn {
 			if _, ok := flowEventMap[dep.Flow]; !ok {
-				flowEventMap[dep.Flow] = make([]RunnerEvent, 0)
+				flowEventMap[dep.Flow] = make([]Event, 0)
 			}
 			flowEventMap[dep.Flow] = append(flowEventMap[dep.Flow], dep.Event)
 		}
@@ -391,6 +395,7 @@ func attachWaitChan(
 				return fmt.Errorf("failed to find depends_on %s", k)
 			}
 			waitChan := caster.Subscribe()
+			//nolint:unparam
 			flowWaitFuncMap[k] = func(ctx context.Context) error {
 				mustEvents := v
 				for len(mustEvents) > 0 {
@@ -407,7 +412,7 @@ func attachWaitChan(
 		flow.waitFunc = func(ctx context.Context) error {
 			for k, f := range flowWaitFuncMap {
 				if err := f(ctx); err != nil {
-					return fmt.Errorf("failed to wait for %s: %v", k, err)
+					return fmt.Errorf("failed to wait for %s: %w", k, err)
 				}
 			}
 			return nil
@@ -425,7 +430,7 @@ func (f *ValidFlow) Run(
 	env string,
 	log logger.Logger,
 	slaveConCtr *ConnectionContainer,
-	encryptCtr encrypt.EncrypterContainer,
+	encryptCtr encrypt.Container,
 	tmplFactor TmplFactor,
 	store Store,
 	authFactor AuthenticatorFactor,
@@ -436,7 +441,7 @@ func (f *ValidFlow) Run(
 	callCount int,
 	slaveValues map[string]any,
 ) error {
-	broadCastMap := make(map[string]*utils.Broadcaster[RunnerEvent])
+	broadCastMap := make(map[string]*utils.Broadcaster[Event])
 	cl, err := createBroadCastMap(f.Step.Flows, broadCastMap)
 	if err != nil {
 		return err
@@ -478,7 +483,7 @@ func run(
 	env string,
 	log logger.Logger,
 	slaveConCtr *ConnectionContainer,
-	encryptCtr encrypt.EncrypterContainer,
+	encryptCtr encrypt.Container,
 	tmplFactor TmplFactor,
 	store Store,
 	authFactor AuthenticatorFactor,
@@ -490,7 +495,7 @@ func run(
 	flows []ValidFlowStepFlow,
 	concurrency int,
 	slaveValues map[string]any,
-	broadCastMap map[string]*utils.Broadcaster[RunnerEvent],
+	broadCastMap map[string]*utils.Broadcaster[Event],
 ) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -511,7 +516,7 @@ func run(
 		if !ok {
 			return fmt.Errorf("failed to find depends_on %s", flow.ID)
 		}
-		castFunc := func(ctx context.Context) error {
+		castFunc := func(_ context.Context) error {
 			caster.Broadcast(RunnerEventTerminated)
 			return nil
 		}
@@ -589,7 +594,7 @@ func run(
 			if err := executor.waitFunc(ctx); err != nil {
 				log.Error(ctx, fmt.Sprintf("failed to wait[%d]", i),
 					logger.Value("error", err), logger.Value("on", "Flow"))
-				return fmt.Errorf("failed to wait: %v", err)
+				return fmt.Errorf("failed to wait: %w", err)
 			}
 			switch executor.flowType {
 			case FlowStepFlowTypeFile:
@@ -618,7 +623,7 @@ func run(
 				if err != nil {
 					log.Error(ctx, fmt.Sprintf("failed to execute flow[%d]", i),
 						logger.Value("error", err), logger.Value("on", "Flow"))
-					return fmt.Errorf("failed to execute flow: %v", err)
+					return fmt.Errorf("failed to execute flow: %w", err)
 				}
 			case FlowStepFlowTypeSlaveCmd:
 				err := slaveCmdRun(
@@ -633,7 +638,7 @@ func run(
 				if err != nil {
 					log.Error(ctx, fmt.Sprintf("failed to execute flow[%d]", i),
 						logger.Value("error", err), logger.Value("on", "Flow"))
-					return fmt.Errorf("failed to execute flow: %v", err)
+					return fmt.Errorf("failed to execute flow: %w", err)
 				}
 				log.Debug(ctx, "flow finished",
 					logger.Value("on", "Flow"))
@@ -660,7 +665,7 @@ func run(
 				if err != nil {
 					log.Error(ctx, fmt.Sprintf("failed to execute flow[%d]", i),
 						logger.Value("error", err), logger.Value("on", "Flow"))
-					return fmt.Errorf("failed to execute flow: %v", err)
+					return fmt.Errorf("failed to execute flow: %w", err)
 				}
 				log.Debug(ctx, "flow finished",
 					logger.Value("on", "Flow"))
@@ -669,7 +674,7 @@ func run(
 			if err := executor.castFunc(ctx); err != nil {
 				log.Error(ctx, fmt.Sprintf("failed to cast[%d]", i),
 					logger.Value("error", err), logger.Value("on", "Flow"))
-				return fmt.Errorf("failed to cast: %v", err)
+				return fmt.Errorf("failed to cast: %w", err)
 			}
 		}
 	} else {
@@ -680,7 +685,7 @@ func run(
 			if err := executor.waitFunc(ctx); err != nil {
 				log.Error(ctx, fmt.Sprintf("failed to wait[%d]", i),
 					logger.Value("error", err), logger.Value("on", "Flow"))
-				return fmt.Errorf("failed to wait: %v", err)
+				return fmt.Errorf("failed to wait: %w", err)
 			}
 
 			wg.Add(1)
@@ -787,9 +792,14 @@ func run(
 		close(sem)
 
 		if err := atomicErr.Load(); err != nil {
-			log.Error(ctx, "failed to find error",
-				logger.Value("error", err.(error)), logger.Value("on", "Flow"))
-			return err.(error)
+			if e, ok := err.(error); ok {
+				log.Error(ctx, "failed to find error",
+					logger.Value("error", e), logger.Value("on", "Flow"))
+				return e
+			}
+			log.Error(ctx, "failed to find unknown error",
+				logger.Value("on", "Flow"))
+			return fmt.Errorf("failed to find unknown error")
 		}
 
 		return nil
@@ -810,7 +820,9 @@ func slaveCmdRun(
 	globalStr := make(map[string]any)
 	threadOnlyStr := make(map[string]any)
 	str.Range(func(key, value any) bool {
-		globalStr[key.(string)] = value
+		if keyStr, ok := key.(string); ok {
+			globalStr[keyStr] = value
+		}
 		return true
 	})
 	f.ThreadOnlyValues = append(f.ThreadOnlyValues, f.Values...)
@@ -828,7 +840,9 @@ func slaveCmdRun(
 		}
 		if exec.InheritValues {
 			str.Range(func(key, value any) bool {
-				globalStr[key.(string)] = value
+				if keyStr, ok := key.(string); ok {
+					globalStr[keyStr] = value
+				}
 				return true
 			})
 		}
@@ -854,20 +868,20 @@ func slaveCmdRun(
 		if err != nil {
 			log.Error(ctx, "failed to execute",
 				logger.Value("error", err), logger.Value("on", "Flow"))
-			return fmt.Errorf("failed to execute slave command: %v", err)
+			return fmt.Errorf("failed to execute slave command: %w", err)
 		}
 
 		stream, err := mapData.Cli.SlaveCommandDefaultStore(ctx)
 		if err != nil {
 			log.Error(ctx, "failed to execute",
 				logger.Value("error", err), logger.Value("on", "Flow"))
-			return fmt.Errorf("failed to execute slave command default store: %v", err)
+			return fmt.Errorf("failed to execute slave command default store: %w", err)
 		}
 		defaultStrBytes, err := json.Marshal(globalStr)
 		if err != nil {
 			log.Error(ctx, "failed to marshal",
 				logger.Value("error", err), logger.Value("on", "Flow"))
-			return fmt.Errorf("failed to marshal default store: %v", err)
+			return fmt.Errorf("failed to marshal default store: %w", err)
 		}
 		for i := 0; i < len(defaultStrBytes); i += DefaultChunkSize {
 			end := i + DefaultChunkSize
@@ -883,14 +897,14 @@ func slaveCmdRun(
 			}); err != nil {
 				log.Error(ctx, "failed to send",
 					logger.Value("error", err), logger.Value("on", "Flow"))
-				return fmt.Errorf("failed to send slave command default store request: %v", err)
+				return fmt.Errorf("failed to send slave command default store request: %w", err)
 			}
 		}
 		defaultThreadOnlyStrBytes, err := json.Marshal(threadOnlyStr)
 		if err != nil {
 			log.Error(ctx, "failed to marshal",
 				logger.Value("error", err), logger.Value("on", "Flow"))
-			return fmt.Errorf("failed to marshal default thread only store: %v", err)
+			return fmt.Errorf("failed to marshal default thread only store: %w", err)
 		}
 		for i := 0; i < len(defaultThreadOnlyStrBytes); i += DefaultChunkSize {
 			end := i + DefaultChunkSize
@@ -906,14 +920,14 @@ func slaveCmdRun(
 			}); err != nil {
 				log.Error(ctx, "failed to send",
 					logger.Value("error", err), logger.Value("on", "Flow"))
-				return fmt.Errorf("failed to send slave command default store request: %v", err)
+				return fmt.Errorf("failed to send slave command default store request: %w", err)
 			}
 		}
 		defaultSlaveValuesStrBytes, err := json.Marshal(slaveValuesMap)
 		if err != nil {
 			log.Error(ctx, "failed to marshal",
 				logger.Value("error", err), logger.Value("on", "Flow"))
-			return fmt.Errorf("failed to marshal slave values: %v", err)
+			return fmt.Errorf("failed to marshal slave values: %w", err)
 		}
 		for i := 0; i < len(defaultSlaveValuesStrBytes); i += DefaultChunkSize {
 			end := i + DefaultChunkSize
@@ -929,13 +943,13 @@ func slaveCmdRun(
 			}); err != nil {
 				log.Error(ctx, "failed to send",
 					logger.Value("error", err), logger.Value("on", "Flow"))
-				return fmt.Errorf("failed to send slave command default store request: %v", err)
+				return fmt.Errorf("failed to send slave command default store request: %w", err)
 			}
 		}
 		if _, err := stream.CloseAndRecv(); err != nil {
 			log.Error(ctx, "failed to receive",
 				logger.Value("error", err), logger.Value("on", "Flow"))
-			return fmt.Errorf("failed to receive slave command default store response: %v", err)
+			return fmt.Errorf("failed to receive slave command default store response: %w", err)
 		}
 
 		slaveExecutors[i] = slaveExecutor{
@@ -968,9 +982,14 @@ func slaveCmdRun(
 	wg.Wait()
 
 	if err := atomicErr.Load(); err != nil {
-		log.Error(ctx, "failed to find error",
-			logger.Value("error", err.(error)), logger.Value("on", "Flow"))
-		return err.(error)
+		if e, ok := err.(error); ok {
+			log.Error(ctx, "failed to find error",
+				logger.Value("error", e), logger.Value("on", "Flow"))
+			return e
+		}
+		log.Error(ctx, "failed to find unknown error",
+			logger.Value("on", "Flow"))
+		return fmt.Errorf("failed to find unknown error")
 	}
 
 	return nil
@@ -996,7 +1015,7 @@ func (e slaveExecutor) exec(
 	if err != nil {
 		log.Error(ctx, "failed to call exec",
 			logger.Value("error", err), logger.Value("on", "Flow"))
-		return fmt.Errorf("failed to call exec: %v", err)
+		return fmt.Errorf("failed to call exec: %w", err)
 	}
 
 	go func() {
@@ -1017,7 +1036,7 @@ func (e slaveExecutor) exec(
 		}()
 		for {
 			res, err := stream.Recv()
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				if err := stream.CloseSend(); err != nil {
 					log.Error(ctx, "failed to close send",
 						logger.Value("error", err), logger.Value("on", "Flow"))
@@ -1090,6 +1109,14 @@ func (e slaveExecutor) exec(
 					}
 					return
 				}
+			case pb.CallExecOutputType_CALL_EXEC_OUTPUT_TYPE_UNSPECIFIED:
+				log.Error(ctx, "invalid output type",
+					logger.Value("on", "Flow"))
+				if err := stream.CloseSend(); err != nil {
+					log.Error(ctx, "failed to close send",
+						logger.Value("error", err), logger.Value("on", "Flow"))
+				}
+				return
 			default:
 				log.Error(ctx, "invalid output type",
 					logger.Value("on", "Flow"))
@@ -1108,7 +1135,7 @@ func (e slaveExecutor) exec(
 	if err != nil {
 		log.Error(ctx, "failed to receive term channel",
 			logger.Value("error", err), logger.Value("on", "Flow"))
-		return fmt.Errorf("failed to receive term channel: %v", err)
+		return fmt.Errorf("failed to receive term channel: %w", err)
 	}
 	if !termRes.Success {
 		log.Error(ctx, "failed to receive term channel",

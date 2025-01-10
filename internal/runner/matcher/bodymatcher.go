@@ -26,12 +26,12 @@ func (bc BodyCondition) MatcherGenerate(ctx context.Context, log logger.Logger) 
 	}
 	extractor, err := bc.Extractor.Validate()
 	if err != nil {
-		return nil, fmt.Errorf("failed to validate extractor: %v", err)
+		return nil, fmt.Errorf("failed to validate extractor: %w", err)
 	}
 	return func(body any) (bool, error) {
 		res, err := extractor.Extract(body)
 		if err != nil {
-			return false, fmt.Errorf("failed to extract body: %v", err)
+			return false, fmt.Errorf("failed to extract body: %w", err)
 		}
 		var match bool
 		if v, ok := res.(bool); ok {
@@ -58,7 +58,7 @@ func (bcs BodyConditions) MatcherGenerate(ctx context.Context, log logger.Logger
 	for _, bc := range bcs {
 		matcher, err := bc.MatcherGenerate(ctx, log)
 		if err != nil {
-			return nil, fmt.Errorf("failed to generate body matcher: %v", err)
+			return nil, fmt.Errorf("failed to generate body matcher: %w", err)
 		}
 		matchers = append(matchers, matcher)
 	}
@@ -66,7 +66,7 @@ func (bcs BodyConditions) MatcherGenerate(ctx context.Context, log logger.Logger
 		for i, matcher := range matchers {
 			match, err := matcher(body)
 			if err != nil {
-				return *bcs[i].ID, false, fmt.Errorf("failed to match body: %v", err)
+				return *bcs[i].ID, false, fmt.Errorf("failed to match body: %w", err)
 			}
 			if match {
 				return *bcs[i].ID, true, nil

@@ -22,7 +22,7 @@ func (r StoreImport) Validate() (ValidStoreImport, error) {
 	for i, d := range r.Data {
 		valid, err := d.Validate()
 		if err != nil {
-			return ValidStoreImport{}, fmt.Errorf("failed to validate data at index %d: %v", i, err)
+			return ValidStoreImport{}, fmt.Errorf("failed to validate data at index %d: %w", i, err)
 		}
 		validData = append(validData, valid)
 	}
@@ -62,7 +62,7 @@ func (d StoreImportData) Validate() (ValidStoreImportData, error) {
 	}
 	validEncrypt, err := d.Encrypt.Validate()
 	if err != nil {
-		return ValidStoreImportData{}, fmt.Errorf("failed to validate encrypt: %v", err)
+		return ValidStoreImportData{}, fmt.Errorf("failed to validate encrypt: %w", err)
 	}
 	return ValidStoreImportData{
 		BucketID:   *d.BucketID,
@@ -75,11 +75,11 @@ func (d StoreImportData) Validate() (ValidStoreImportData, error) {
 
 // Run runs the StoreImport runner
 func (r ValidStoreImport) Run(ctx context.Context, str Store, store *sync.Map) error {
-	if err := str.Import(ctx, r.Data, func(ctx context.Context, data ValidStoreImportData, val any, valBytes []byte) error {
+	if err := str.Import(ctx, r.Data, func(_ context.Context, data ValidStoreImportData, val any, _ []byte) error {
 		store.Store(data.Key, val)
 		return nil
 	}); err != nil {
-		return fmt.Errorf("failed to import data: %v", err)
+		return fmt.Errorf("failed to import data: %w", err)
 	}
 
 	return nil

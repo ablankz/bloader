@@ -25,12 +25,12 @@ func NewBasicAuthenticator(conf config.ValidAuthBasicConfig) (Authenticator, err
 }
 
 // Authenticate authenticates the user
-func (a *BasicAuthenticator) Authenticate(ctx context.Context, str store.Store) error {
+func (a *BasicAuthenticator) Authenticate(_ context.Context, _ store.Store) error {
 	return nil
 }
 
 // SetOnRequest sets the authentication information on the request
-func (a *BasicAuthenticator) SetOnRequest(ctx context.Context, r *http.Request) {
+func (a *BasicAuthenticator) SetOnRequest(_ context.Context, r *http.Request) {
 	r.SetBasicAuth(a.Username, a.Password)
 }
 
@@ -48,14 +48,16 @@ func (a *BasicAuthenticator) GetAuthValue() *pb.Auth {
 }
 
 // IsExpired checks if the authentication information is expired
-func (a *BasicAuthenticator) IsExpired(ctx context.Context, str store.Store) bool {
+func (a *BasicAuthenticator) IsExpired(_ context.Context, _ store.Store) bool {
 	return false
 }
 
 // Refresh refreshes the authentication information
-func (a *BasicAuthenticator) Refresh(ctx context.Context, str store.Store) error {
+func (a *BasicAuthenticator) Refresh(_ context.Context, _ store.Store) error {
 	return nil
 }
 
-var _ Authenticator = &BasicAuthenticator{}
-var _ SetAuthor = &BasicAuthenticator{}
+var (
+	_ Authenticator = &BasicAuthenticator{}
+	_ SetAuthor     = &BasicAuthenticator{}
+)

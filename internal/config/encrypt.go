@@ -45,7 +45,7 @@ type ValidEncryptConfig []ValidEncryptRespectiveConfig
 // Validate validates the encrypt configuration.
 func (c EncryptConfig) Validate() (ValidEncryptConfig, error) {
 	var valid ValidEncryptConfig
-	var idSet = make(map[string]struct{})
+	idSet := make(map[string]struct{})
 	for i, ec := range c {
 		var validRespective ValidEncryptRespectiveConfig
 		if ec.ID == nil {
@@ -90,7 +90,7 @@ func (c EncryptConfig) Validate() (ValidEncryptConfig, error) {
 // ValidateOnSlave validates the encrypt configuration on the slave.
 func (c EncryptConfig) ValidateOnSlave() (ValidEncryptConfig, error) {
 	var valid ValidEncryptConfig
-	var idSet = make(map[string]struct{})
+	idSet := make(map[string]struct{})
 	for i, ec := range c {
 		var validRespective ValidEncryptRespectiveConfig
 		if ec.ID == nil {

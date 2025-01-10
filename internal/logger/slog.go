@@ -59,7 +59,8 @@ func (l *SlogLogger) SetupLogger(env string, cfg config.ValidLoggingConfig) erro
 				handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level})
 			}
 		case config.LoggingOutputTypeFile:
-			if err := os.MkdirAll(filepath.Dir(output.Filename), 0755); err != nil {
+			//nolint:gosec
+			if err := os.MkdirAll(filepath.Dir(output.Filename), 0o755); err != nil {
 				return fmt.Errorf("failed to create log directories: %w", err)
 			}
 			file, err := os.OpenFile(output.Filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600)
@@ -100,12 +101,12 @@ func (l *SlogLogger) SetupLogger(env string, cfg config.ValidLoggingConfig) erro
 	return nil
 }
 
-func createAttr(args ...keyVal) []slog.Attr {
+func createAttr(args ...KeyVal) []slog.Attr {
 	var attrs []slog.Attr
 	for _, arg := range args {
 		var value slog.Value
-		if kvs, ok := arg.Value.([]keyVal); ok {
-			var groupArgs = createAttr(kvs...)
+		if kvs, ok := arg.Value.([]KeyVal); ok {
+			groupArgs := createAttr(kvs...)
 			value = slog.GroupValue(groupArgs...)
 		} else {
 			value = slog.AnyValue(arg.Value)
@@ -119,10 +120,10 @@ func createAttr(args ...keyVal) []slog.Attr {
 	return attrs
 }
 
-func createArgs(args ...keyVal) []any {
-	var attrs []slog.Attr = createAttr(args...)
+func createArgs(args ...KeyVal) []any {
+	attrs := createAttr(args...)
 
-	var anyKeyVals []any = make([]any, 0, len(attrs)*2)
+	anyKeyVals := make([]any, 0, len(attrs)*2)
 	for _, arg := range attrs {
 		anyKeyVals = append(anyKeyVals, arg.Key, arg.Value)
 	}
@@ -130,7 +131,7 @@ func createArgs(args ...keyVal) []any {
 }
 
 // With adds attributes to the logger
-func (l *SlogLogger) With(args ...keyVal) Logger {
+func (l *SlogLogger) With(args ...KeyVal) Logger {
 	newLogger := l.Logger.With(createArgs(args...)...)
 	return &SlogLogger{
 		Logger: newLogger,
@@ -138,22 +139,22 @@ func (l *SlogLogger) With(args ...keyVal) Logger {
 }
 
 // Debug logs a debug message
-func (l *SlogLogger) Debug(ctx context.Context, msg string, args ...keyVal) {
+func (l *SlogLogger) Debug(ctx context.Context, msg string, args ...KeyVal) {
 	l.Logger.DebugContext(ctx, msg, createArgs(args...)...)
 }
 
 // Info logs an info message
-func (l *SlogLogger) Info(ctx context.Context, msg string, args ...keyVal) {
+func (l *SlogLogger) Info(ctx context.Context, msg string, args ...KeyVal) {
 	l.Logger.InfoContext(ctx, msg, createArgs(args...)...)
 }
 
 // Warn logs a warning message
-func (l *SlogLogger) Warn(ctx context.Context, msg string, args ...keyVal) {
+func (l *SlogLogger) Warn(ctx context.Context, msg string, args ...KeyVal) {
 	l.Logger.WarnContext(ctx, msg, createArgs(args...)...)
 }
 
 // Error logs an error message
-func (l *SlogLogger) Error(ctx context.Context, msg string, args ...keyVal) {
+func (l *SlogLogger) Error(ctx context.Context, msg string, args ...KeyVal) {
 	l.Logger.ErrorContext(ctx, msg, createArgs(args...)...)
 }
 

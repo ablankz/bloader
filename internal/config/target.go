@@ -61,7 +61,7 @@ type ValidTargetConfig []ValidTargetRespectiveConfig
 // Validate validates the target configuration
 func (c TargetConfig) Validate() (ValidTargetConfig, error) {
 	var valid ValidTargetConfig
-	var idSet = make(map[string]struct{})
+	idSet := make(map[string]struct{})
 	for i, target := range c {
 		var validRespective ValidTargetRespectiveConfig
 		if target.ID == nil {

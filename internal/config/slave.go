@@ -1,6 +1,6 @@
 package config
 
-// SlaveCertificateConfig represents the configuration for the slave certificate
+// SlaveSettingConfig represents the configuration for the slave setting
 type SlaveSettingConfig struct {
 	Port        *int                    `mapstructure:"port"`
 	Certificate SlaveCertificateConfig  `mapstructure:"certificate"`

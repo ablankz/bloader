@@ -28,7 +28,7 @@ func (d ExecRequestData) Validate() (ValidExecRequestData, error) {
 	}
 	validExtractor, err := d.Extractor.Validate()
 	if err != nil {
-		return ValidExecRequestData{}, fmt.Errorf("failed to validate extractor: %v", err)
+		return ValidExecRequestData{}, fmt.Errorf("failed to validate extractor: %w", err)
 	}
 	return ValidExecRequestData{
 		Key:       *d.Key,
@@ -74,11 +74,11 @@ func (d ExecRequestStoreData) Validate() (ValidExecRequestStoreData, error) {
 	}
 	validEncrypt, err := d.Encrypt.Validate()
 	if err != nil {
-		return ValidExecRequestStoreData{}, fmt.Errorf("failed to validate encrypt: %v", err)
+		return ValidExecRequestStoreData{}, fmt.Errorf("failed to validate encrypt: %w", err)
 	}
 	validExtractor, err := d.Extractor.Validate()
 	if err != nil {
-		return ValidExecRequestStoreData{}, fmt.Errorf("failed to validate extractor: %v", err)
+		return ValidExecRequestStoreData{}, fmt.Errorf("failed to validate extractor: %w", err)
 	}
 	return ValidExecRequestStoreData{
 		BucketID:  *d.BucketID,

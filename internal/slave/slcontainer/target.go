@@ -12,14 +12,14 @@ import (
 // Target represents the target container for the slave node
 type Target struct {
 	mu *sync.RWMutex
-	target.TargetContainer
+	target.Container
 }
 
 // NewTarget creates a new target container for the slave node
 func NewTarget() *Target {
 	return &Target{
-		mu:              &sync.RWMutex{},
-		TargetContainer: make(map[string]target.Target),
+		mu:        &sync.RWMutex{},
+		Container: make(map[string]target.Target),
 	}
 }
 
@@ -28,7 +28,7 @@ func (t Target) Exists(id string) bool {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
-	_, ok := t.TargetContainer[id]
+	_, ok := t.Container[id]
 	return ok
 }
 
@@ -37,7 +37,7 @@ func (t *Target) Add(id string, target target.Target) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	t.TargetContainer[id] = target
+	t.Container[id] = target
 }
 
 // Remove removes a target from the container
@@ -45,7 +45,7 @@ func (t *Target) Remove(id string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	delete(t.TargetContainer, id)
+	delete(t.Container, id)
 }
 
 // AddFromProto adds a new target from the proto to the container
@@ -69,7 +69,7 @@ func (t Target) Find(id string) (target.Target, bool) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
-	target, ok := t.TargetContainer[id]
+	target, ok := t.Container[id]
 	return target, ok
 }
 

@@ -58,18 +58,18 @@ func (r OneExec) Validate(
 	var validAuth auth.SetAuthor
 	validOutput, err := r.Output.Validate(ctx, outFactor)
 	if err != nil {
-		return ValidOneExec{}, fmt.Errorf("failed to validate output: %v", err)
+		return ValidOneExec{}, fmt.Errorf("failed to validate output: %w", err)
 	}
 	validAuth, err = r.Auth.Validate(ctx, authFactor)
 	if err != nil {
-		return ValidOneExec{}, fmt.Errorf("failed to validate auth: %v", err)
+		return ValidOneExec{}, fmt.Errorf("failed to validate auth: %w", err)
 	}
 	if r.Request == nil {
 		return ValidOneExec{}, fmt.Errorf("request is required")
 	}
 	validRequest, err := r.Request.Validate(ctx, targetFactor)
 	if err != nil {
-		return ValidOneExec{}, fmt.Errorf("failed to validate request: %v", err)
+		return ValidOneExec{}, fmt.Errorf("failed to validate request: %w", err)
 	}
 	return ValidOneExec{
 		Type:    oneExecType,
@@ -92,11 +92,11 @@ func (o OneExecOutput) Validate(ctx context.Context, outFactor OutputFactor) ([]
 	}
 	var outputs []output.Output
 	for _, id := range o.IDs {
-		if output, err := outFactor.Factorize(ctx, id); err != nil {
-			return nil, fmt.Errorf("failed to factorize output: %v", err)
-		} else {
-			outputs = append(outputs, output)
+		output, err := outFactor.Factorize(ctx, id)
+		if err != nil {
+			return nil, fmt.Errorf("failed to factorize output: %w", err)
 		}
+		outputs = append(outputs, output)
 	}
 	return outputs, nil
 }
@@ -119,15 +119,16 @@ func (a OneExecAuth) Validate(ctx context.Context, authFactor AuthenticatorFacto
 	} else {
 		authID = *a.AuthID
 	}
-	if auth, err := authFactor.Factorize(
+	auth, err := authFactor.Factorize(
 		ctx,
 		authID,
 		isDefault,
-	); err != nil {
-		return nil, fmt.Errorf("failed to factorize auth: %v", err)
-	} else {
-		return auth, nil
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to factorize auth: %w", err)
 	}
+
+	return auth, nil
 }
 
 // OneExecRequest represents the request configuration for the OneExec runner
@@ -174,7 +175,7 @@ func (r OneExecRequest) Validate(ctx context.Context, targetFactor TargetFactor)
 	var urlRoot string
 	tg, err := targetFactor.Factorize(ctx, *r.TargetID)
 	if err != nil {
-		return ValidOneExecRequest{}, fmt.Errorf("failed to factorize target: %v", err)
+		return ValidOneExecRequest{}, fmt.Errorf("failed to factorize target: %w", err)
 	}
 	urlRoot = tg.URL
 	valid.URL = fmt.Sprintf("%s%s", urlRoot, *r.Endpoint)
@@ -204,21 +205,21 @@ func (r OneExecRequest) Validate(ctx context.Context, targetFactor TargetFactor)
 	for _, d := range r.Data {
 		validData, err := d.Validate()
 		if err != nil {
-			return ValidOneExecRequest{}, fmt.Errorf("failed to validate data: %v", err)
+			return ValidOneExecRequest{}, fmt.Errorf("failed to validate data: %w", err)
 		}
 		valid.Data = append(valid.Data, validData)
 	}
 	for _, d := range r.MemoryData {
 		validData, err := d.Validate()
 		if err != nil {
-			return ValidOneExecRequest{}, fmt.Errorf("failed to validate memory data: %v", err)
+			return ValidOneExecRequest{}, fmt.Errorf("failed to validate memory data: %w", err)
 		}
 		valid.MemoryData = append(valid.MemoryData, validData)
 	}
 	for _, d := range r.StoreData {
 		validData, err := d.Validate()
 		if err != nil {
-			return ValidOneExecRequest{}, fmt.Errorf("failed to validate store data: %v", err)
+			return ValidOneExecRequest{}, fmt.Errorf("failed to validate store data: %w", err)
 		}
 		valid.StoreData = append(valid.StoreData, validData)
 	}
@@ -268,7 +269,7 @@ func (r ValidOneExec) runHTTP(
 	writers := make([]output.HTTPDataWrite, 0)
 	uniqueName := fmt.Sprintf("%s/%s", outputRoot, utils.GenerateUniqueID())
 	for _, o := range r.Output {
-		writer, close, err := o.HTTPDataWriteFactory(
+		writer, closer, err := o.HTTPDataWriteFactory(
 			ctx,
 			log,
 			true,
@@ -286,40 +287,40 @@ func (r ValidOneExec) runHTTP(
 			),
 		)
 		if err != nil {
-			return fmt.Errorf("failed to create writer: %v", err)
+			return fmt.Errorf("failed to create writer: %w", err)
 		}
-		defer close()
+		defer closer()
 		writers = append(writers, writer)
 	}
 
 	resp, err := exe.RequestExecute(ctx, log)
 	if err != nil {
-		return fmt.Errorf("failed to execute request: %v", err)
+		return fmt.Errorf("failed to execute request: %w", err)
 	}
 	var data []string
 	for _, d := range r.Request.Data {
 		result, err := d.Extractor.Extract(resp.Res)
 		if err != nil {
-			return fmt.Errorf("failed to extract data: %v", err)
+			return fmt.Errorf("failed to extract data: %w", err)
 		}
 		data = append(data, fmt.Sprint(result))
 	}
 	for _, w := range writers {
-		if err := w(ctx, log, append(resp.ToWriteHTTPData(1).ToSlice(), data...)); err != nil {
-			return fmt.Errorf("failed to write data: %v", err)
+		if err := w(ctx, log, append(resp.ToWriteHTTPData().ToSlice(), data...)); err != nil {
+			return fmt.Errorf("failed to write data: %w", err)
 		}
 	}
 
 	for _, d := range r.Request.MemoryData {
 		result, err := d.Extractor.Extract(resp.Res)
 		if err != nil {
-			return fmt.Errorf("failed to extract memory data: %v", err)
+			return fmt.Errorf("failed to extract memory data: %w", err)
 		}
 		str.Store(d.Key, result)
 	}
 
 	if err := store.StoreWithExtractor(ctx, resp.Res, r.Request.StoreData, nil); err != nil {
-		return fmt.Errorf("failed to store data: %v", err)
+		return fmt.Errorf("failed to store data: %w", err)
 	}
 
 	return nil

@@ -1,3 +1,4 @@
+// Package output provides a set of functions to write the data to the output.
 package output
 
 import (
@@ -22,12 +23,12 @@ type Output interface {
 	) (HTTPDataWrite, Close, error)
 }
 
-// OutputContainer is a map of outputs
-type OutputContainer map[string]Output
+// Container is a map of outputs
+type Container map[string]Output
 
-// NewOutputContainer creates a new OutputContainer
-func NewOutputContainer(env string, cfg config.ValidOutputConfig) OutputContainer {
-	outputs := make(OutputContainer)
+// NewContainer creates a new OutputContainer
+func NewContainer(env string, cfg config.ValidOutputConfig) Container {
+	outputs := make(Container)
 	for _, output := range cfg {
 		var t Output
 		var ok bool

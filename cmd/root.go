@@ -42,7 +42,14 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().StringP("config", "c", "", "config file (default is ./bloader/config.yaml, $HOME/bloader/config.yaml, or /etc/bloader/config.yaml)")
+	rootCmd.PersistentFlags().
+		StringP(
+			"config",
+			"c",
+			"",
+			`config file (default is ./bloader/config.yaml, $HOME/bloader/config.yaml, 
+			or /etc/bloader/config.yaml)`,
+		)
 	if err := viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config")); err != nil {
 		fmt.Printf("Error binding flag: %v\n", err)
 		os.Exit(1)
@@ -79,7 +86,7 @@ func initConfig() {
 		os.Exit(1)
 	}
 
-	var cfgForOverride config.ConfigForOverride
+	var cfgForOverride config.ForOverride
 	if err := viper.Unmarshal(&cfgForOverride, func(m *mapstructure.DecoderConfig) {
 		m.DecodeHook = mapstructure.ComposeDecodeHookFunc(
 			mapstructure.StringToSliceHookFunc(","),
@@ -99,7 +106,10 @@ func initConfig() {
 		}
 		switch override.Type {
 		case config.OverrideTypeStatic:
-			config.SetNestedValue(viper.GetViper(), override.Key, override.Value)
+			if err := config.SetNestedValue(viper.GetViper(), override.Key, override.Value); err != nil {
+				fmt.Printf("failed to set nested value: %v\n", err)
+				os.Exit(1)
+			}
 		case config.OverrideTypeFile:
 			if override.Partial {
 				f, err := os.Open(override.Path)
@@ -119,7 +129,10 @@ func initConfig() {
 				}
 				for _, v := range override.Vars {
 					value := config.GetNestedValueFromMap(overrideMap, v.Value)
-					config.SetNestedValue(viper.GetViper(), v.Key, value)
+					if err := config.SetNestedValue(viper.GetViper(), v.Key, value); err != nil {
+						fmt.Printf("failed to set nested value: %v\n", err)
+						os.Exit(1)
+					}
 				}
 			} else {
 				f, err := os.Open(override.Path)
@@ -137,7 +150,10 @@ func initConfig() {
 						os.Exit(1)
 					}
 				}
-				viper.MergeConfigMap(overrideMap)
+				if err := viper.MergeConfigMap(overrideMap); err != nil {
+					fmt.Printf("failed to merge config: %v\n", err)
+					os.Exit(1)
+				}
 			}
 		}
 	}

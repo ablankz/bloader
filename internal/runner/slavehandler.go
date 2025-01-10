@@ -26,6 +26,7 @@ type SlaveRequestHandler struct {
 	dataBufferMap map[string]*bytes.Buffer
 }
 
+// DefaultChunkSize is an integer.
 const DefaultChunkSize = 1024
 
 // NewSlaveRequestHandler creates a new ResponseHandler.
@@ -52,7 +53,6 @@ func (rh *SlaveRequestHandler) HandleResponse(
 	targetFactor TargetFactor,
 	store Store,
 ) error {
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -81,11 +81,11 @@ func (rh *SlaveRequestHandler) HandleResponse(
 				loaderResourceReq := res.GetLoaderResourceRequest()
 				stream, err := rh.cli.SendLoader(ctx)
 				if err != nil {
-					return fmt.Errorf("failed to send loader: %v", err)
+					return fmt.Errorf("failed to send loader: %w", err)
 				}
 				tmplStr, err := tmplFactor.TmplFactorize(ctx, loaderResourceReq.LoaderId)
 				if err != nil {
-					return fmt.Errorf("failed to factorize template: %v", err)
+					return fmt.Errorf("failed to factorize template: %w", err)
 				}
 				buffer := []byte(tmplStr)
 				for i := 0; i < len(buffer); i += rh.chunkSize {
@@ -99,12 +99,12 @@ func (rh *SlaveRequestHandler) HandleResponse(
 						Content:     buffer[i:end],
 						IsLastChunk: end == len(buffer),
 					}); err != nil {
-						return fmt.Errorf("failed to send loader request: %v", err)
+						return fmt.Errorf("failed to send loader request: %w", err)
 					}
 				}
 				_, err = stream.CloseAndRecv()
 				if err != nil {
-					return fmt.Errorf("failed to receive loader response: %v", err)
+					return fmt.Errorf("failed to receive loader response: %w", err)
 				}
 				log.Info(ctx, "Sent loader: %v",
 					logger.Value("loader_id", loaderResourceReq.LoaderId))
@@ -112,7 +112,7 @@ func (rh *SlaveRequestHandler) HandleResponse(
 				authResourceReq := res.GetAuthResourceRequest()
 				auth, err := authFactor.Factorize(ctx, authResourceReq.AuthId, authResourceReq.IsDefault)
 				if err != nil {
-					return fmt.Errorf("failed to factorize auth: %v", err)
+					return fmt.Errorf("failed to factorize auth: %w", err)
 				}
 				_, err = rh.cli.SendAuth(ctx, &pb.SendAuthRequest{
 					RequestId: res.RequestId,
@@ -121,7 +121,7 @@ func (rh *SlaveRequestHandler) HandleResponse(
 					IsDefault: authFactor.IsDefault(authResourceReq.AuthId),
 				})
 				if err != nil {
-					return fmt.Errorf("failed to send auth: %v", err)
+					return fmt.Errorf("failed to send auth: %w", err)
 				}
 				log.Info(ctx, "Sent auth: %v",
 					logger.Value("auth_id", authResourceReq.AuthId))
@@ -133,14 +133,14 @@ func (rh *SlaveRequestHandler) HandleResponse(
 					rh.dataBufferMap[res.RequestId] = buffer
 				}
 				if _, err := buffer.Write(storeResourceReq.Data); err != nil {
-					return fmt.Errorf("failed to write import store data: %v", err)
+					return fmt.Errorf("failed to write import store data: %w", err)
 				}
 				if storeResourceReq.IsLastChunk {
 					byteData := buffer.Bytes()
 					delete(rh.dataBufferMap, res.RequestId)
 					var dataList pb.StoreImportRequestList
 					if err := proto.Unmarshal(byteData, &dataList); err != nil {
-						return fmt.Errorf("failed to unmarshal import store data list: %v", err)
+						return fmt.Errorf("failed to unmarshal import store data list: %w", err)
 					}
 
 					storeData := make([]ValidStoreImportData, len(dataList.Data))
@@ -160,12 +160,12 @@ func (rh *SlaveRequestHandler) HandleResponse(
 					if err := store.Import(
 						ctx,
 						storeData,
-						func(ctx context.Context, data ValidStoreImportData, val any, valBytes []byte) error {
+						func(_ context.Context, data ValidStoreImportData, val any, valBytes []byte) error {
 							var err error
 							if valBytes == nil {
 								valBytes, err = json.Marshal(val)
 								if err != nil {
-									return fmt.Errorf("failed to marshal store data: %v", err)
+									return fmt.Errorf("failed to marshal store data: %w", err)
 								}
 							}
 							strData = append(strData, &pb.StoreExportData{
@@ -176,19 +176,19 @@ func (rh *SlaveRequestHandler) HandleResponse(
 							return nil
 						},
 					); err != nil {
-						return fmt.Errorf("failed to import store data: %v", err)
+						return fmt.Errorf("failed to import store data: %w", err)
 					}
 
 					stream, err := rh.cli.SendStoreData(ctx)
 					if err != nil {
-						return fmt.Errorf("failed to send store data: %v", err)
+						return fmt.Errorf("failed to send store data: %w", err)
 					}
 					strDataList := &pb.StoreExportDataList{
 						Data: strData,
 					}
 					b, err := proto.Marshal(strDataList)
 					if err != nil {
-						return fmt.Errorf("failed to marshal store data list: %v", err)
+						return fmt.Errorf("failed to marshal store data list: %w", err)
 					}
 					for i := 0; i < len(b); i += rh.chunkSize {
 						end := i + rh.chunkSize
@@ -200,12 +200,12 @@ func (rh *SlaveRequestHandler) HandleResponse(
 							Data:        b[i:end],
 							IsLastChunk: end == len(b),
 						}); err != nil {
-							return fmt.Errorf("failed to send store data request: %v", err)
+							return fmt.Errorf("failed to send store data request: %w", err)
 						}
 					}
 					_, err = stream.CloseAndRecv()
 					if err != nil {
-						return fmt.Errorf("failed to receive store data response: %v", err)
+						return fmt.Errorf("failed to receive store data response: %w", err)
 					}
 					log.Info(ctx, "Sent store: %v",
 						logger.Value("store_data", strData))
@@ -218,21 +218,21 @@ func (rh *SlaveRequestHandler) HandleResponse(
 					rh.dataBufferMap[res.RequestId] = buffer
 				}
 				if _, err := buffer.Write(storeReq.Data); err != nil {
-					return fmt.Errorf("failed to write store data: %v", err)
+					return fmt.Errorf("failed to write store data: %w", err)
 				}
 				if storeReq.IsLastChunk {
 					byteData := buffer.Bytes()
 					delete(rh.dataBufferMap, res.RequestId)
 					var dataList pb.StoreDataList
 					if err := proto.Unmarshal(byteData, &dataList); err != nil {
-						return fmt.Errorf("failed to unmarshal store data list: %v", err)
+						return fmt.Errorf("failed to unmarshal store data list: %w", err)
 					}
 
 					storeData := make([]ValidStoreValueData, len(dataList.Data))
 					for i, data := range dataList.Data {
 						var val any
 						if err := json.Unmarshal(data.Data, &val); err != nil {
-							return fmt.Errorf("failed to unmarshal store data: %v", err)
+							return fmt.Errorf("failed to unmarshal store data: %w", err)
 						}
 						storeData[i] = ValidStoreValueData{
 							BucketID: data.BucketId,
@@ -246,12 +246,12 @@ func (rh *SlaveRequestHandler) HandleResponse(
 					}
 
 					if err := store.Store(ctx, storeData, nil); err != nil {
-						return fmt.Errorf("failed to store data: %v", err)
+						return fmt.Errorf("failed to store data: %w", err)
 					}
 					if _, err := rh.cli.SendStoreOk(ctx, &pb.SendStoreOkRequest{
 						RequestId: res.RequestId,
 					}); err != nil {
-						return fmt.Errorf("failed to send store ok: %v", err)
+						return fmt.Errorf("failed to send store ok: %w", err)
 					}
 					log.Info(ctx, "Stored data: %v",
 						logger.Value("store_data", storeData))
@@ -260,7 +260,7 @@ func (rh *SlaveRequestHandler) HandleResponse(
 				targetResourceReq := res.GetTargetResourceRequest()
 				target, err := targetFactor.Factorize(ctx, targetResourceReq.TargetId)
 				if err != nil {
-					return fmt.Errorf("failed to factorize target: %v", err)
+					return fmt.Errorf("failed to factorize target: %w", err)
 				}
 				_, err = rh.cli.SendTarget(ctx, &pb.SendTargetRequest{
 					RequestId: res.RequestId,
@@ -268,10 +268,12 @@ func (rh *SlaveRequestHandler) HandleResponse(
 					Target:    target.GetTarget(),
 				})
 				if err != nil {
-					return fmt.Errorf("failed to send target: %v", err)
+					return fmt.Errorf("failed to send target: %w", err)
 				}
 				log.Info(ctx, "Sent target: %v",
 					logger.Value("target_id", targetResourceReq.TargetId))
+			case pb.RequestType_REQUEST_TYPE_UNSPECIFIED:
+				return fmt.Errorf("request type is unspecified")
 			default:
 				return fmt.Errorf("unknown request type: %v", res.RequestType)
 			}

@@ -37,3 +37,5 @@ outputs/
 certs/
 ssh_keys/
 *.log
+dist/# Added by goreleaser init:
+dist/

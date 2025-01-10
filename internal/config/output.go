@@ -89,7 +89,7 @@ type ValidOutputConfig []ValidOutputRespectiveConfig
 // Validate validates the output configuration
 func (c OutputConfig) Validate() (ValidOutputConfig, error) {
 	var valid ValidOutputConfig
-	var idSet = make(map[string]struct{})
+	idSet := make(map[string]struct{})
 	for i, output := range c {
 		var validRespective ValidOutputRespectiveConfig
 		if output.ID == nil {

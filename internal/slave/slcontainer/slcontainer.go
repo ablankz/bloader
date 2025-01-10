@@ -1,3 +1,4 @@
+// Package slcontainer provides the container for the slave node
 package slcontainer
 
 import (
@@ -44,7 +45,9 @@ func (s *SlaveContainer) AddCommandMap(cmdID string, data CommandMapData) {
 // GetCommandMap returns the command map from the slave container
 func (s *SlaveContainer) GetCommandMap(cmdID string) (CommandMapData, bool) {
 	if loaderID, ok := s.CommandMap.Load(cmdID); ok {
-		return loaderID.(CommandMapData), true
+		if v, ok := loaderID.(CommandMapData); ok {
+			return v, true
+		}
 	}
 	return CommandMapData{}, false
 }

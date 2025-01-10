@@ -9,8 +9,8 @@ import (
 	"github.com/ablankz/bloader/internal/runner"
 )
 
-// SlaveOutput represents the slave output service
-type SlaveOutput struct {
+// Output represents the slave output service
+type Output struct {
 	// OutputID represents the output ID
 	OutputID string
 	// outputChan represents the output channel
@@ -18,22 +18,21 @@ type SlaveOutput struct {
 }
 
 // NewSlaveOutput creates a new SlaveOutput
-func NewSlaveOutput(outputID string, outputChan chan<- *pb.CallExecResponse) SlaveOutput {
-	return SlaveOutput{
+func NewSlaveOutput(outputID string, outputChan chan<- *pb.CallExecResponse) Output {
+	return Output{
 		OutputID:   outputID,
 		outputChan: outputChan,
 	}
 }
 
 // HTTPDataWriteFactory returns the HTTPDataWrite function
-func (o SlaveOutput) HTTPDataWriteFactory(
+func (o Output) HTTPDataWriteFactory(
 	ctx context.Context,
-	log logger.Logger,
+	_ logger.Logger,
 	enabled bool,
 	uniqueName string,
 	header []string,
 ) (output.HTTPDataWrite, output.Close, error) {
-
 	select {
 	case <-ctx.Done():
 		return nil, nil, nil
@@ -51,7 +50,7 @@ func (o SlaveOutput) HTTPDataWriteFactory(
 
 	return func(
 			ctx context.Context,
-			log logger.Logger,
+			_ logger.Logger,
 			data []string,
 		) error {
 			if !enabled {
@@ -77,17 +76,17 @@ func (o SlaveOutput) HTTPDataWriteFactory(
 		}, nil
 }
 
-var _ output.Output = SlaveOutput{}
+var _ output.Output = Output{}
 
-// SlaveOutputFactor represents the factory
-type SlaveOutputFactor struct {
+// OutputFactor represents the factory
+type OutputFactor struct {
 	outputChan chan<- *pb.CallExecResponse
 }
 
 // Factorize returns the factorized output
-func (f *SlaveOutputFactor) Factorize(ctx context.Context, outputID string) (output.Output, error) {
+func (f *OutputFactor) Factorize(_ context.Context, outputID string) (output.Output, error) {
 	o := NewSlaveOutput(outputID, f.outputChan)
 	return o, nil
 }
 
-var _ runner.OutputFactor = &SlaveOutputFactor{}
+var _ runner.OutputFactor = &OutputFactor{}

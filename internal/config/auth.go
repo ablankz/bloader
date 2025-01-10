@@ -288,7 +288,7 @@ type ValidAuthConfig []ValidAuthRespectiveConfig
 // Validate validates the auth configuration.
 func (c AuthConfig) Validate() (ValidAuthConfig, error) {
 	var valid ValidAuthConfig
-	var idSet = make(map[string]struct{})
+	idSet := make(map[string]struct{})
 	var hasDefault bool
 	for i, ac := range c {
 		var validRespective ValidAuthRespectiveConfig

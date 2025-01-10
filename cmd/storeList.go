@@ -25,7 +25,7 @@ var storeListCmd = &cobra.Command{
 
 		buckets, err := ctr.Store.ListBuckets()
 		if err != nil {
-			color.Red("Failed to list the store: %v", err)
+			color.Red("Failed to list the store: %w", err)
 			return
 		}
 		if len(buckets) == 0 {

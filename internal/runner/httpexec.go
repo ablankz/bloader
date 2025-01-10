@@ -55,7 +55,7 @@ func runResponseHandler(
 	log logger.Logger,
 	id int,
 	request ValidMassExecRequest,
-	termChan chan<- termChanType,
+	termChan chan<- TermChanType,
 	writeErrChan <-chan struct{},
 	uidChan <-chan uuid.UUID,
 	resChan <-chan httpexec.ResponseContent,
@@ -66,18 +66,18 @@ func runResponseHandler(
 	if request.Break.Time.Enabled && request.Break.Time.Time > 0 {
 		timeout = time.After(request.Break.Time.Time)
 	}
-	sentUid := make(map[uuid.UUID]struct{})
+	sentUID := make(map[uuid.UUID]struct{})
 	for {
 		select {
 		case uid := <-uidChan:
-			delete(sentUid, uid)
+			delete(sentUID, uid)
 		case <-writeErrChan:
 			log.Warn(ctx, "Term Condition: Write Error",
 				logger.Value("id", id), logger.Value("on", "runResponseHandler"))
-			for len(sentUid) > 0 {
+			for len(sentUID) > 0 {
 				select {
 				case uid := <-uidChan:
-					delete(sentUid, uid)
+					delete(sentUID, uid)
 				case <-reqTermChan:
 					return
 				}
@@ -89,14 +89,14 @@ func runResponseHandler(
 			}
 			return
 		case <-timeout:
-			sentLen := len(sentUid)
+			sentLen := len(sentUID)
 			writeErr := false
 			for sentLen > 0 {
 				select {
 				case <-reqTermChan:
 					return
 				case uid := <-uidChan:
-					delete(sentUid, uid)
+					delete(sentUID, uid)
 					sentLen--
 				case <-writeErrChan:
 					log.Warn(ctx, "write error occurred",
@@ -123,14 +123,14 @@ func runResponseHandler(
 			}
 			return
 		case <-ctx.Done():
-			sentLen := len(sentUid)
+			sentLen := len(sentUID)
 			writeErr := false
 			for sentLen > 0 {
 				select {
 				case <-reqTermChan:
 					return
 				case uid := <-uidChan:
-					delete(sentUid, uid)
+					delete(sentUID, uid)
 					sentLen--
 				case <-writeErrChan:
 					log.Warn(ctx, "write error occurred",
@@ -183,14 +183,14 @@ func runResponseHandler(
 			if err != nil {
 				log.Error(ctx, "failed to search jmespath",
 					logger.Value("error", err), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
-				sentLen := len(sentUid)
+				sentLen := len(sentUID)
 				writeErr := false
 				for sentLen > 0 {
 					select {
 					case <-reqTermChan:
 						return
 					case uid := <-uidChan:
-						delete(sentUid, uid)
+						delete(sentUID, uid)
 						sentLen--
 					case <-writeErrChan:
 						log.Warn(ctx, "write error occurred",
@@ -235,7 +235,7 @@ func runResponseHandler(
 					StatusCode:       strconv.Itoa(v.StatusCode),
 					RawData:          response,
 				}
-				sentUid[uid] = struct{}{}
+				sentUID[uid] = struct{}{}
 				go func() {
 					select {
 					case <-reqTermChan:
@@ -249,13 +249,13 @@ func runResponseHandler(
 			}
 
 			if v.ReqCreateHasErr {
-				sentLen := len(sentUid)
+				sentLen := len(sentUID)
 				for sentLen > 0 {
 					select {
 					case <-reqTermChan:
 						return
 					case uid := <-uidChan:
-						delete(sentUid, uid)
+						delete(sentUID, uid)
 						sentLen--
 					case <-writeErrChan:
 						log.Warn(ctx, "write error occurred",
@@ -273,13 +273,13 @@ func runResponseHandler(
 			}
 			if v.HasSystemErr {
 				if request.Break.SysError {
-					sentLen := len(sentUid)
+					sentLen := len(sentUID)
 					for sentLen > 0 {
 						select {
 						case <-reqTermChan:
 							return
 						case uid := <-uidChan:
-							delete(sentUid, uid)
+							delete(sentUID, uid)
 							sentLen--
 						case <-writeErrChan:
 							log.Warn(ctx, "write error occurred",
@@ -294,20 +294,19 @@ func runResponseHandler(
 						return
 					}
 					return
-				} else {
-					log.Warn(ctx, "System error occurred",
-						logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
 				}
+				log.Warn(ctx, "System error occurred",
+					logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
 			}
 			if v.ParseResHasErr {
 				if request.Break.ParseError {
-					sentLen := len(sentUid)
+					sentLen := len(sentUID)
 					for sentLen > 0 {
 						select {
 						case <-reqTermChan:
 							return
 						case uid := <-uidChan:
-							delete(sentUid, uid)
+							delete(sentUID, uid)
 							sentLen--
 						case <-writeErrChan:
 							log.Warn(ctx, "write error occurred",
@@ -322,20 +321,19 @@ func runResponseHandler(
 						return
 					}
 					return
-				} else {
-					log.Warn(ctx, "Parse error occurred",
-						logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
 				}
+				log.Warn(ctx, "Parse error occurred",
+					logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
 			}
 			if v.WithCountLimit {
-				sentLen := len(sentUid)
+				sentLen := len(sentUID)
 				writeErr := false
 				for sentLen > 0 {
 					select {
 					case <-reqTermChan:
 						return
 					case uid := <-uidChan:
-						delete(sentUid, uid)
+						delete(sentUID, uid)
 						sentLen--
 					case <-writeErrChan:
 						log.Warn(ctx, "write error occurred",
@@ -367,14 +365,14 @@ func runResponseHandler(
 			if err != nil {
 				log.Error(ctx, "failed to search jmespath",
 					logger.Value("error", err), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
-				sentLen := len(sentUid)
+				sentLen := len(sentUID)
 				writeErr := false
 				for sentLen > 0 {
 					select {
 					case <-reqTermChan:
 						return
 					case uid := <-uidChan:
-						delete(sentUid, uid)
+						delete(sentUID, uid)
 						sentLen--
 					case <-writeErrChan:
 						log.Warn(ctx, "write error occurred",
@@ -403,14 +401,14 @@ func runResponseHandler(
 				return
 			}
 			if isMatch {
-				sentLen := len(sentUid)
+				sentLen := len(sentUID)
 				writeErr := false
 				for sentLen > 0 {
 					select {
 					case <-reqTermChan:
 						return
 					case uid := <-uidChan:
-						delete(sentUid, uid)
+						delete(sentUID, uid)
 						sentLen--
 					case <-writeErrChan:
 						log.Warn(ctx, "write error occurred",
@@ -437,7 +435,6 @@ func runResponseHandler(
 					return
 				}
 				return
-
 			}
 			matchID, isMatch = request.Break.StatusCodeMatcher(v.StatusCode)
 			if isMatch {
@@ -445,14 +442,14 @@ func runResponseHandler(
 				fmt.Println("matchID", matchID)
 				fmt.Println("v.StatusCode", v.StatusCode)
 				fmt.Println("v.ByteResponse", string(v.ByteResponse))
-				sentLen := len(sentUid)
+				sentLen := len(sentUID)
 				writeErr := false
 				for sentLen > 0 {
 					select {
 					case <-reqTermChan:
 						return
 					case uid := <-uidChan:
-						delete(sentUid, uid)
+						delete(sentUID, uid)
 						sentLen--
 					case <-writeErrChan:
 						log.Warn(ctx, "write error occurred",
@@ -484,25 +481,26 @@ func runResponseHandler(
 	}
 }
 
+// RunAsyncProcessing runs the async processing
 func RunAsyncProcessing(
 	ctx context.Context,
 	reqTermChan <-chan struct{},
 	log logger.Logger,
 	id int,
 	request ValidMassExecRequest,
-	termChan chan<- termChanType,
+	termChan chan<- TermChanType,
 	resChan <-chan httpexec.ResponseContent,
 	consumer ResponseDataConsumer,
 ) {
 	writeChan := make(chan writeSendData)
-	wroteUidChan := make(chan uuid.UUID)
+	wroteUIDChan := make(chan uuid.UUID)
 	writeErrChan := make(chan struct{})
 	go func() {
-		runResponseHandler(ctx, reqTermChan, log, id, request, termChan, writeErrChan, wroteUidChan, resChan, writeChan)
+		runResponseHandler(ctx, reqTermChan, log, id, request, termChan, writeErrChan, wroteUIDChan, resChan, writeChan)
 	}()
 
 	go func() {
-		defer close(wroteUidChan)
+		defer close(wroteUIDChan)
 		defer close(writeErrChan)
 		defer close(writeChan)
 		for {
@@ -522,7 +520,7 @@ func RunAsyncProcessing(
 							return
 						}
 						select {
-						case wroteUidChan <- d.uid:
+						case wroteUIDChan <- d.uid:
 						case <-reqTermChan:
 							return
 						}
@@ -530,7 +528,7 @@ func RunAsyncProcessing(
 					}
 				}
 				select {
-				case wroteUidChan <- d.uid:
+				case wroteUIDChan <- d.uid:
 				case <-reqTermChan:
 					return
 				}

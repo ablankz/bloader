@@ -29,7 +29,7 @@ func NewLocalAuthenticatorFactor(authCtr auth.AuthenticatorContainer) *LocalAuth
 
 // Factorize returns the factorized authenticator
 func (l LocalAuthenticatorFactor) Factorize(
-	ctx context.Context,
+	_ context.Context,
 	authID string,
 	isDefault bool,
 ) (auth.SetAuthor, error) {

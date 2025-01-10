@@ -34,8 +34,8 @@ A worker node is a node that is responsible for running the tasks assigned by th
 			cancel()
 		}()
 
-		if err := slave.SlaveRun(ctr); err != nil {
-			color.Red("Failed to run the worker node: %v", err)
+		if err := slave.Run(ctr); err != nil {
+			color.Red("Failed to run the worker node: %w", err)
 			return
 		}
 	},

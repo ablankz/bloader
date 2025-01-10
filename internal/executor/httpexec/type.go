@@ -25,7 +25,7 @@ type ResponseContent struct {
 }
 
 // ToWriteHTTPData converts the ResponseContent to WriteHTTPData
-func (r ResponseContent) ToWriteHTTPData(count int) WriteHTTPData {
+func (r ResponseContent) ToWriteHTTPData() WriteHTTPData {
 	return WriteHTTPData{
 		Success:          r.Success,
 		SendDatetime:     r.StartTime.Format(time.RFC3339Nano),

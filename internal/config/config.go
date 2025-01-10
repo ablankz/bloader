@@ -1,18 +1,18 @@
 // Package config provides configuration for the application.
 package config
 
-// ConfigType represents the configuration type
-type ConfigType string
+// Type represents the configuration type
+type Type string
 
 const (
 	// ConfigTypeMaster represents the master configuration type
-	ConfigTypeMaster ConfigType = "master"
+	ConfigTypeMaster Type = "master"
 	// ConfigTypeSlave represents the slave configuration type
-	ConfigTypeSlave ConfigType = "slave"
+	ConfigTypeSlave Type = "slave"
 )
 
-// ConfigForOverride represents the configuration for the override service
-type ConfigForOverride struct {
+// ForOverride represents the configuration for the override service
+type ForOverride struct {
 	Env      *string         `mapstructure:"env"`
 	Override *OverrideConfig `mapstructure:"override"`
 }
@@ -24,7 +24,7 @@ type ValidConfigForOverride struct {
 }
 
 // Validate validates the configuration for the override service
-func (c ConfigForOverride) Validate() (ValidConfigForOverride, error) {
+func (c ForOverride) Validate() (ValidConfigForOverride, error) {
 	var valid ValidConfigForOverride
 	if c.Env == nil {
 		return ValidConfigForOverride{}, ErrEnvRequired
@@ -62,7 +62,7 @@ type Config struct {
 
 // ValidConfig represents the application configuration
 type ValidConfig struct {
-	Type         ConfigType
+	Type         Type
 	Env          string
 	Loader       ValidLoaderConfig
 	Targets      ValidTargetConfig

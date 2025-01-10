@@ -1,3 +1,4 @@
+// Package target provides the container for the target node
 package target
 
 import (
@@ -31,12 +32,12 @@ func (t Target) GetTarget() *pb.Target {
 	return nil
 }
 
-// TargetContainer is a map of targets
-type TargetContainer map[string]Target
+// Container is a map of targets
+type Container map[string]Target
 
-// NewTargetContainer creates a new TargetContainer
-func NewTargetContainer(env string, cfg config.ValidTargetConfig) TargetContainer {
-	targets := make(TargetContainer)
+// NewContainer creates a new TargetContainer
+func NewContainer(env string, cfg config.ValidTargetConfig) Container {
+	targets := make(Container)
 	for _, target := range cfg {
 		t := Target{
 			Type: target.Type,

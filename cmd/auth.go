@@ -20,5 +20,12 @@ It is used to authenticate the user, refresh the token, etc.`,
 func init() {
 	rootCmd.AddCommand(authCmd)
 
-	loginCmd.PersistentFlags().StringVarP(&authID, "id", "i", "", `ID of the auth setting. If not provided, a default auth setting will be used.`)
+	loginCmd.PersistentFlags().
+		StringVarP(
+			&authID,
+			"id",
+			"i",
+			"",
+			`ID of the auth setting. If not provided, a default auth setting will be used.`,
+		)
 }
