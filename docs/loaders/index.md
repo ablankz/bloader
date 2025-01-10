@@ -71,7 +71,8 @@ The configuration files use the **Sprig template engine**, offering flexible and
 {: .note }
 > The `store_import` setting here can be similar to Kind's `StoreImport` in the loader, but since it does not exist at the time of initial loading, it must be checked for its existence as follows.
 
-```yaml
+{% raw %}
+``` yaml
 kind: MassExecute
 type: http
 store_import:
@@ -141,5 +142,6 @@ requests:
 {{- end }}
 {{- end }}
 ```
+{% endraw %}
 
 Explore the individual loader pages for detailed examples and configurations.
