@@ -14,4 +14,4 @@ nav_order: 4
 > It is recommended to read this section with caution, as it is not only about the bloader, but also about the security of the measurement target.
 
 - The Slave **does not retain loaders or authentication information**. All necessary data is securely transmitted from the Master to the Slave **prior to starting the load test**. 
-- To ensure safe communication between the Master and Slave, enabling **TLS communication** is strongly recommended. TLS provides **encryption for data transmission**, offering a secure and reliable communication channel. 🛡️
+- To ensure safe communication between the Master and Slave, enabling **TLS communication** is strongly recommended. TLS provides **encryption for data transmission**, offering a secure and reliable communication channel. 

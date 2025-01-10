@@ -1,23 +1,23 @@
 ---
 title: "Loaders"
-nav_order: 3
+nav_order: 4
 ---
 
 # Loaders 🚦
 
 Loaders define the actual load-testing logic in Bloader. Each loader type offers unique features to tailor your tests.
 
-## Internal Database and Memory Stores 🗄️
+## Internal Database and Memory Stores
 
 Bloader provides **three types of stores** for different use cases:
 
 1. **Internal Database**: 
    - A persistent store using `Bolt`, suitable for data reuse even after the loader terminates. 
-   - It supports encryption for storing sensitive information. 🔒
+   - It supports encryption for storing sensitive information.
 
 2. **Global Memory Store**:
    - A high-speed memory store where data is **ephemeral** and deleted after the load test completes. 
-   - Faster than the internal database but lacks persistence. ⚡
+   - Faster than the internal database but lacks persistence.
 
 3. **Thread Memory Store**:
    - Similar to the global memory store but only valid within the current loader thread. 
@@ -25,7 +25,7 @@ Bloader provides **three types of stores** for different use cases:
 
 ---
 
-## Loader Kinds 🛠️
+## Loader Kinds
 
 > Bloader supports multiple kinds of loaders, each designed for specific tasks:
 
@@ -41,7 +41,7 @@ Bloader provides **three types of stores** for different use cases:
 
 ---
 
-## Definition Format 📜
+## Definition Format
 
 The configuration files use the **Sprig template engine**, offering flexible and dynamic settings. Below are the common settings applicable to all loaders:
 
@@ -52,19 +52,19 @@ The configuration files use the **Sprig template engine**, offering flexible and
 | `kind`                  | Specifies the type of loader.                                                              | ✅                              | `string`       |
 | `sleep`                 | Configures sleep settings.                                                                 | ❌                              | `object`       |
 | `sleep.enabled`         | Enables or disables sleep. Default is `false`.                                             | ❌                              | `boolean`      |
-| `sleep.values`          | Sleep timing and duration settings.                                                        | ✅ (if `enabled=true`)          | `[]object`     |
+| `sleep.values`          | Sleep timing and duration settings.                                                        | ✅ (`enabled=true`)          | `[]object`     |
 | `sleep.values[].duration` | Sleep duration in time format (e.g., `10s`, `1s`).                                        | ✅                              | `string`       |
 | `sleep.values[].after`  | Specifies when to sleep: `init`, `exec`, `failedExec`.                                      | ✅                              | `string`       |
 | `store_import`          | Configures StoreImport settings.                                                           | ❌                              | `object`       |
 | `store_import.enabled`  | Enables or disables StoreImport. Default is `false`.                                       | ❌                              | `boolean`      |
-| `store_import.data`     | Defines the StoreImport data.                                                              | ✅ (if `enabled=true`)          | `[]object`     |
+| `store_import.data`     | Defines the StoreImport data.                                                              | ✅ (`enabled=true`)          | `[]object`     |
 | `store_import.data[].bucket_id` | The bucket ID to import from.                                                       | ✅                              | `string`       |
 | `store_import.data[].store_key` | The key in the store to import.                                                     | ✅                              | `string`       |
 | `store_import.data[].key` | The key to store imported data in the memory store.                                       | ✅                              | `string`       |
 | `store_import.data[].thread_only` | If `true`, data is imported only into the thread memory store. Default is `false`. | ❌                              | `boolean`      |
 | `store_import.data[].encrypt` | Configures encryption settings for the imported data.                                | ❌                              | `object`       |
 | `store_import.data[].encrypt.enabled` | Enables or disables encryption for imported data. Default is `false`.         | ❌                              | `boolean`      |
-| `store_import.data[].encrypt.encrypt_id` | The ID of the encryption used to decrypt the imported data.                | ✅ (if `enabled=true`)          | `string`       |
+| `store_import.data[].encrypt.encrypt_id` | The ID of the encryption used to decrypt the imported data.                | ✅ (`enabled=true`)          | `string`       |
 
 ---
 

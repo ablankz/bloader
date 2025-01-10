@@ -59,8 +59,8 @@ nav_order: 1
 | `encrypts`                            | Encryption settings                                        | ✅                           | `[]object`  |
 | `encrypts[].id`                       | Unique ID for the encryption                               | ✅                           | `string`    |
 | `encrypts[].type`                     | Encryption type                                            | ✅                           | `string`    |
-| `encrypts[].key`                      | Encryption key (recommended to override via external file) | ✅ (if `type=static*`)       | `string`    |
-| `encrypts[].store`                    | Key management settings for dynamic encryption             | ✅ (if `type=dynamic*`)      | `object`    |
+| `encrypts[].key`                      | Encryption key (recommended to override via external file) | ✅ (`type=static*`)       | `string`    |
+| `encrypts[].store`                    | Key management settings for dynamic encryption             | ✅ (`type=dynamic*`)      | `object`    |
 | `encrypts[].store.bucket_id`          | Bucket ID where the key is stored                          | ✅                           | `string`    |
 | `encrypts[].store.key`                | Key identifier within the bucket                           | ✅                           | `string`    |
 | `encrypts[].store.encrypt`            | Encryption settings for key management                     | ❌                           | `object`    |
@@ -75,37 +75,37 @@ nav_order: 1
 | `auth[].id`                                         | Unique ID for the authentication configuration                       | ✅                                                       | `string`    |
 | `auth[].default`                                    | Set as the default authentication configuration                      | ✅                                                       | `boolean`   |
 | `auth[].type`                                       | Authentication type (`oauth2`, `apiKey`, `basic`, etc.)              | ✅                                                       | `string`    |
-| `auth[].oauth2`                                     | OAuth2 configuration settings                                        | ✅ (if `type=oauth2`)                                           | `object`     |
+| `auth[].oauth2`                                     | OAuth2 configuration settings                                        | ✅ (`type=oauth2`)                                           | `object`     |
 | `auth[].oauth2.grant_type`                          | OAuth2 grant type (`authorization_code`, `client_credentials`, etc.) | ✅                                                       | `string`    |
 | `auth[].oauth2.client_id`                           | OAuth2 client ID                                                     | ✅                                                       | `string`    |
 | `auth[].oauth2.scope`                               | OAuth2 scope                                                         | ✅                                                       | `[]string`  |
 | `auth[].oauth2.client_secret`                       | OAuth2 client secret                                                 | ❌                                                       | `string`    |
-| `auth[].oauth2.access_type`                         | OAuth2 access type (`online` or `offline`)                           | ✅ (if `grant_type=authorization_code`)                         | `string`     |
-| `auth[].oauth2.auth_url`                            | OAuth2 authorization endpoint                                        | ✅ (if `grant_type=authorization_code`)                         | `string`     |
-| `auth[].oauth2.token_url`                           | OAuth2 token endpoint                                                | ✅ (if `grant_type=authorization_code` or `client_credentials`) | `string`     |
-| `auth[].oauth2.username`                            | Username for OAuth2 password grant                                   | ✅ (if `grant_type=password`)                                   | `string`     |
-| `auth[].oauth2.password`                            | Password for OAuth2 password grant                                   | ✅ (if `grant_type=password`)                                   | `string`     |
+| `auth[].oauth2.access_type`                         | OAuth2 access type (`online` or `offline`)                           | ✅ (`grant_type=authorization_code`)                         | `string`     |
+| `auth[].oauth2.auth_url`                            | OAuth2 authorization endpoint                                        | ✅ (`grant_type=authorization_code`)                         | `string`     |
+| `auth[].oauth2.token_url`                           | OAuth2 token endpoint                                                | ✅ (`grant_type=authorization_code` or `client_credentials`) | `string`     |
+| `auth[].oauth2.username`                            | Username for OAuth2 password grant                                   | ✅ (`grant_type=password`)                                   | `string`     |
+| `auth[].oauth2.password`                            | Password for OAuth2 password grant                                   | ✅ (`grant_type=password`)                                   | `string`     |
 | `auth[].oauth2.credential`                          | Credential storage settings                                          | ✅                                                       | `object`     |
 | `auth[].oauth2.credential.store`                    | Credential key storage                                               | ✅                                                       | `object`     |
 | `auth[].oauth2.credential.store.bucket_id`          | Bucket ID for credential storage                                     | ✅                                                       | `string`     |
 | `auth[].oauth2.credential.store.key`                | Credential key within the bucket                                     | ✅                                                       | `string`     |
 | `auth[].oauth2.credential.store.encrypt`            | Encryption settings for credential storage                           | ❌                                                       | `object`     |
 | `auth[].oauth2.credential.store.encrypt.enabled`    | Enable encryption for credential storage                             | ❌                                                       | `boolean`    |
-| `auth[].oauth2.credential.store.encrypt.encrypt_id` | Encryption ID for credential storage                                 | ✅ (if `encrypt.enabled=true`)                                           | `string`     |
-| `auth[].api_key`                                    | API key configuration                                                | ✅ (if `type=apiKey`)                                           | `object`     |
+| `auth[].oauth2.credential.store.encrypt.encrypt_id` | Encryption ID for credential storage                                 | ✅ (`encrypt.enabled=true`)                                           | `string`     |
+| `auth[].api_key`                                    | API key configuration                                                | ✅ (`type=apiKey`)                                           | `object`     |
 | `auth[].api_key.header_name`                        | Header name for the API key                                          | ✅                                                       | `string`     |
 | `auth[].api_key.key`                                | API key value                                                        | ✅                                                       | `string`     |
-| `auth[].basic`                                      | Basic authentication configuration                                   | ✅ (if `type=basic`)                                            | `object`      |
+| `auth[].basic`                                      | Basic authentication configuration                                   | ✅ (`type=basic`)                                            | `object`      |
 | `auth[].basic.username`                             | Username for basic authentication                                    | ✅                                                       | `string`      |
 | `auth[].basic.password`                             | Password for basic authentication                                    | ✅                                                       | `string`      |
-| `auth[].jwt`                                        | JWT authentication configuration                                     | ✅ (if `type=jwt`)                                              | `object`      |
+| `auth[].jwt`                                        | JWT authentication configuration                                     | ✅ (`type=jwt`)                                              | `object`      |
 | `auth[].jwt.credential`                             | JWT credential settings                                              | ✅                                                       | `object`      |
 | `auth[].jwt.credential.store`                       | Storage settings for JWT credentials                                 | ✅                                                       | `object`      |
 | `auth[].jwt.credential.store.bucket_id`             | Bucket ID for JWT credential storage                                 | ✅                                                       | `string`      |
 | `auth[].jwt.credential.store.key`                   | JWT credential key within the bucket                                 | ✅                                                       | `string`      |
 | `auth[].jwt.credential.store.encrypt`               | Encryption settings for JWT credential storage                       | ❌                                                       | `object`      |
 | `auth[].jwt.credential.store.encrypt.enabled`       | Enable encryption for JWT credential storage                         | ❌                                                       | `boolean`     |
-| `auth[].jwt.credential.store.encrypt.encrypt_id`    | Encryption ID for JWT credential storage                             | ✅ (if `encrypt.enabled=true`)                                            | `string`      |
+| `auth[].jwt.credential.store.encrypt.encrypt_id`    | Encryption ID for JWT credential storage                             | ✅ (`encrypt.enabled=true`)                                            | `string`      |
 
 ## Server Settings ⚙️
 
@@ -136,8 +136,8 @@ nav_order: 1
 | `logging.output[].format`   | Format of log output (`text` or `json`)                          | ✅           | `string`   |
 | `logging.output[].enabled_env` | List of environments where the log output is enabled          | ❌           | `[]string` |
 | `logging.output[].level`    | Logging level (`debug`, `info`, `warn`, `error`)                | ✅           | `string`   |
-| `logging.output[].filename` | File path for log output (required if `type=file`)               | ✅ (if file) | `string`   |
-| `logging.output[].address`  | Address for log output (required if `type=tcp`)                 | ✅ (if tcp)  | `string`   |
+| `logging.output[].filename` | File path for log output             | ✅ (logging.output[].type=file) | `string`   |
+| `logging.output[].address`  | Address for log output                 | ✅ (logging.output[].type=tcp)  | `string`   |
 
 ## Clock Settings ⏰
 
@@ -162,10 +162,10 @@ nav_order: 1
 |:---------------------|:-------------------------------------------------------------|:-------------:|:------------:|
 | `override`          | Override settings                                            | ✅           | `[]object` |
 | `override[].type`   | Type of override (`file`, `static`)                          | ✅           | `string`   |
-| `override[].file_type` | File type for overrides (`yaml`, `json`) (if `type=file`) | ✅ (file)   | `string`   |
-| `override[].path`   | Path to the override file (if `type=file`)                   | ✅ (file)   | `string`   |
+| `override[].file_type` | File type for overrides (`yaml`, `json`) | ✅ (override[].file_type=file)   | `string`   |
+| `override[].path`   | Path to the override file                  | ✅ (override[].file_type=file)   | `string`   |
 | `override[].partial`| Enable partial override for file type (default: `false`)     | ❌           | `boolean`  |
-| `override[].vars`   | Variables for static override (if `type=static`)             | ✅ (static) | `[]object` |
-| `override[].vars[].key` | Key to override                                          | ✅ (static) | `string`   |
-| `override[].vars[].value` | Value to assign                                        | ✅ (static) | `string`   |
+| `override[].vars`   | Variables for static override             | ✅ (override[].file_type=static) | `[]object` |
+| `override[].vars[].key` | Key to override                                          | ✅ (override[].file_type=static) | `string`   |
+| `override[].vars[].value` | Value to assign                                        | ✅ (override[].file_type=static) | `string`   |
 | `override[].enabled_env` | List of environments where the override is enabled      | ❌           | `[]string` |
