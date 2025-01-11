@@ -4,10 +4,16 @@ on:
   workflow_call:
   workflow_dispatch:
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   test-go:
     name: Test go files
     runs-on: ubuntu-latest
+    env:
+      GOTESTSUM_BIN: "${{ github.workspace }}/.tmp/gotestsum/bin"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -15,22 +21,17 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: "1.23"
-      - name: Cache Go modules
+      - name: Cache gotestsum
+        id: gotestsum-cache
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+          path: ${{ env.GOTESTSUM_BIN}}
+          key: ${{ runner.os }}-go-gotestsum
       - name: Install gotestsum
-        run: |
-          go install gotest.tools/gotestsum@latest
+        if: ${{ steps.gotestsum-cache.outputs.cache-hit != 'true' }}
+        run: GOBIN="${{ env.GOTESTSUM_BIN }}" go install gotest.tools/gotestsum@latest
       - name: Run tests and generate JUnit report, test coverage
-        run: |
-          go clean -testcache
-          "gotestsum --junitfile report.xml --format testdox --  -cover -covermode=atomic -coverprofile=coverage.out ./... -race"
+        run: "${{ env.GOTESTSUM_BIN }}/gotestsum --junitfile report.xml --format testdox --  -cover -coverprofile=coverage.out ./..."
       - name: Upload test report and coverage
         uses: actions/upload-artifact@v4
         with:
