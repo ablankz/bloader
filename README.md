@@ -1,4 +1,13 @@
-# 🌟 Bloader: A Modern Benchmarking Tool
+# Bloader: A Modern Benchmarking Tool
+
+[![Go Reference](https://pkg.go.dev/badge/github.com/ablankz/bloader.svg)](https://pkg.go.dev/github.com/ablankz/bloader)
+[![CI](https://github.com/ablankz/bloader/actions/workflows/ci.yaml/badge.svg)](https://github.com/ablankz/bloader/actions/workflows/ci.yaml)
+[![Test Coverage](https://codecov.io/gh/ablankz/bloader/branch/main/graph/badge.svg)](https://codecov.io/gh/ablankz/bloader)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ablankz/bloader)](https://goreportcard.com/report/github.com/ablankz/bloader)
+[![License](https://img.shields.io/github/license/ablankz/bloader)](https://github.com/ablankz/bloader/blob/main/LICENSE)
+[![Release](https://img.shields.io/github/v/release/ablankz/bloader.svg)](https://github.com/ablankz/bloader/releases)
+[![Last Commit](https://img.shields.io/github/last-commit/ablankz/bloader.svg)](https://github.com/ablankz/bloader/commits/main)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/ablankz/bloader.svg)](https://golang.org/doc/devel/release.html)
 
 Bloader is a cutting-edge load testing tool designed for simplicity and flexibility. While still in active development, it already offers robust features to execute and manage load tests effectively. We welcome contributions from the community to help shape its future. 💡
 
