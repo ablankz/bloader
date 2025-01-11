@@ -13,9 +13,6 @@ on:
       - develop
       - 'releases/**'
 
-permissions:
-  contents: read
-
 jobs:
   lint:
     name: Lint
@@ -23,3 +20,8 @@ jobs:
   test:
     name: Test
     uses: ./.github/workflows/test.yaml
+    permissions:
+      contents: write
+      actions: read
+      checks: write
+      pull-requests: write
