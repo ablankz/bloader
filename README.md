@@ -15,9 +15,9 @@ Bloader is a cutting-edge load testing tool designed for simplicity and flexibil
 
 ## ✨ Key Features
 
-- **Internal Storage**: Bloader can store request data for enhanced testing capabilities.
-- **Master-Slave Architecture**: Avoid client-side bottlenecks by leveraging gRPC communication between Master and Slave nodes.
-- **Human-Friendly Configuration**: Load tests are defined using YAML, with support for Sprig's template engine (used in Helm), offering exceptional flexibility.
+✔️ **Internal Storage**: Bloader can store request data for enhanced testing capabilities.
+✔️ **Master-Slave Architecture**: Avoid client-side bottlenecks by leveraging gRPC communication between Master and Slave nodes.
+✔️ **Human-Friendly Configuration**: Load tests are defined using YAML, with support for Sprig's template engine (used in Helm), offering exceptional flexibility.
 
 ---
 
@@ -163,6 +163,8 @@ We welcome contributions of all kinds! If you're interested in improving Bloader
 2. Make your changes in a new branch.
 3. Submit a pull request with a detailed description.
 
+For more details, see [CONTRIBUTION.md](CONTRIBUTION.md).
+
 ---
 
 ## 🛠️ Related Tools
@@ -176,4 +178,4 @@ We welcome contributions of all kinds! If you're interested in improving Bloader
 
 ## 📜 License
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
