@@ -48,8 +48,8 @@ func init() {
 			"config",
 			"c",
 			"",
-			`config file (default is ./bloader/config.yaml, $HOME/bloader/config.yaml, 
-			or /etc/bloader/config.yaml)`,
+			`config file (default is ./bloader.yaml, $HOME/bloader.yaml, 
+			or /etc/bloader/bloader.yaml)`,
 		)
 	if err := viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config")); err != nil {
 		fmt.Printf("Error binding flag: %v\n", err)
@@ -67,10 +67,15 @@ func initConfig() {
 			fmt.Printf("Failed to get home directory: %v\n", err)
 			os.Exit(1)
 		}
-		viper.AddConfigPath("./bloader")
-		viper.AddConfigPath(homeDir + "/bloader")
+		currentDir, err := os.Getwd()
+		if err != nil {
+			fmt.Printf("Failed to get current directory: %v\n", err)
+			os.Exit(1)
+		}
+		viper.AddConfigPath(currentDir)
+		viper.AddConfigPath(homeDir)
 		viper.AddConfigPath("/etc/bloader")
-		viper.SetConfigName("config")
+		viper.SetConfigName("bloader")
 		// viper.SetConfigType("yaml")
 	}
 
