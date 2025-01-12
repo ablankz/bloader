@@ -58,6 +58,11 @@ func init() {
 }
 
 func initConfig() {
+
+	if shouldSkipConfig() {
+		return
+	}
+
 	configFile := viper.GetString("config")
 	if configFile != "" {
 		viper.SetConfigFile(configFile)
@@ -194,4 +199,22 @@ func initConfig() {
 	// 		}
 	// 	}
 	// }
+}
+
+func shouldSkipConfig() bool {
+	// Retrieve the subcommand
+	// cmd, _, err := rootCmd.Find(os.Args[1:])
+	// if err != nil {
+	// 	return false
+	// }
+
+	// Ignore the following subcommands
+	commandsToSkip := map[string]struct{}{
+		"completion": {},
+		"version":    {},
+		"help":       {},
+	}
+
+	_, ok := commandsToSkip[os.Args[1]]
+	return ok
 }
