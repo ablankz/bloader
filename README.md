@@ -16,7 +16,9 @@ Bloader is a cutting-edge load testing tool designed for simplicity and flexibil
 ## ✨ Key Features
 
 ✔️ **Internal Storage**: Bloader can store request data for enhanced testing capabilities.
+
 ✔️ **Master-Slave Architecture**: Avoid client-side bottlenecks by leveraging gRPC communication between Master and Slave nodes.
+
 ✔️ **Human-Friendly Configuration**: Load tests are defined using YAML, with support for Sprig's template engine (used in Helm), offering exceptional flexibility.
 
 ---

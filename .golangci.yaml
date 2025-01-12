@@ -72,7 +72,7 @@ linters-settings:
   gofumpt:
     extra-rules: true
   goimports:
-    local-prefixes: github.com/LabGroupware/go-web-measure-cli
+    local-prefixes: github.com/ablankz/bloader
   govet:
     enable-all: true
   revive:

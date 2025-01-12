@@ -3,7 +3,6 @@ package runner
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -168,14 +167,12 @@ func runResponseHandler(
 			if isMatch {
 				log.Debug(ctx, "Count output filter found",
 					logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
-				fmt.Println("Count output filter found")
 				mustWrite = false
 			}
 			_, isMatch = request.RecordExcludeFilter.StatusCodeFilter(v.StatusCode)
 			if isMatch {
 				log.Debug(ctx, "Status output filter found",
 					logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
-				fmt.Println("Status output filter found")
 				mustWrite = false
 			}
 			var matchID string
@@ -220,7 +217,6 @@ func runResponseHandler(
 			if isMatch {
 				log.Debug(ctx, "Response output filter found",
 					logger.Value("id", id), logger.Value("on", "runResponseHandler"), logger.Value("count", v.Count))
-				fmt.Println("Response output filter found")
 				mustWrite = false
 			}
 
@@ -438,10 +434,6 @@ func runResponseHandler(
 			}
 			matchID, isMatch = request.Break.StatusCodeMatcher(v.StatusCode)
 			if isMatch {
-				fmt.Println("Status code match")
-				fmt.Println("matchID", matchID)
-				fmt.Println("v.StatusCode", v.StatusCode)
-				fmt.Println("v.ByteResponse", string(v.ByteResponse))
 				sentLen := len(sentUID)
 				writeErr := false
 				for sentLen > 0 {

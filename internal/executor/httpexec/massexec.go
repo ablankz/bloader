@@ -138,12 +138,13 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 							HasSystemErr:   true,
 							WithCountLimit: countOver,
 						}: // do nothing
-							fmt.Println("startTime", startTime)
-							fmt.Println("endTime", endTime)
-							fmt.Println("count", countInternal)
-							fmt.Println("responseTime", endTime.Sub(startTime).Milliseconds())
-							fmt.Println("countOver", countOver)
-							fmt.Println("err", err)
+							log.Error(ctx, "response error",
+								logger.Value("startTime", startTime),
+								logger.Value("endTime", endTime),
+								logger.Value("count", countInternal),
+								logger.Value("responseTime", endTime.Sub(startTime).Milliseconds()),
+								logger.Value("err", err),
+							)
 						}
 
 						return
@@ -172,13 +173,15 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 							ParseResHasErr: true,
 							WithCountLimit: countOver,
 						}: // do nothing
-							fmt.Println("responseByte", string(responseByte))
-							fmt.Println("response", response)
-							fmt.Println("startTime", startTime)
-							fmt.Println("endTime", endTime)
-							fmt.Println("count", countInternal)
-							fmt.Println("statusCode", statusCode)
-							fmt.Println("err", err)
+							log.Error(ctx, "failed to read response",
+								logger.Value("responseByte", string(responseByte)),
+								logger.Value("response", response),
+								logger.Value("startTime", startTime),
+								logger.Value("endTime", endTime),
+								logger.Value("count", countInternal),
+								logger.Value("statusCode", statusCode),
+								logger.Value("err", err),
+							)
 						}
 						return
 					}
@@ -216,12 +219,15 @@ func (q MassRequestContent[Req]) MassRequestExecute(
 							ParseResHasErr: true,
 							WithCountLimit: countOver,
 						}: // do nothing
-							fmt.Println("responseByte", string(responseByte))
-							fmt.Println("response", response)
-							fmt.Println("startTime", startTime)
-							fmt.Println("endTime", endTime)
-							fmt.Println("count", countInternal)
-							fmt.Println("statusCode", statusCode)
+							log.Error(ctx, "failed to parse response",
+								logger.Value("responseByte", string(responseByte)),
+								logger.Value("response", response),
+								logger.Value("startTime", startTime),
+								logger.Value("endTime", endTime),
+								logger.Value("count", countInternal),
+								logger.Value("statusCode", statusCode),
+								logger.Value("err", err),
+							)
 						}
 						return
 					}

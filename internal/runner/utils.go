@@ -19,7 +19,7 @@ func wait(
 	if v, wait := conf.RetrieveSleepValue(after); wait {
 		log.Debug(ctx, "sleeping after execute",
 			logger.Value("duration", v))
-		fmt.Println("Sleeping For", v, "...", "on", filename)
+		fmt.Println("Sleeping For", v, "at", filename, "...")
 		select {
 		case <-time.After(v):
 		case <-ctx.Done():
@@ -27,7 +27,7 @@ func wait(
 				logger.Value("on", filename))
 			return nil
 		}
-		fmt.Println("Sleeping Complete", "on", filename)
+		fmt.Println("Sleeping Complete", "at", filename)
 	}
 
 	return nil

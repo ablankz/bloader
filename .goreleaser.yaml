@@ -27,12 +27,17 @@ builds:
     goarch:
       - amd64
       - arm64
+    ldflags:
+      - -X 'github.com/ablankz/bloader/cmd.Version={{.Version}}'
+      - -X 'github.com/ablankz/bloader/cmd.Commit={{.Commit}}'
+      - -X 'github.com/ablankz/bloader/cmd.BuildTime={{.Date}}'
 
 archives:
   - format: tar.gz
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
       {{ .ProjectName }}_
+      {{- .Version }}_
       {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else if eq .Arch "386" }}i386
@@ -42,6 +47,82 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
+
+brews:
+  - name: bloader
+    repository:
+      owner: ablankz
+      name: homebrew-tap
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+
+nfpms:
+  - package_name: bloader
+    bindir: /usr/bin
+    formats:
+      - apk
+      - deb
+      - rpm
+      - termux.deb
+      - archlinux
+    maintainer: "Hayashi Kenta <k.hayashi@cresplanex.com>"
+    # Contents to add to the package.
+    # GoReleaser will automatically add the binaries.
+    # contents:
+      # # Basic file that applies to all packagers
+      # - src: path/to/foo
+      #   dst: /usr/bin/foo
+
+      # # This will add all files in some/directory or in subdirectories at the
+      # # same level under the directory /etc. This means the tree structure in
+      # # some/directory will not be replicated.
+      # - src: some/directory/
+      #   dst: /etc
+
+      # # This will replicate the directory structure under some/directory at
+      # # /etc, using the "tree" type.
+      # #
+      # # Templates: allowed.
+      # - src: some/directory/
+      #   dst: /etc
+      #   type: tree
+      #   file_info:
+      #     # File mode.
+      #     mode: 0644
+      #     # Modification time.
+      #     #
+      #     # Templates: allowed (since v2.6).
+      #     # mtime: "{{.CommitDate}}"
+
+      #     # Owner name.
+      #     #
+      #     # Templates: allowed (since v2.6).
+      #     owner: notRoot
+
+      #     # Group name.
+      #     #
+      #     # Templates: allowed (since v2.6).
+      #     group: notRoot
+
+      # # Simple config file
+      # - src: path/to/foo.conf
+      #   dst: /etc/foo.conf
+      #   type: config
+
+      # # Simple symlink.
+      # # Corresponds to `ln -s /sbin/foo /usr/local/bin/foo`
+      # - src: /sbin/foo
+      #   dst: /usr/bin/foo
+      #   type: "symlink"
+
+      # # Corresponds to `%config(noreplace)` if the packager is rpm, otherwise it
+      # # is just a config file
+      # - src: path/to/local/bar.conf
+      #   dst: /etc/bar.conf
+      #   type: "config|noreplace"
+
+      # # The src and dst attributes also supports name templates
+      # - src: path/{{ .Os }}-{{ .Arch }}/bar.conf
+      #   dst: /etc/foo/bar-{{ .ProjectName }}.conf
 
 changelog:
   sort: asc

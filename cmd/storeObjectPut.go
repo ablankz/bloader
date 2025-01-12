@@ -59,7 +59,7 @@ bloader store object put --bucket 1234 objectKey objectValue`,
 func init() {
 	storeObjectCmd.AddCommand(storeObjectPutCmd)
 
-	storeObjectGetCmd.PersistentFlags().
+	storeObjectPutCmd.PersistentFlags().
 		StringVarP(
 			&storeObjectEncrypt,
 			"encrypt",

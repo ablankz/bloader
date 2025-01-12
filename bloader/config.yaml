@@ -52,11 +52,11 @@ store:
     - "bucketForSlave"
 encrypts:
     # The id is required, and it must be unique.
-  - id: "encryptStaticCBC"
-    # Supported types are `staticCBC`, `staticCFB`, `staticCTR`,
-    # `dynamicCBC`, `dynamicCFB`, `dynamicCTR`.
-    type: "staticCBC"
-    key: "must override"
+  # - id: "encryptStaticCBC"
+  #   # Supported types are `staticCBC`, `staticCFB`, `staticCTR`,
+  #   # `dynamicCBC`, `dynamicCFB`, `dynamicCTR`.
+  #   type: "staticCBC"
+  #   key: "must override"
   - id: "encryptDynamicCBC"
     type: "dynamicCBC"
     store:
@@ -144,14 +144,14 @@ language:
   default: "en"
 # The one below takes precedence over the one above.
 # The bottom one takes precedence.
-override:
-  - type: "file"
-    file_type: "yaml"
-    path: "bloader/static_encrypt.yaml"
-    partial: true
-    vars:
-      - key: encrypts[0].key
-        value: "encrypt_key"
+override: []
+  # - type: "file"
+  #   file_type: "yaml"
+  #   path: "bloader/static_encrypt.yaml"
+  #   partial: true
+  #   vars:
+  #     - key: encrypts[0].key
+  #       value: "encrypt_key"
     # If enabled_env is not set, it will be enabled all environments.
     # enabled_env:
   # - type: "file"

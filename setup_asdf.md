@@ -45,5 +45,5 @@ asdf list all <Plugin>
 
 ### Plugin Install With Signatured Version
 ``` sh
-asdf install <Plugin> <バージョン>
+asdf install <Plugin> <Version>
 ```
