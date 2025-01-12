@@ -58,7 +58,6 @@ func init() {
 }
 
 func initConfig() {
-
 	if shouldSkipConfig() {
 		return
 	}
@@ -210,6 +209,7 @@ func shouldSkipConfig() bool {
 
 	// Ignore the following subcommands
 	commandsToSkip := map[string]struct{}{
+		"__complete": {}, // This is a special command for shell completion
 		"completion": {},
 		"version":    {},
 		"help":       {},
