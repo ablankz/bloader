@@ -9,13 +9,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ablankz/bloader/internal/config"
-	"github.com/ablankz/bloader/internal/container"
-	"github.com/ablankz/bloader/internal/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
+
+	"github.com/ablankz/bloader/internal/config"
+	"github.com/ablankz/bloader/internal/container"
+	"github.com/ablankz/bloader/internal/utils"
 )
 
 var ctr = container.NewContainer()

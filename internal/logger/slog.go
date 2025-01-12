@@ -8,9 +8,10 @@ import (
 	"os"
 	"path/filepath"
 
+	slogmulti "github.com/samber/slog-multi"
+
 	"github.com/ablankz/bloader/internal/config"
 	"github.com/ablankz/bloader/internal/utils"
-	slogmulti "github.com/samber/slog-multi"
 )
 
 // SlogLogger is a logger that uses slog

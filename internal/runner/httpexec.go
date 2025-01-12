@@ -6,10 +6,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/ablankz/bloader/internal/executor/httpexec"
 	"github.com/ablankz/bloader/internal/logger"
 	"github.com/ablankz/bloader/internal/runner/matcher"
-	"github.com/google/uuid"
 )
 
 // WriteData represents the write data

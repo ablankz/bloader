@@ -16,9 +16,10 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
+	"gopkg.in/yaml.v3"
+
 	"github.com/ablankz/bloader/internal/executor/httpexec"
 	"github.com/ablankz/bloader/internal/logger"
-	"gopkg.in/yaml.v3"
 )
 
 // HTTPRequestBodyType represents the HTTP request body type

@@ -8,8 +8,9 @@ import (
 
 	rpc "buf.build/gen/go/cresplanex/bloader/grpc/go/cresplanex/bloader/v1/bloaderv1grpc"
 	pb "buf.build/gen/go/cresplanex/bloader/protocolbuffers/go/cresplanex/bloader/v1"
-	"github.com/ablankz/bloader/internal/logger"
 	"google.golang.org/protobuf/proto"
+
+	"github.com/ablankz/bloader/internal/logger"
 )
 
 // SlaveRequestHandler is a struct that holds the response handler information.

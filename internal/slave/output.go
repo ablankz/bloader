@@ -4,6 +4,7 @@ import (
 	"context"
 
 	pb "buf.build/gen/go/cresplanex/bloader/protocolbuffers/go/cresplanex/bloader/v1"
+
 	"github.com/ablankz/bloader/internal/logger"
 	"github.com/ablankz/bloader/internal/output"
 	"github.com/ablankz/bloader/internal/runner"

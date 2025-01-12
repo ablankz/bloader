@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/boltdb/bolt"
+
 	"github.com/ablankz/bloader/internal/config"
 	"github.com/ablankz/bloader/internal/utils"
-	"github.com/boltdb/bolt"
 )
 
 // BoltStore is a store that uses BoltDB

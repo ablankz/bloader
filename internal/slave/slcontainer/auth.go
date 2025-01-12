@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	pb "buf.build/gen/go/cresplanex/bloader/protocolbuffers/go/cresplanex/bloader/v1"
+
 	"github.com/ablankz/bloader/internal/auth"
 )
 

@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ablankz/bloader/internal/encrypt"
 	"google.golang.org/grpc"
+
+	"github.com/ablankz/bloader/internal/encrypt"
 )
 
 // UnaryClientEncryptInterceptor is a client-side interceptor that encrypts the request and decrypts the response.

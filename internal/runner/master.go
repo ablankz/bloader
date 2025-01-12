@@ -12,12 +12,13 @@ import (
 
 	rpc "buf.build/gen/go/cresplanex/bloader/grpc/go/cresplanex/bloader/v1/bloaderv1grpc"
 	pb "buf.build/gen/go/cresplanex/bloader/protocolbuffers/go/cresplanex/bloader/v1"
-	"github.com/ablankz/bloader/internal/encrypt"
-	"github.com/ablankz/bloader/internal/logger"
-	"github.com/ablankz/bloader/internal/master"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+
+	"github.com/ablankz/bloader/internal/encrypt"
+	"github.com/ablankz/bloader/internal/logger"
+	"github.com/ablankz/bloader/internal/master"
 )
 
 // ReceiveTermType represents the valid ReceiveTermType runner

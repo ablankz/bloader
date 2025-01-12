@@ -10,9 +10,10 @@ import (
 	"net/http"
 	"time"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/ablankz/bloader/internal/logger"
 	"github.com/ablankz/bloader/internal/utils"
-	"gopkg.in/yaml.v3"
 )
 
 // RequestContent represents the request content

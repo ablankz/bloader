@@ -6,9 +6,10 @@ import (
 	"sync"
 
 	pb "buf.build/gen/go/cresplanex/bloader/protocolbuffers/go/cresplanex/bloader/v1"
+	"google.golang.org/protobuf/proto"
+
 	"github.com/ablankz/bloader/internal/runner"
 	"github.com/ablankz/bloader/internal/utils"
-	"google.golang.org/protobuf/proto"
 )
 
 // RequestTermCaster is an interface that represents a request term caster

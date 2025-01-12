@@ -4,9 +4,10 @@ Copyright © 2024 hayashi kenta <k.hayashi@cresplanex.com>
 package cmd
 
 import (
-	"github.com/ablankz/bloader/internal/config"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
+
+	"github.com/ablankz/bloader/internal/config"
 )
 
 // storeClearCmd represents the storeClear command

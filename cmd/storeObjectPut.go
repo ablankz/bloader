@@ -6,9 +6,10 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/ablankz/bloader/internal/config"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
+
+	"github.com/ablankz/bloader/internal/config"
 )
 
 // storeObjectPutCmd represents the storeObjectPut command

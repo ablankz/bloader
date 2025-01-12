@@ -6,10 +6,11 @@ package cmd
 import (
 	"os"
 
-	"github.com/ablankz/bloader/internal/config"
-	"github.com/ablankz/bloader/internal/utils"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
+
+	"github.com/ablankz/bloader/internal/config"
+	"github.com/ablankz/bloader/internal/utils"
 )
 
 var outputClearAll bool

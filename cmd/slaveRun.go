@@ -9,9 +9,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ablankz/bloader/internal/slave"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
+
+	"github.com/ablankz/bloader/internal/slave"
 )
 
 // slaveRunCmd represents the slaveRun command
