@@ -19,7 +19,7 @@ jobs:
         run: |
           echo "TAG_NAME=${GITHUB_REF##*/}" >> $GITHUB_ENV
           PREV_TAG=$(git describe --tags --abbrev=0 ${GITHUB_REF}^)
-          git log ${PREV_TAG}..HEAD --pretty=format:'%H: %s (%an <%ae>)' > commits.txt
+          git log ${PREV_TAG}..HEAD --pretty=format:'%s (%an <%ae>)' > commits.txt
           echo "" >> commits.txt
       - name: Update CHANGELOG.md
         run: |
@@ -80,6 +80,7 @@ jobs:
             echo "### 🚀 Features" >> $BODY_FILE
             for feature in "${features[@]}"; do
               echo "✔️ $feature" >> $BODY_FILE
+              echo "" >> $BODY_FILE
             done
             echo "" >> $BODY_FILE
           fi
@@ -87,6 +88,7 @@ jobs:
             echo "### 🐞 Bug fixes" >> $BODY_FILE
             for bug_fix in "${bug_fixes[@]}"; do
               echo "✔️ $bug_fix" >> $BODY_FILE
+              echo "" >> $BODY_FILE
             done
             echo "" >> $BODY_FILE
           fi
@@ -94,6 +96,7 @@ jobs:
             echo "### 💪 Performance improvements" >> $BODY_FILE
             for performance_improvement in "${performance_improvements[@]}"; do
               echo "✔️ $performance_improvement" >> $BODY_FILE
+              echo "" >> $BODY_FILE
             done
             echo "" >> $BODY_FILE
           fi
@@ -101,6 +104,7 @@ jobs:
             echo "### 📃 Documentation" >> $BODY_FILE
             for doc in "${documentation[@]}"; do
               echo "✔️ $doc" >> $BODY_FILE
+              echo "" >> $BODY_FILE
             done
             echo "" >> $BODY_FILE
           fi
@@ -108,6 +112,7 @@ jobs:
             echo "### 🕶️ Styles" >> $BODY_FILE
             for style in "${styles[@]}"; do
               echo "✔️ $style" >> $BODY_FILE
+              echo "" >> $BODY_FILE
             done
             echo "" >> $BODY_FILE
           fi
@@ -115,6 +120,7 @@ jobs:
             echo "### ⚒️ Refactor" >> $BODY_FILE
             for refactor in "${refactors[@]}"; do
               echo "✔️ $refactor" >> $BODY_FILE
+              echo "" >> $BODY_FILE
             done
             echo "" >> $BODY_FILE
           fi
@@ -122,6 +128,7 @@ jobs:
             echo "### 🧪 Tests" >> $BODY_FILE
             for test in "${tests[@]}"; do
               echo "✔️ $test" >> $BODY_FILE
+              echo "" >> $BODY_FILE
             done
             echo "" >> $BODY_FILE
           fi
@@ -129,6 +136,7 @@ jobs:
             echo "### 💻 Chores" >> $BODY_FILE
             for chore in "${chores[@]}"; do
               echo "✔️ $chore" >> $BODY_FILE
+              echo "" >> $BODY_FILE
             done
             echo "" >> $BODY_FILE
           fi
@@ -136,6 +144,7 @@ jobs:
             echo "### 🔔 Others" >> $BODY_FILE
             for other in "${others[@]}"; do
               echo "✔️ $other" >> $BODY_FILE
+              echo "" >> $BODY_FILE
             done
             echo "" >> $BODY_FILE
           fi
