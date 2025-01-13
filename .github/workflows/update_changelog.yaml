@@ -19,7 +19,7 @@ jobs:
         run: |
           echo "TAG_NAME=${GITHUB_REF##*/}" >> $GITHUB_ENV
           PREV_TAG=$(git describe --tags --abbrev=0 ${GITHUB_REF}^)
-          COMMITS=$(git log ${PREV_TAG}..HEAD --pretty=format:'%H: %s (%an <%ae>)') > commits.txt
+          git log ${PREV_TAG}..HEAD --pretty=format:'%H: %s (%an <%ae>)' > commits.txt
       - name: Update CHANGELOG.md
         run: |
           git checkout gh-pages
@@ -34,12 +34,10 @@ jobs:
           echo "and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)." >> $TEMP_FILE
           echo "" >> $TEMP_FILE
 
-          cat $TEMP_FILE
-
           if [ ! -f CHANGELOG.md ]; then
             CHANGELOG_BODY=""
           else
-            TITLE_LINE_COUNT=3 # Number of lines in the title section
+            TITLE_LINE_COUNT=7 # Number of lines in the title section
             CHANGELOG_BODY=$(tail -n +"$((TITLE_LINE_COUNT + 1))" CHANGELOG.md)
           fi
 
