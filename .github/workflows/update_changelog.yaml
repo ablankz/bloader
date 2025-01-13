@@ -19,59 +19,71 @@ jobs:
         run: |
           echo "TAG_NAME=${GITHUB_REF##*/}" >> $GITHUB_ENV
           PREV_TAG=$(git describe --tags --abbrev=0 ${GITHUB_REF}^)
-          COMMITS=$(git log ${PREV_TAG}..HEAD --pretty=format:'%H: %s (%an <%ae>)') > $GITHUB_WORKSPACE/commits.txt
+          COMMITS=$(git log ${PREV_TAG}..HEAD --pretty=format:'%H: %s (%an <%ae>)') > commits.txt
       - name: Update CHANGELOG.md
         run: |
           git checkout gh-pages
 
-          if [ ! -f CHANGELOG.md ]; then
-            echo "# Changelog" > CHANGELOG.md
-            echo "" >> CHANGELOG.md
-            echo "All notable changes to this project will be documented in this file." >> CHANGELOG.md
-            echo "" >> CHANGELOG.md
-            echo "The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)," >> CHANGELOG.md
-            echo "and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)." >> CHANGELOG.md
-            echo "" >> CHANGELOG.md
-          fi
-          RELEASE_DATE=$(date +'%Y-%m-%d')
           TEMP_FILE=$(mktemp)
-          {
-            echo "## [${TAG_NAME}] - ${RELEASE_DATE}"
-            echo ""
-            cat $GITHUB_WORKSPACE/commits.txt | while IFS= read -r line; do
-              if [[ $line =~ feat.* ]]; then
-                echo "🚀 Features"
-                echo "✔️ ${line}"
-              elif [[ $line =~ fix.* ]]; then
-                echo "🐞 Bug fixes"
-                echo "✔️ ${line}"
-              elif [[ $line =~ perf.* ]]; then
-                echo "💪 Performance improvements"
-                echo "✔️ ${line}"
-              elif [[ $line =~ docs.* ]]; then
-                echo "📃 Documentation"
-                echo "✔️ ${line}"
-              elif [[ $line =~ style.* ]]; then
-                echo "🕶️ Styles"
-                echo "✔️ ${line}"
-              elif [[ $line =~ refactor.* ]]; then
-                echo "⚒️ Refactor"
-                echo "✔️ ${line}"
-              elif [[ $line =~ test.* ]]; then
-                echo "🧪 Tests"
-                echo "✔️ ${line}"
-              elif [[ $line =~ chore.* ]]; then
-                echo "💻 Chores"
-                echo "✔️ ${line}"
-              else
-                echo "🔔 Others"
-                echo "✔️ ${line}"
-              fi
-            done
-            echo ""
-            tail -n +4 CHANGELOG.md # `# Changelog`
-          } > $TEMP_FILE
-          mv $TEMP_FILE CHANGELOG.md
+
+          echo "# Changelog" > $TEMP_FILE
+          echo "" >> $TEMP_FILE
+          echo "All notable changes to this project will be documented in this file." >> $TEMP_FILE
+          echo "" >> $TEMP_FILE
+          echo "The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)," >> $TEMP_FILE
+          echo "and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)." >> $TEMP_FILE
+          echo "" >> $TEMP_FILE
+
+          cat $TEMP_FILE
+
+          if [ ! -f CHANGELOG.md ]; then
+            CHANGELOG_BODY=""
+          else
+            TITLE_LINE_COUNT=3 # Number of lines in the title section
+            CHANGELOG_BODY=$(tail -n +"$((TITLE_LINE_COUNT + 1))" CHANGELOG.md)
+          fi
+
+          echo "$CHANGELOG_BODY"
+
+          cat commits.txt
+
+          RELEASE_DATE=$(date +'%Y-%m-%d')
+          BODY_FILE=$(mktemp)
+          echo "## [${TAG_NAME}] - ${RELEASE_DATE}" > $BODY_FILE
+          echo "" >> $BODY_FILE
+          cat commits.txt | while IFS= read -r line; do
+            if [[ $line =~ feat.* ]]; then
+              echo "🚀 Features" >> $BODY_FILE
+              echo "✔️ ${line}" >> $BODY_FILE
+            elif [[ $line =~ fix.* ]]; then
+              echo "🐞 Bug fixes" >> $BODY_FILE
+              echo "✔️ ${line}" >> $BODY_FILE
+            elif [[ $line =~ perf.* ]]; then
+              echo "💪 Performance improvements" >> $BODY_FILE
+              echo "✔️ ${line}" >> $BODY_FILE
+            elif [[ $line =~ docs.* ]]; then
+              echo "📃 Documentation" >> $BODY_FILE
+              echo "✔️ ${line}" >> $BODY_FILE
+            elif [[ $line =~ style.* ]]; then
+              echo "🕶️ Styles" >> $BODY_FILE
+              echo "✔️ ${line}" >> $BODY_FILE
+            elif [[ $line =~ refactor.* ]]; then
+              echo "⚒️ Refactor" >> $BODY_FILE
+              echo "✔️ ${line}" >> $BODY_FILE
+            elif [[ $line =~ test.* ]]; then
+              echo "🧪 Tests" >> $BODY_FILE
+              echo "✔️ ${line}" >> $BODY_FILE
+            elif [[ $line =~ chore.* ]]; then
+              echo "💻 Chores" >> $BODY_FILE
+              echo "✔️ ${line}" >> $BODY_FILE
+            else
+              echo "🔔 Others" >> $BODY_FILE
+              echo "✔️ ${line}" >> $BODY_FILE
+            fi
+          done
+          echo ""
+          echo "$CHANGELOG_BODY" >> $BODY_FILE
+          cat $TEMP_FILE $BODY_FILE > CHANGELOG.md
       - name: Commit and push changes
         run: |
           git config user.name "github-actions[bot]"
