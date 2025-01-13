@@ -1,0 +1,52 @@
+name: UPDATE CHANGELOG.md
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  update-changelog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Extract release details
+        id: release
+        run: |
+          echo "RELEASE_TAG=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+          echo "RELEASE_NOTES=$(echo '${{ github.event.release.body }}' | jq -Rs .)" >> $GITHUB_ENV
+      - name: Update CHANGELOG.md
+        run: |
+          if [ ! -f CHANGELOG.md ]; then
+            echo "# Changelog" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "All notable changes to this project will be documented in this file." >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)," >> CHANGELOG.md
+            echo "and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)." >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+          fi
+
+          RELEASE_DATE=$(date +'%Y-%m-%d')
+
+          TEMP_FILE=$(mktemp)
+          echo "## [$RELEASE_TAG] - $RELEASE_DATE" > $TEMP_FILE
+          echo "" >> $TEMP_FILE
+          echo "${RELEASE_NOTES}" | jq -r . >> $TEMP_FILE
+          echo "" >> $TEMP_FILE
+          cat CHANGELOG.md >> $TEMP_FILE
+          mv $TEMP_FILE CHANGELOG.md
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "Update CHANGELOG.md for release $RELEASE_TAG"
+          git push origin HEAD
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
