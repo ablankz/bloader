@@ -1,9 +1,9 @@
 name: Update CHANGELOG.md
 
 on:
-  release:
-    types:
-      - published
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   update-changelog:
@@ -14,11 +14,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Extract release details
-        id: release
+      - name: Get tag details and commits
+        id: tag_details
         run: |
-          echo "RELEASE_TAG=${GITHUB_REF_NAME}" >> $GITHUB_ENV
-          echo "RELEASE_NOTES=$(echo '${{ github.event.release.body }}' | jq -Rs .)" >> $GITHUB_ENV
+          echo "TAG_NAME=${GITHUB_REF##*/}" >> $GITHUB_ENV
+          PREV_TAG=$(git describe --tags --abbrev=0 ${GITHUB_REF}^)
+          COMMITS=$(git log ${PREV_TAG}..HEAD --pretty=format:'%H: %s (%an <%ae>)')
+          echo "COMMITS=${COMMITS}" >> $GITHUB_ENV
       - name: Update CHANGELOG.md
         run: |
           if [ ! -f CHANGELOG.md ]; then
@@ -30,23 +32,50 @@ jobs:
             echo "and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)." >> CHANGELOG.md
             echo "" >> CHANGELOG.md
           fi
-
           RELEASE_DATE=$(date +'%Y-%m-%d')
-
           TEMP_FILE=$(mktemp)
-          echo "## [$RELEASE_TAG] - $RELEASE_DATE" > $TEMP_FILE
+          echo "## [${TAG_NAME}] - ${RELEASE_DATE}" > $TEMP_FILE
           echo "" >> $TEMP_FILE
-          echo "${RELEASE_NOTES}" | jq -r . >> $TEMP_FILE
+          echo "${COMMITS}" | while IFS= read -r line; do
+            if [[ $line =~ feat.* ]]; then
+              echo "🚀 Features" >> $TEMP_FILE
+              echo "- ${line}" >> $TEMP_FILE
+            elif [[ $line =~ fix.* ]]; then
+              echo "🐞 Bug fixes" >> $TEMP_FILE
+              echo "- ${line}" >> $TEMP_FILE
+            elif [[ $line =~ perf.* ]]; then
+              echo "💪 Performance improvements" >> $TEMP_FILE
+              echo "- ${line}" >> $TEMP_FILE
+            elif [[ $line =~ docs.* ]]; then
+              echo "📃 Documentation" >> $TEMP_FILE
+              echo "- ${line}" >> $TEMP_FILE
+            elif [[ $line =~ style.* ]]; then
+              echo "🕶️ Styles" >> $TEMP_FILE
+              echo "- ${line}" >> $TEMP_FILE
+            elif [[ $line =~ refactor.* ]]; then
+              echo "⚒️ Refactor" >> $TEMP_FILE
+              echo "- ${line}" >> $TEMP_FILE
+            elif [[ $line =~ test.* ]]; then
+              echo "🧪 Tests" >> $TEMP_FILE
+              echo "- ${line}" >> $TEMP_FILE
+            elif [[ $line =~ chore.* ]]; then
+              echo "💻 Chores" >> $TEMP_FILE
+              echo "- ${line}" >> $TEMP_FILE
+            else
+              echo "🔔 Others" >> $TEMP_FILE
+              echo "- ${line}" >> $TEMP_FILE
+            fi
+          done
+
           echo "" >> $TEMP_FILE
           cat CHANGELOG.md >> $TEMP_FILE
           mv $TEMP_FILE CHANGELOG.md
-
       - name: Commit and push changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add CHANGELOG.md
-          git commit -m "Update CHANGELOG.md for release $RELEASE_TAG"
+          git commit -m "Update CHANGELOG.md for ${TAG_NAME}"
           git push origin HEAD
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
