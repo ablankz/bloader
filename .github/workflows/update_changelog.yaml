@@ -36,41 +36,42 @@ jobs:
           fi
           RELEASE_DATE=$(date +'%Y-%m-%d')
           TEMP_FILE=$(mktemp)
-          echo "## [${TAG_NAME}] - ${RELEASE_DATE}" > $TEMP_FILE
-          echo "" >> $TEMP_FILE
-          echo "${COMMITS}" | while IFS= read -r line; do
-            if [[ $line =~ feat.* ]]; then
-              echo "🚀 Features" >> $TEMP_FILE
-              echo "- ${line}" >> $TEMP_FILE
-            elif [[ $line =~ fix.* ]]; then
-              echo "🐞 Bug fixes" >> $TEMP_FILE
-              echo "- ${line}" >> $TEMP_FILE
-            elif [[ $line =~ perf.* ]]; then
-              echo "💪 Performance improvements" >> $TEMP_FILE
-              echo "- ${line}" >> $TEMP_FILE
-            elif [[ $line =~ docs.* ]]; then
-              echo "📃 Documentation" >> $TEMP_FILE
-              echo "- ${line}" >> $TEMP_FILE
-            elif [[ $line =~ style.* ]]; then
-              echo "🕶️ Styles" >> $TEMP_FILE
-              echo "- ${line}" >> $TEMP_FILE
-            elif [[ $line =~ refactor.* ]]; then
-              echo "⚒️ Refactor" >> $TEMP_FILE
-              echo "- ${line}" >> $TEMP_FILE
-            elif [[ $line =~ test.* ]]; then
-              echo "🧪 Tests" >> $TEMP_FILE
-              echo "- ${line}" >> $TEMP_FILE
-            elif [[ $line =~ chore.* ]]; then
-              echo "💻 Chores" >> $TEMP_FILE
-              echo "- ${line}" >> $TEMP_FILE
-            else
-              echo "🔔 Others" >> $TEMP_FILE
-              echo "- ${line}" >> $TEMP_FILE
-            fi
-          done
-
-          echo "" >> $TEMP_FILE
-          cat CHANGELOG.md >> $TEMP_FILE
+          {
+            echo "## [${TAG_NAME}] - ${RELEASE_DATE}"
+            echo ""
+            echo "${COMMITS}" | while IFS= read -r line; do
+              if [[ $line =~ feat.* ]]; then
+                echo "🚀 Features"
+                echo "✔️ ${line}"
+              elif [[ $line =~ fix.* ]]; then
+                echo "🐞 Bug fixes"
+                echo "✔️ ${line}"
+              elif [[ $line =~ perf.* ]]; then
+                echo "💪 Performance improvements"
+                echo "✔️ ${line}"
+              elif [[ $line =~ docs.* ]]; then
+                echo "📃 Documentation"
+                echo "✔️ ${line}"
+              elif [[ $line =~ style.* ]]; then
+                echo "🕶️ Styles"
+                echo "✔️ ${line}"
+              elif [[ $line =~ refactor.* ]]; then
+                echo "⚒️ Refactor"
+                echo "✔️ ${line}"
+              elif [[ $line =~ test.* ]]; then
+                echo "🧪 Tests"
+                echo "✔️ ${line}"
+              elif [[ $line =~ chore.* ]]; then
+                echo "💻 Chores"
+                echo "✔️ ${line}"
+              else
+                echo "🔔 Others"
+                echo "✔️ ${line}"
+              fi
+            done
+            echo ""
+            tail -n +2 CHANGELOG.md # `# Changelog` ヘッダー以降の内容を追加
+          } > $TEMP_FILE
           mv $TEMP_FILE CHANGELOG.md
       - name: Commit and push changes
         run: |
