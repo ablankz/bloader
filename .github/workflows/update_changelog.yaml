@@ -1,4 +1,4 @@
-name: UPDATE CHANGELOG.md
+name: Update CHANGELOG.md
 
 on:
   release:

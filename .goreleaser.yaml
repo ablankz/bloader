@@ -140,31 +140,31 @@ changelog:
       - "^test:"
   format: '{{ .SHA }}: {{ .Message }} ({{ with .AuthorUsername }}@{{ . }}{{ else }}{{ .AuthorName }} <{{ .AuthorEmail }}>{{ end }})'
   groups:
-    - title: Features
+    - title: "🚀 Features"
       regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
       order: 0
-    - title: "Bug fixes"
+    - title: "🐞 Bug fixes"
       regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
       order: 1
-    - title: "Performance improvements"
+    - title: "💪 Performance improvements"
       regexp: '^.*?perf(\([[:word:]]+\))??!?:.+$'
       order: 2
-    - title: "Documentation"
+    - title: "📃 Documentation"
       regexp: '^.*?docs(\([[:word:]]+\))??!?:.+$'
       order: 3
-    - title: "Styles"
+    - title: "🕶️ Styles"
       regexp: '^.*?style(\([[:word:]]+\))??!?:.+$'
       order: 4
-    - title: "Refactor"
+    - title: "⚒️ Refactor"
       regexp: '^.*?refactor(\([[:word:]]+\))??!?:.+$'
       order: 5
-    - title: "Tests"
+    - title: "🧪 Tests"
       regexp: '^.*?test(\([[:word:]]+\))??!?:.+$'
       order: 6
-    - title: "Chores"
+    - title: "💻 Chores"
       regexp: '^.*?chore(\([[:word:]]+\))??!?:.+$'
       order: 7
-    - title: Others
+    - title: "🔔 Others"
       order: 999
 
 release:
