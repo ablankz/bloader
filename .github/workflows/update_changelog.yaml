@@ -79,7 +79,6 @@ jobs:
               others+=("$line")
             fi
           done
-          : > $BODY_FILE
           if [ ${#features[@]} -gt 0 ]; then
             echo "### 🚀 Features" >> $BODY_FILE
             for feature in "${features[@]}"; do
@@ -143,7 +142,10 @@ jobs:
             done
             echo "" >> $BODY_FILE
           fi
+          cat $BODY_FILE
           echo "$CHANGELOG_BODY" >> $BODY_FILE
+          echo ""
+          cat $TEMP_FILE $BODY_FILE
           cat $TEMP_FILE $BODY_FILE > CHANGELOG.md
       - name: Commit and push changes
         run: |
