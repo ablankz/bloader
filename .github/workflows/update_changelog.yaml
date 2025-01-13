@@ -20,6 +20,7 @@ jobs:
           echo "TAG_NAME=${GITHUB_REF##*/}" >> $GITHUB_ENV
           PREV_TAG=$(git describe --tags --abbrev=0 ${GITHUB_REF}^)
           git log ${PREV_TAG}..HEAD --pretty=format:'%H: %s (%an <%ae>)' > commits.txt
+          echo "" >> commits.txt
       - name: Update CHANGELOG.md
         run: |
           git checkout gh-pages
@@ -41,10 +42,6 @@ jobs:
             CHANGELOG_BODY=$(tail -n +"$((TITLE_LINE_COUNT + 1))" CHANGELOG.md)
           fi
 
-          echo "$CHANGELOG_BODY"
-
-          cat commits.txt
-
           RELEASE_DATE=$(date +'%Y-%m-%d')
           BODY_FILE=$(mktemp)
           echo "## [${TAG_NAME}] - ${RELEASE_DATE}" > $BODY_FILE
@@ -59,7 +56,6 @@ jobs:
           chores=()
           others=()
           while IFS= read -r line; do
-            echo "Processing line: $line"
             if [[ $line =~ feat.* ]]; then
               features+=("$line")
             elif [[ $line =~ fix.* ]]; then
@@ -80,7 +76,6 @@ jobs:
               others+=("$line")
             fi
           done < commits.txt
-          echo ${#tests[@]}
           if [ ${#features[@]} -gt 0 ]; then
             echo "### 🚀 Features" >> $BODY_FILE
             for feature in "${features[@]}"; do
@@ -144,7 +139,6 @@ jobs:
             done
             echo "" >> $BODY_FILE
           fi
-          cat $BODY_FILE
           echo "$CHANGELOG_BODY" >> $BODY_FILE
           cat $TEMP_FILE $BODY_FILE > CHANGELOG.md
       - name: Commit and push changes
