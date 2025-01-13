@@ -49,37 +49,100 @@ jobs:
           BODY_FILE=$(mktemp)
           echo "## [${TAG_NAME}] - ${RELEASE_DATE}" > $BODY_FILE
           echo "" >> $BODY_FILE
+          features=()
+          bug_fixes=()
+          performance_improvements=()
+          documentation=()
+          styles=()
+          refactors=()
+          tests=()
+          chores=()
+          others=()
           cat commits.txt | while IFS= read -r line; do
             if [[ $line =~ feat.* ]]; then
-              echo "🚀 Features" >> $BODY_FILE
-              echo "✔️ ${line}" >> $BODY_FILE
+              features+=("$line")
             elif [[ $line =~ fix.* ]]; then
-              echo "🐞 Bug fixes" >> $BODY_FILE
-              echo "✔️ ${line}" >> $BODY_FILE
+              bug_fixes+=("$line")
             elif [[ $line =~ perf.* ]]; then
-              echo "💪 Performance improvements" >> $BODY_FILE
-              echo "✔️ ${line}" >> $BODY_FILE
+              performance_improvements+=("$line")
             elif [[ $line =~ docs.* ]]; then
-              echo "📃 Documentation" >> $BODY_FILE
-              echo "✔️ ${line}" >> $BODY_FILE
+              documentation+=("$line")
             elif [[ $line =~ style.* ]]; then
-              echo "🕶️ Styles" >> $BODY_FILE
-              echo "✔️ ${line}" >> $BODY_FILE
+              styles+=("$line")
             elif [[ $line =~ refactor.* ]]; then
-              echo "⚒️ Refactor" >> $BODY_FILE
-              echo "✔️ ${line}" >> $BODY_FILE
+              refactors+=("$line")
             elif [[ $line =~ test.* ]]; then
-              echo "🧪 Tests" >> $BODY_FILE
-              echo "✔️ ${line}" >> $BODY_FILE
+              tests+=("$line")
             elif [[ $line =~ chore.* ]]; then
-              echo "💻 Chores" >> $BODY_FILE
-              echo "✔️ ${line}" >> $BODY_FILE
+              chores+=("$line")
             else
-              echo "🔔 Others" >> $BODY_FILE
-              echo "✔️ ${line}" >> $BODY_FILE
+              others+=("$line")
             fi
           done
-          echo ""
+          : > $BODY_FILE
+          if [ ${#features[@]} -gt 0 ]; then
+            echo "### 🚀 Features" >> $BODY_FILE
+            for feature in "${features[@]}"; do
+              echo "✔️ $feature" >> $BODY_FILE
+            done
+            echo "" >> $BODY_FILE
+          fi
+          if [ ${#bug_fixes[@]} -gt 0 ]; then
+            echo "### 🐞 Bug fixes" >> $BODY_FILE
+            for bug_fix in "${bug_fixes[@]}"; do
+              echo "✔️ $bug_fix" >> $BODY_FILE
+            done
+            echo "" >> $BODY_FILE
+          fi
+          if [ ${#performance_improvements[@]} -gt 0 ]; then
+            echo "### 💪 Performance improvements" >> $BODY_FILE
+            for performance_improvement in "${performance_improvements[@]}"; do
+              echo "✔️ $performance_improvement" >> $BODY_FILE
+            done
+            echo "" >> $BODY_FILE
+          fi
+          if [ ${#documentation[@]} -gt 0 ]; then
+            echo "### 📃 Documentation" >> $BODY_FILE
+            for doc in "${documentation[@]}"; do
+              echo "✔️ $doc" >> $BODY_FILE
+            done
+            echo "" >> $BODY_FILE
+          fi
+          if [ ${#styles[@]} -gt 0 ]; then
+            echo "### 🕶️ Styles" >> $BODY_FILE
+            for style in "${styles[@]}"; do
+              echo "✔️ $style" >> $BODY_FILE
+            done
+            echo "" >> $BODY_FILE
+          fi
+          if [ ${#refactors[@]} -gt 0 ]; then
+            echo "### ⚒️ Refactor" >> $BODY_FILE
+            for refactor in "${refactors[@]}"; do
+              echo "✔️ $refactor" >> $BODY_FILE
+            done
+            echo "" >> $BODY_FILE
+          fi
+          if [ ${#tests[@]} -gt 0 ]; then
+            echo "### 🧪 Tests" >> $BODY_FILE
+            for test in "${tests[@]}"; do
+              echo "✔️ $test" >> $BODY_FILE
+            done
+            echo "" >> $BODY_FILE
+          fi
+          if [ ${#chores[@]} -gt 0 ]; then
+            echo "### 💻 Chores" >> $BODY_FILE
+            for chore in "${chores[@]}"; do
+              echo "✔️ $chore" >> $BODY_FILE
+            done
+            echo "" >> $BODY_FILE
+          fi
+          if [ ${#others[@]} -gt 0 ]; then
+            echo "### 🔔 Others" >> $BODY_FILE
+            for other in "${others[@]}"; do
+              echo "✔️ $other" >> $BODY_FILE
+            done
+            echo "" >> $BODY_FILE
+          fi
           echo "$CHANGELOG_BODY" >> $BODY_FILE
           cat $TEMP_FILE $BODY_FILE > CHANGELOG.md
       - name: Commit and push changes
