@@ -59,6 +59,7 @@ jobs:
           chores=()
           others=()
           cat commits.txt | while IFS= read -r line; do
+            echo "Processing line: $line"
             if [[ $line =~ feat.* ]]; then
               features+=("$line")
             elif [[ $line =~ fix.* ]]; then
@@ -79,6 +80,7 @@ jobs:
               others+=("$line")
             fi
           done
+          echo ${#tests[@]}
           if [ ${#features[@]} -gt 0 ]; then
             echo "### 🚀 Features" >> $BODY_FILE
             for feature in "${features[@]}"; do
@@ -144,8 +146,6 @@ jobs:
           fi
           cat $BODY_FILE
           echo "$CHANGELOG_BODY" >> $BODY_FILE
-          echo ""
-          cat $TEMP_FILE $BODY_FILE
           cat $TEMP_FILE $BODY_FILE > CHANGELOG.md
       - name: Commit and push changes
         run: |
