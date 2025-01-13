@@ -58,7 +58,7 @@ jobs:
           tests=()
           chores=()
           others=()
-          cat commits.txt | while IFS= read -r line; do
+          while IFS= read -r line; do
             echo "Processing line: $line"
             if [[ $line =~ feat.* ]]; then
               features+=("$line")
@@ -79,7 +79,7 @@ jobs:
             else
               others+=("$line")
             fi
-          done
+          done < commits.txt
           echo ${#tests[@]}
           if [ ${#features[@]} -gt 0 ]; then
             echo "### 🚀 Features" >> $BODY_FILE
