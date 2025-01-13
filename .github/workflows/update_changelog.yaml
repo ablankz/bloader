@@ -19,7 +19,7 @@ jobs:
         run: |
           echo "TAG_NAME=${GITHUB_REF##*/}" >> $GITHUB_ENV
           PREV_TAG=$(git describe --tags --abbrev=0 ${GITHUB_REF}^)
-          COMMITS=$(git log ${PREV_TAG}..HEAD --pretty=format:'%H: %s (%an <%ae>)') > commits.txt
+          COMMITS=$(git log ${PREV_TAG}..HEAD --pretty=format:'%H: %s (%an <%ae>)') > $GITHUB_WORKSPACE/commits.txt
       - name: Update CHANGELOG.md
         run: |
           git checkout gh-pages
@@ -38,7 +38,7 @@ jobs:
           {
             echo "## [${TAG_NAME}] - ${RELEASE_DATE}"
             echo ""
-            cat commits.txt | while IFS= read -r line; do
+            cat $GITHUB_WORKSPACE/commits.txt | while IFS= read -r line; do
               if [[ $line =~ feat.* ]]; then
                 echo "🚀 Features"
                 echo "✔️ ${line}"
@@ -69,7 +69,7 @@ jobs:
               fi
             done
             echo ""
-            tail -n +2 CHANGELOG.md # `# Changelog` ヘッダー以降の内容を追加
+            tail -n +4 CHANGELOG.md # `# Changelog`
           } > $TEMP_FILE
           mv $TEMP_FILE CHANGELOG.md
       - name: Commit and push changes
